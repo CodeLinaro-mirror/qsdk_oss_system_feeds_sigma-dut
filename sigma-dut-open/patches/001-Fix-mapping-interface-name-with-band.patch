@@ -1,6 +1,6 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -4800,28 +4800,13 @@ static int cmd_ap_config_commit(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -4828,28 +4828,13 @@ static int cmd_ap_config_commit(struct s
  	case AP_11g:
  	case AP_11b:
  	case AP_11ng:
@@ -31,7 +31,7 @@
  		fprintf(f, "hw_mode=a\n");
  		break;
  	default:
-@@ -5745,9 +5730,9 @@ static int cmd_ap_get_info(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -5846,9 +5831,9 @@ static int cmd_ap_get_info(struct sigma_
  		else
  			version = "Unknown";
  
@@ -44,7 +44,7 @@
  		else
  			snprintf(resp, sizeof(resp), "interface,wlan0_any,"
  				 "agent,1.0,version,%s", version);
-@@ -5861,12 +5846,7 @@ static int ap_inject_frame(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -5962,12 +5947,7 @@ static int ap_inject_frame(struct sigma_
  	char cbuf[100];
  	struct ifreq ifr;
  
@@ -58,3 +58,17 @@
  
  	if (hwaddr_aton(sta_addr, addr_sta) < 0)
  		return -1;
+@@ -6567,12 +6547,7 @@ static int cmd_ap_get_mac_address(struct
+ 		else
+ 			ifname = "ath0";
+ 	} else {
+-		if ((dut->ap_mode == AP_11a || dut->ap_mode == AP_11na ||
+-		     dut->ap_mode == AP_11ac) &&
+-		    if_nametoindex("wlan1") > 0)
+-			ifname = "wlan1";
+-		else
+-			ifname = "wlan0";
++		ifname = get_main_ifname();
+ 	}
+ 
+ 	s = socket(AF_INET, SOCK_DGRAM, 0);
