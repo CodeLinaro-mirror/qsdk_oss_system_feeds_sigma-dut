@@ -1,0 +1,21 @@
+diff --git a/ap.c b/ap.c
+index e4fce7d..9956689 100644
+--- a/ap.c
++++ b/ap.c
+@@ -5338,14 +5338,14 @@ static int cmd_ap_config_commit(struct sigma_dut *dut, struct sigma_conn *conn,
+ 		if (dut->ap_sgi80 || dut->ap_txBF ||
+ 		    dut->ap_ldpc != VALUE_NOT_SET ||
+ 		    dut->ap_tx_stbc || dut->ap_mu_txBF) {
+-			fprintf(f, "vht_capab=%s%s%s%s%s\n",
++			fprintf(f, "vht_capab=%s%s%s%s%s%s\n",
+ 				dut->ap_sgi80 ? "[SHORT-GI-80]" : "",
+ 				dut->ap_txBF ?
+ 				"[SU-BEAMFORMER][SU-BEAMFORMEE][BF-ANTENNA-2][SOUNDING-DIMENSION-2]" : "",
+ 				(dut->ap_ldpc == VALUE_ENABLED) ?
+ 				"[RXLDPC]" : "",
+ 				dut->ap_tx_stbc ? "[TX-STBC-2BY1][RX-STBC-1]" : "",
+-				dut->ap_mu_txBF ? "[MU-BEAMFORMER]" : "");
++				dut->ap_mu_txBF ? "[MU-BEAMFORMER]" : "", "[MAX-A-MPDU-LEN-EXP3]");
+ 		}
+ 	}
+ 
