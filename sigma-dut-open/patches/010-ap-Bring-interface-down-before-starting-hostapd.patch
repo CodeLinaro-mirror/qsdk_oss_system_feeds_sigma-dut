@@ -1,15 +1,15 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -4591,6 +4591,12 @@ static int cmd_ap_config_commit(struct s
+@@ -7855,6 +7855,12 @@ skip_key_mgmt:
  			sigma_dut_print(dut, DUT_MSG_ERROR, "Failed to remove "
  					"monitor interface");
  
 +		snprintf(buf, sizeof(buf), "ifconfig %s down", ifname);
 +		if (system(buf) != 0) {
 +			sigma_dut_print(dut, DUT_MSG_INFO,
-+					"Failed to run '%s'", buf);
++				"Failed to run '%s'", buf);
 +		}
 +
- 		snprintf(buf, sizeof(buf), "%shostapd -B%s%s%s%s " SIGMA_TMPDIR
- 			 "/sigma_dut-ap.conf",
- 			 file_exists("hostapd") ? "./" : "",
+ 		snprintf(path, sizeof(path), "%shostapd",
+ 			 file_exists("hostapd") ? "./" : "");
+ 		snprintf(buf, sizeof(buf), "%s -B%s%s%s%s%s " SIGMA_TMPDIR

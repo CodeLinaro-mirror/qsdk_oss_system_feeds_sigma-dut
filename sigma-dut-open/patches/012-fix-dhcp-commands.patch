@@ -1,6 +1,6 @@
 --- a/p2p.c
 +++ b/p2p.c
-@@ -66,7 +66,7 @@ static void start_dhcp(struct sigma_dut *dut, const char *group_ifname, int go)
+@@ -123,7 +123,7 @@ void start_dhcp(struct sigma_dut *dut, const char *group_ifname, int go)
  			 GO_IP_ADDR);
  		run_system(dut, buf);
  		snprintf(buf, sizeof(buf),
@@ -9,7 +9,7 @@
  			 START_IP_RANGE, END_IP_RANGE);
  	} else {
  #ifdef ANDROID
-@@ -83,7 +83,7 @@ static void start_dhcp(struct sigma_dut *dut, const char *group_ifname, int go)
+@@ -146,7 +146,7 @@ void start_dhcp(struct sigma_dut *dut, const char *group_ifname, int go)
  		}
  #else /* ANDROID */
  		snprintf(buf, sizeof(buf),
@@ -18,7 +18,7 @@
  			 group_ifname, group_ifname);
  #endif /* ANDROID */
  	}
-@@ -101,7 +101,7 @@ static void stop_dhcp(struct sigma_dut *dut, const char *group_ifname, int go)
+@@ -164,7 +164,7 @@ void stop_dhcp(struct sigma_dut *dut, const char *group_ifname, int go)
  	struct stat s;
  
  	if (go) {
@@ -27,7 +27,7 @@
  		sigma_dut_print(dut, DUT_MSG_DEBUG,
  				"Kill previous DHCP server: %s", buf);
  	} else {
-@@ -122,7 +122,7 @@ static void stop_dhcp(struct sigma_dut *dut, const char *group_ifname, int go)
+@@ -185,7 +185,7 @@ void stop_dhcp(struct sigma_dut *dut, const char *group_ifname, int go)
  		snprintf(path, sizeof(path), "/data/misc/dhcp/dhcpcd-%s.pid",
  			 group_ifname);
  #else /* ANDROID */
@@ -38,7 +38,7 @@
  		sigma_dut_print(dut, DUT_MSG_DEBUG,
 --- a/sta.c
 +++ b/sta.c
-@@ -636,7 +636,7 @@ static void kill_dhcp_client(struct sigma_dut *dut, const char *ifname)
+@@ -1191,7 +1191,7 @@ static void kill_dhcp_client(struct sigma_dut *dut, const char *ifname)
  #ifdef ANDROID
  	snprintf(path, sizeof(path), "/data/misc/dhcp/dhcpcd-%s.pid", ifname);
  #else /* ANDROID */
@@ -47,7 +47,7 @@
  #endif /* ANDROID */
  	if (stat(path, &s) == 0) {
  		snprintf(buf, sizeof(buf), "kill `cat %s`", path);
-@@ -683,7 +683,7 @@ static int start_dhcp_client(struct sigma_dut *dut, const char *ifname)
+@@ -1242,7 +1242,7 @@ static int start_dhcp_client(struct sigma_dut *dut, const char *ifname)
  	}
  #else /* ANDROID */
  	snprintf(buf, sizeof(buf),

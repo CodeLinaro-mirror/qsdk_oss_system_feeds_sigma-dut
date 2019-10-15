@@ -1,8 +1,6 @@
-diff --git a/p2p.c b/p2p.c
-index 83a86b3..fc6cbe4 100644
 --- a/p2p.c
 +++ b/p2p.c
-@@ -145,6 +145,52 @@ static void stop_dhcp(struct sigma_dut *dut, const char *group_ifname, int go)
+@@ -208,6 +208,52 @@ void stop_dhcp(struct sigma_dut *dut, const char *group_ifname, int go)
  }
  
  
@@ -55,7 +53,7 @@ index 83a86b3..fc6cbe4 100644
  static int stop_event_rx = 0;
  
  #ifdef __linux__
-@@ -167,10 +213,13 @@ static void * wpa_event_recv(void *ptr)
+@@ -230,10 +276,13 @@ static void * wpa_event_recv(void *ptr)
  	fd_set rfd;
  	struct timeval tv;
  	size_t len;
@@ -69,7 +67,7 @@ index 83a86b3..fc6cbe4 100644
  		NULL
  	};
  
-@@ -210,12 +259,16 @@ static void * wpa_event_recv(void *ptr)
+@@ -273,12 +322,16 @@ static void * wpa_event_recv(void *ptr)
  		}
  
  		len = sizeof(buf);
@@ -86,7 +84,7 @@ index 83a86b3..fc6cbe4 100644
  		ret = 0;
  		pos = strchr(buf, '>');
  		if (pos) {
-@@ -230,7 +283,7 @@ static void * wpa_event_recv(void *ptr)
+@@ -293,7 +346,7 @@ static void * wpa_event_recv(void *ptr)
  		if (!ret)
  			continue;
  
@@ -95,7 +93,7 @@ index 83a86b3..fc6cbe4 100644
  			sigma_dut_print(dut, DUT_MSG_DEBUG, "Group event '%s'",
  					buf);
  			p2p_group_ifname = strchr(buf, ' ');
-@@ -241,13 +294,17 @@ static void * wpa_event_recv(void *ptr)
+@@ -304,13 +357,17 @@ static void * wpa_event_recv(void *ptr)
  			if (!pos)
  				continue;
  			*pos++ = '\0';
@@ -119,7 +117,7 @@ index 83a86b3..fc6cbe4 100644
  		}
  
  		if (strstr(buf, "P2P-GROUP-STARTED")) {
-@@ -255,6 +312,10 @@ static void * wpa_event_recv(void *ptr)
+@@ -318,6 +375,10 @@ static void * wpa_event_recv(void *ptr)
  		} else if (strstr(buf, "P2P-GROUP-REMOVED")) {
  			stop_dhcp(dut, p2p_group_ifname, go);
  			go = 0;
