@@ -367,7 +367,7 @@
 +		self_mac = dut->mbo_self_ap_tuple.mac_addr;
 +		self_ap_ne_pref = dut->mbo_self_ap_tuple.ap_ne_pref;
 +		snprintf(nrbuf[0], sizeof(nrbuf[0]),
-+			 "neighbor=%02x:%02x:%02x:%02x:%02x:%02x,0x00000017,%02d,%02x,%02x,0301%02x ",
++			 "neighbor=%02x:%02x:%02x:%02x:%02x:%02x,0x00000017,%02d,%02d,%02d,0301%02x ",
 +			 self_mac[0], self_mac[1], self_mac[2],
 +			 self_mac[3], self_mac[4], self_mac[5],
 +			 dut->mbo_self_ap_tuple.ap_ne_class,
@@ -377,7 +377,7 @@
 +		for (i = 0; i < dut->mbo_pref_ap_cnt; i++) {
 +			pref_mac_addr = dut->mbo_pref_aps[i].mac_addr;
 +			snprintf(nrbuf[i + 1], sizeof(nrbuf[0]),
-+				"neighbor=%02x:%02x:%02x:%02x:%02x:%02x,0x00000017,%02d,%02x,%02x,0301%02x ",
++				"neighbor=%02x:%02x:%02x:%02x:%02x:%02x,0x00000017,%02d,%02d,%02d,0301%02x ",
 +				pref_mac_addr[0], pref_mac_addr[1], pref_mac_addr[2],
 +				pref_mac_addr[3], pref_mac_addr[4], pref_mac_addr[5],
 +				dut->mbo_pref_aps[i].ap_ne_class,
@@ -500,7 +500,7 @@
  	case DRIVER_ATHEROS:
  		return ath_ap_send_frame_mbo(dut, conn, cmd);
  	case DRIVER_OPENWRT:
-@@ -12170,6 +12581,187 @@ static int mac80211_vht_chnum_band(struc
+@@ -12170,6 +12581,185 @@ static int mac80211_vht_chnum_band(struc
  	return 0;
  }
  
@@ -512,12 +512,10 @@
 +	/* AP Reachable, Security, Spectrum mgmt bits set */
 +	uint32_t bssid_info = 0x00000017;
 +	uint32_t phy_type = 0x0;
-+	uint32_t wide_bw_subelem_hdr = 0x603;
-+	uint32_t wide_bw_subelem_data = 0x0;
 +	uint32_t bss_cand_pref_subelem = 0x301;
 +
 +	/* Neighbor Report element nr = BSSID + BSSID info + op_class + chan +
-+         * phy type + wide bandwidth channel + BSS Trans Cand Pref subelements
++         * phy type + BSS Trans Cand Pref subelements
 +	 */
 +	snprintf(temp_str_val, sizeof(temp_str_val), "%02x%02x%02x%02x%02x%02x%08x",
 +		 mac_addr[0], mac_addr[1], mac_addr[2],
@@ -527,9 +525,9 @@
 +
 +	memcpy(nr_buf, temp_str_val, strlen(temp_str_val) + 1);
 +
-+	snprintf(temp_str_val, sizeof(temp_str_val), "%02x%02x%02x%04x%06x%04x%02x",
-+		 ap_ne_class, ap_ne_ch, phy_type, wide_bw_subelem_hdr,
-+		 wide_bw_subelem_data, bss_cand_pref_subelem, ap_ne_pref);
++	snprintf(temp_str_val, sizeof(temp_str_val), "%02x%02x%02x%04x%02x",
++		 ap_ne_class, ap_ne_ch, phy_type, bss_cand_pref_subelem,
++		 ap_ne_pref);
 +
 +	temp_str_val[sizeof(temp_str_val) - 1] = '\0';
 +
@@ -688,7 +686,7 @@
  
  static int mac80211_ap_set_rfeature(struct sigma_dut *dut,
  				    struct sigma_conn *conn,
-@@ -12187,6 +12779,39 @@ static int mac80211_ap_set_rfeature(stru
+@@ -12187,6 +12777,39 @@ static int mac80211_ap_set_rfeature(stru
  	if (val && mac80211_vht_chnum_band(dut, ifname, val) < 0)
  		return -1;
  
