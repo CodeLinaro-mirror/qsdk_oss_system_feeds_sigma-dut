@@ -1,8 +1,6 @@
-diff --git a/ap.c b/ap.c
-index 0dd4650..9b93de3 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -1161,14 +1161,17 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -1161,14 +1161,17 @@ static enum sigma_cmd_result cmd_ap_set_
  	}
  
  	val = get_param(cmd, "TxBF");
@@ -21,7 +19,7 @@ index 0dd4650..9b93de3 100644
  		} else if (strcasecmp(val, "disable") == 0) {
  			dut->ap_txBF = 0;
  			dut->ap_mu_txBF = 0;
-@@ -8474,6 +8477,10 @@ skip_key_mgmt:
+@@ -8483,6 +8486,10 @@ skip_key_mgmt:
  						   ifname, dut->he_mcs);
  		}
  
@@ -32,7 +30,7 @@ index 0dd4650..9b93de3 100644
  	}
  
  	if (dut->program == PROGRAM_60GHZ && dut->ap_num_ese_allocs > 0) {
-@@ -8946,6 +8953,8 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+@@ -8955,6 +8962,8 @@ static enum sigma_cmd_result cmd_ap_rese
  		dut->ap_txBF = 1;
  		dut->ap_mu_txBF = 1;
  		dut->ap_numsounddim = -1;
@@ -41,7 +39,7 @@ index 0dd4650..9b93de3 100644
  		if (dut->device_type == AP_testbed) {
  			dut->ap_amsdu = VALUE_DISABLED;
  			dut->ap_bcc = VALUE_DISABLED;
-@@ -8958,6 +8967,7 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+@@ -8967,6 +8976,7 @@ static enum sigma_cmd_result cmd_ap_rese
  			dut->ap_tx_streams = 2;
  			dut->ap_txBF = 0;
  			dut->ap_mu_txBF = 0;
@@ -49,7 +47,7 @@ index 0dd4650..9b93de3 100644
  			dut->ap_ba_bufsize = BA_BUFSIZE_64;
                 }
  	}
-@@ -13112,6 +13122,40 @@ static int mac80211_set_trigger_type(struct sigma_dut *dut, const char *ifname,
+@@ -13146,6 +13156,40 @@ static int mac80211_set_trigger_type(str
  	return SUCCESS_SEND_STATUS;
  }
  
@@ -90,7 +88,7 @@ index 0dd4650..9b93de3 100644
  
  static int16_t mac80211_he_ltf_mapping(struct sigma_dut *dut,
  				       struct sigma_conn *conn,
-@@ -13197,6 +13241,7 @@ static int mac80211_ap_set_rfeature(struct sigma_dut *dut,
+@@ -13231,6 +13275,7 @@ static int mac80211_ap_set_rfeature(stru
  {
  	const char *val;
  	char *ifname, *type = "he";
@@ -98,7 +96,7 @@ index 0dd4650..9b93de3 100644
  
  	ifname = get_main_ifname();
  	val = get_param(cmd, "RTS_FORCE");
-@@ -13258,6 +13303,37 @@ static int mac80211_ap_set_rfeature(struct sigma_dut *dut,
+@@ -13294,6 +13339,37 @@ static int mac80211_ap_set_rfeature(stru
  		return STATUS_SENT_ERROR;
  	}
  
@@ -136,8 +134,6 @@ index 0dd4650..9b93de3 100644
  	/* Extract LTF value before GI because in case of auto-rate,
  	 * dut->ar_ltf should be set before calling
  	 * mac80211_he_ar_gi_ltf_mask()
-diff --git a/sigma_dut.h b/sigma_dut.h
-index 4088cca..d4c2520 100644
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
 @@ -903,6 +903,9 @@ struct sigma_dut {

@@ -1,8 +1,6 @@
-diff --git a/ap.c b/ap.c
-index 162dfee..d07ed1d 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -8358,6 +8358,16 @@ skip_key_mgmt:
+@@ -8357,6 +8357,16 @@ skip_key_mgmt:
  			pdev_id = 3;
  		}
  

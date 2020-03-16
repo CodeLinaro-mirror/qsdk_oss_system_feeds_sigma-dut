@@ -1,8 +1,6 @@
-diff --git a/ap.c b/ap.c
-index f815726dcec0..0884f9f1337c 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -13098,6 +13098,85 @@ static int mac80211_set_trigger_type(struct sigma_dut *dut, const char *ifname,
+@@ -13146,6 +13146,85 @@ static int mac80211_set_trigger_type(str
  	return SUCCESS_SEND_STATUS;
  }
  
@@ -88,7 +86,7 @@ index f815726dcec0..0884f9f1337c 100644
  static int mac80211_ap_set_rfeature(struct sigma_dut *dut,
  				    struct sigma_conn *conn,
  				    struct sigma_cmd *cmd)
-@@ -13165,7 +13244,19 @@ static int mac80211_ap_set_rfeature(struct sigma_dut *dut,
+@@ -13215,7 +13294,19 @@ static int mac80211_ap_set_rfeature(stru
  		return STATUS_SENT_ERROR;
  	}
  

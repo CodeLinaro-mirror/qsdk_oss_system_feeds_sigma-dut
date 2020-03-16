@@ -1,8 +1,6 @@
-diff --git a/ap.c b/ap.c
-index f815726..73418ee 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -809,7 +809,11 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -809,7 +809,11 @@ static enum sigma_cmd_result cmd_ap_set_
  	val = get_param(cmd, "MCS_FIXEDRATE");
  	if (val) {
  		dut->ap_fixed_rate = 1;
@@ -15,7 +13,7 @@ index f815726..73418ee 100644
  	}
  
  	val = get_param(cmd, "SPATIAL_RX_STREAM");
-@@ -8460,6 +8464,16 @@ skip_key_mgmt:
+@@ -8469,6 +8473,16 @@ skip_key_mgmt:
  			/* Trigger interval */
  			run_system_wrapper(dut, "ath11k-fwtest -t 2 -i %s -m 0x00 -p %d 0xA2 0xC8", ifname, pdev_id);
  		}
@@ -32,8 +30,6 @@ index f815726..73418ee 100644
  	}
  
  	if (dut->program == PROGRAM_60GHZ && dut->ap_num_ese_allocs > 0) {
-diff --git a/sigma_dut.h b/sigma_dut.h
-index 5100f1a..4088cca 100644
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
 @@ -902,6 +902,7 @@ struct sigma_dut {
