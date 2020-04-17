@@ -36,8 +36,8 @@
  	if (ap_ft_enabled(dut)) {
 -		unsigned char own_addr[ETH_ALEN];
 -		unsigned char ap2_addr[20];
-+		unsigned char own_addr[ETH_ALEN], own_addr_str[20];
-+		unsigned char ap2_addr[ETH_ALEN], ap2_addr_str[20];
++		char own_addr[ETH_ALEN], own_addr_str[20];
++		char ap2_addr[ETH_ALEN], ap2_addr_str[20];
  
  		fprintf(f, "mobility_domain=%s\n",
  			atoi(dut->ap_mobility_domain) ? dut->ap_mobility_domain : "0101");
@@ -94,14 +94,14 @@
 -				own_addr[3], own_addr[4], own_addr[5]);
 +				own_addr[3], own_addr[4], own_addr[5],
 +				own_addr_str);
-+			fprintf(f,
+ 			fprintf(f,
+-				"r1kh=%s %s 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff\n",
+-				ap2_addr, ap2_addr);
 +				"r0kh=%02x:%02x:%02x:%02x:%02x:%02x %s 000102030405060708090a0b0c0d0e0f\n",
 +				ap2_addr[0], ap2_addr[1], ap2_addr[2],
 +				ap2_addr[3], ap2_addr[4], ap2_addr[5],
 +				ap2_addr_str);
- 			fprintf(f,
--				"r1kh=%s %s 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff\n",
--				ap2_addr, ap2_addr);
++			fprintf(f,
 +				"r1kh=%02x:%02x:%02x:%02x:%02x:%02x %02x:%02x:%02x:%02x:%02x:%02x 000102030405060708090a0b0c0d0e0f\n",
 +				ap2_addr[0], ap2_addr[1], ap2_addr[2],
 +				ap2_addr[3], ap2_addr[4], ap2_addr[5],
@@ -110,3 +110,12 @@
  		} else {
  			fprintf(f,
  				"r0kh=ff:ff:ff:ff:ff:ff * 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff\n");
+@@ -7838,6 +7853,8 @@ skip_key_mgmt:
+                                 fprintf(f_1, "auth_server_shared_secret=%s\n",
+                                                 dut->ap_radius_password);
+                                 break;
++			default:
++                                break;
+                 }
+                 fclose(f_1);
+         }
