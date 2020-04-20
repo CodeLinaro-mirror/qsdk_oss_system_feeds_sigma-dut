@@ -1,6 +1,6 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -13146,6 +13146,85 @@ static int mac80211_set_trigger_type(str
+@@ -13150,6 +13150,82 @@ static int mac80211_set_trigger_type(str
  	return SUCCESS_SEND_STATUS;
  }
  
@@ -29,8 +29,6 @@
 +					     const char *ifname,
 +					     const char *val)
 +{
-+	int16_t he_ltf;
-+	char buf[256] = {'\0'};
 +	int ret = SUCCESS_SEND_STATUS;
 +
 +	if (dut->ar_ltf)
@@ -52,7 +50,6 @@
 +					    const char *val)
 +{
 +	int16_t he_ltf = 0xFF;
-+	char buf[256] = {'\0'};
 +	char *mode = dut->use_5g ? "5" : "2.4";
 +	int ret = SUCCESS_SEND_STATUS;
 +
@@ -86,7 +83,7 @@
  static int mac80211_ap_set_rfeature(struct sigma_dut *dut,
  				    struct sigma_conn *conn,
  				    struct sigma_cmd *cmd)
-@@ -13215,7 +13294,19 @@ static int mac80211_ap_set_rfeature(stru
+@@ -13219,7 +13295,19 @@ static int mac80211_ap_set_rfeature(stru
  		return STATUS_SENT_ERROR;
  	}
  
