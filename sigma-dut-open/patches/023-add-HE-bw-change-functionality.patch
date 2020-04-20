@@ -3,7 +3,7 @@
 
 --- a/ap.c
 +++ b/ap.c
-@@ -12581,6 +12581,53 @@ static int mac80211_vht_chnum_band(struc
+@@ -12579,6 +12579,53 @@ static int mac80211_vht_chnum_band(struc
  	return 0;
  }
  
@@ -13,7 +13,7 @@
 +	char *token, *result;
 +	int chwidth = 80, center_freq_idx, center_freq, channel_freq;
 +	int sec_channel_offset = 0;
-+	char buf[256], *mode;
++	char buf[256];
 +	char *saveptr;
 +	int res;
 +
@@ -57,7 +57,7 @@
  static void mac80211_prepare_nr_buf(struct sigma_dut *dut, char *nr_buf,
  				    uint8_t *mac_addr, int ap_ne_class,
  				    int ap_ne_ch, int ap_ne_pref)
-@@ -12766,13 +12813,26 @@ static int mac80211_ap_set_rfeature(stru
+@@ -12764,13 +12811,26 @@ static int mac80211_ap_set_rfeature(stru
  				    struct sigma_cmd *cmd)
  {
  	const char *val;

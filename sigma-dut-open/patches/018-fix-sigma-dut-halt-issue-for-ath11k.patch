@@ -5,10 +5,10 @@
  	DIR *dir;
  	struct dirent *entry;
 +	struct stat stats;
- 	char temp[32];
  	const char *key_mgmt;
  #ifdef ANDROID
-@@ -7960,13 +7961,20 @@ skip_key_mgmt:
+ 	struct group *gr;
+@@ -7959,13 +7960,20 @@ skip_key_mgmt:
  
  			path[sizeof(path) - 1] = 0;
  
