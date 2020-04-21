@@ -74,7 +74,15 @@
  					     "/sys/kernel/debug/ieee80211");
  }
  
-@@ -1899,8 +1911,7 @@ static enum sigma_cmd_result cmd_ap_send
+@@ -1874,7 +1886,6 @@ static enum sigma_cmd_result cmd_ap_send
+ {
+ 	/* const char *name = get_param(cmd, "NAME"); */
+ 	/* const char *ifname = get_param(cmd, "INTERFACE"); */
+-	struct stat s;
+ 
+ 	switch (get_driver_type()) {
+ 	case DRIVER_ATHEROS:
+@@ -1899,8 +1910,7 @@ static enum sigma_cmd_result cmd_ap_send
  				"ap_send_addba_req command ignored");
  		return 1;
  	case DRIVER_MAC80211:

@@ -1,6 +1,6 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -6914,6 +6914,15 @@ static int ap_set_60g_ese(struct sigma_d
+@@ -6912,6 +6912,17 @@ static int ap_set_60g_ese(struct sigma_d
  	}
  }
  
@@ -12,11 +12,13 @@
 +		return 1;
 +	else if (strcmp(ifname, "wlan2") == 0)
 +		return 2;
++	else
++		return -1;
 +}
  
  static int ap_set_force_mcs(struct sigma_dut *dut, int force, int mcs)
  {
-@@ -8001,6 +8010,32 @@ skip_key_mgmt:
+@@ -7998,6 +8009,35 @@ skip_key_mgmt:
  			fprintf(f, "he_rts_threshold=0");
  	}
  
@@ -25,11 +27,14 @@
 +		int mac_id;
 +
 +		mac_id = mac80211_get_mac_id(ifname);
-+
-+		snprintf(buf, sizeof(buf), "echo 0 0 0 0 > /sys/kernel/debug/ath11k/ipq8074/mac%d/rate_mask",
-+			 mac_id);
-+		if (system(buf) != 0)
-+			sigma_dut_print(dut, DUT_MSG_INFO, "Failed to run '%s'", buf);
++		if (mac_id >= 0) {
++			snprintf(buf, sizeof(buf), "echo 0 0 0 0 > /sys/kernel/debug/ath11k/ipq8074/mac%d/rate_mask",
++				 mac_id);
++			if (system(buf) != 0)
++				sigma_dut_print(dut, DUT_MSG_INFO, "Failed to run '%s'", buf);
++		} else {
++			sigma_dut_print(dut, DUT_MSG_INFO, "Failed to set rate_mask");
++		}
 +
 +		if (strstr(dut->ap_ssid, "HE-4.37.1") != NULL) {
 +			snprintf(buf, sizeof(buf),

@@ -1,6 +1,6 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -6831,8 +6831,11 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -6831,8 +6831,10 @@ enum sigma_cmd_result cmd_ap_config_comm
  	const char *ifname;
  	char buf[500];
  	char buf_dual[500];
@@ -9,11 +9,10 @@
  	enum driver_type drv;
 +	DIR *dir;
 +	struct dirent *entry;
-+	char temp[32];
  	const char *key_mgmt;
  #ifdef ANDROID
  	struct group *gr;
-@@ -7938,6 +7941,41 @@ skip_key_mgmt:
+@@ -7938,6 +7940,41 @@ skip_key_mgmt:
  		}
  	}
  
