@@ -1,6 +1,6 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -1117,6 +1117,10 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1268,6 +1268,10 @@ static enum sigma_cmd_result cmd_ap_set_
  		}
  	}
  
@@ -11,18 +11,18 @@
  	/* UNSUPPORTED: tx_lgi_rate */
  
  	val = get_param(cmd, "wpsnfc");
-@@ -6902,7 +6906,9 @@ enum sigma_cmd_result cmd_ap_config_comm
- 	if ((drv == DRIVER_MAC80211 || drv == DRIVER_QNXNTO ||
+@@ -7520,7 +7524,9 @@ enum sigma_cmd_result cmd_ap_config_comm
  	     drv == DRIVER_LINUX_WCN) &&
- 	    (dut->ap_mode == AP_11ng || dut->ap_mode == AP_11na)) {
+ 	    (dut->ap_mode == AP_11ng || dut->ap_mode == AP_11na ||
+ 	     (dut->ap_mode == AP_11ax && !dut->use_5g))) {
 -		int ht40plus = 0, ht40minus = 0, tx_stbc = 0;
 +		int ht40plus = 0, ht40minus = 0;
 +		char ht_caps[60];
 +		int len = 0;
  
  		fprintf(f, "ieee80211n=1\n");
- 		if (dut->ap_mode == AP_11ng &&
-@@ -6927,9 +6933,6 @@ enum sigma_cmd_result cmd_ap_config_comm
+ 		if (dut->ap_mode == AP_11ax)
+@@ -7547,9 +7553,6 @@ enum sigma_cmd_result cmd_ap_config_comm
  				ht40minus = 1;
  		}
  
@@ -32,7 +32,7 @@
  		/* Overwrite the ht_capab with offset value if configured */
  		if (dut->ap_chwidth == AP_40 &&
  		    dut->ap_chwidth_offset == SEC_CH_40ABOVE) {
-@@ -6941,10 +6944,16 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -7561,10 +7564,16 @@ enum sigma_cmd_result cmd_ap_config_comm
  			ht40plus = 0;
  		}
  
@@ -53,7 +53,7 @@
  	}
  
  	if ((drv == DRIVER_MAC80211 || drv == DRIVER_QNXNTO ||
-@@ -7678,7 +7687,7 @@ skip_key_mgmt:
+@@ -8359,7 +8368,7 @@ skip_key_mgmt:
  				"[SU-BEAMFORMER][SU-BEAMFORMEE][BF-ANTENNA-2][SOUNDING-DIMENSION-2]" : "",
  				(dut->ap_ldpc == VALUE_ENABLED) ?
  				"[RXLDPC]" : "",

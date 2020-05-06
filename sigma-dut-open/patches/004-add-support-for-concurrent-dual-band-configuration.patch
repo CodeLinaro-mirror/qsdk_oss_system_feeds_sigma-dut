@@ -1,6 +1,6 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -6823,8 +6823,10 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -7433,8 +7433,10 @@ enum sigma_cmd_result cmd_ap_config_comm
  {
  	/* const char *name = get_param(cmd, "NAME"); */
  	FILE *f;
@@ -9,9 +9,9 @@
  	char buf[500];
 +	char buf_dual[500];
  	char path[100];
+ 	char ap_conf_path[100];
  	enum driver_type drv;
- 	const char *key_mgmt;
-@@ -7473,6 +7475,117 @@ skip_key_mgmt:
+@@ -8139,6 +8141,118 @@ skip_key_mgmt:
  		}
  	}
  
@@ -29,16 +29,17 @@
 +                        case AP_11b:
 +                        case AP_11ng:
 +                                ifname = drv == DRIVER_MAC80211 ? "wlan1" : "ath1";
-+                                if (drv == DRIVER_QNXNTO && sigma_main_ifname)
-+                                        ifname = sigma_main_ifname;
++                                if (drv == DRIVER_QNXNTO && \
++			           (strcmp(get_main_ifname(dut),"unknown") != 0))
++                                        ifname = get_main_ifname(dut);
 +                                fprintf(f_1, "hw_mode=g\n");
 +                                break;
 +                        case AP_11a:
 +                        case AP_11na:
 +                        case AP_11ac:
 +                                if (drv == DRIVER_QNXNTO) {
-+                                        if (sigma_main_ifname)
-+                                                ifname = sigma_main_ifname;
++                                        if (strcmp(get_main_ifname(dut),"unknown") != 0)
++                                                ifname = get_main_ifname(dut);
 +                                        else
 +                                                ifname = "wlan0";
 +                                } else if (drv == DRIVER_MAC80211) {
@@ -129,19 +130,19 @@
  	if (dut->program == PROGRAM_WPS) {
  		/* 60G WPS tests requires wps_state of 2 (configured) */
  		int wps_state = is_60g_sigma_dut(dut) ? 2 : 1;
-@@ -7744,6 +7857,21 @@ skip_key_mgmt:
- 			 "",
+@@ -8444,6 +8558,21 @@ skip_key_mgmt:
  			 dut->use_hostapd_pid_file ?
- 			 " -P " SIGMA_DUT_HOSTAPD_PID_FILE : "");
-+                if (dut->ap_is_dual) {
-+                        snprintf(buf_dual, sizeof(buf_dual), "%shostapd -B%s%s%s%s " SIGMA_TMPDIR
-+				 "/sigma_dut_dual-ap.conf",
-+				 file_exists("hostapd") ? "./" : "",
-+				 dut->hostapd_debug_log ? " -ddKt -f" : "",
-+				 dut->hostapd_debug_log ? dut->hostapd_debug_log : "",
-+				 dut->hostapd_entropy_log ? " -e" : "",
-+				 dut->hostapd_entropy_log ? dut->hostapd_entropy_log :
-+				 "");
+ 			 " -P " SIGMA_DUT_HOSTAPD_PID_FILE : "",
+ 			 dut->sigma_tmpdir);
++		if (dut->ap_is_dual) {
++			snprintf(buf_dual, sizeof(buf_dual), "%shostapd -B%s%s%s%s " SIGMA_TMPDIR
++				"/sigma_dut_dual-ap.conf",
++				file_exists("hostapd") ? "./" : "",
++				dut->hostapd_debug_log ? " -ddKt -f" : "",
++				dut->hostapd_debug_log ? dut->hostapd_debug_log : "",
++				dut->hostapd_entropy_log ? " -e" : "",
++				dut->hostapd_entropy_log ? dut->hostapd_entropy_log :
++				"");
 +			if (system(buf_dual) != 0) {
 +				send_resp(dut, conn, SIGMA_ERROR,
 +					  "errorCode,Failed to start hostapd");

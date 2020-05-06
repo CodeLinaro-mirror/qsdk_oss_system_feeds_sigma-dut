@@ -1,20 +1,21 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -6831,8 +6831,10 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -7441,9 +7441,11 @@ enum sigma_cmd_result cmd_ap_config_comm
  	const char *ifname;
  	char buf[500];
  	char buf_dual[500];
 -	char path[100];
 +	char path[100], if_path[100];
+ 	char ap_conf_path[100];
  	enum driver_type drv;
 +	DIR *dir;
 +	struct dirent *entry;
  	const char *key_mgmt;
  #ifdef ANDROID
  	struct group *gr;
-@@ -7938,6 +7940,41 @@ skip_key_mgmt:
- 		}
- 	}
+@@ -8664,6 +8666,41 @@ skip_key_mgmt:
+ 	if (drv == DRIVER_WCN || drv == DRIVER_LINUX_WCN)
+ 		wcn_config_ap_ldpc(dut, ifname);
  
 +	if( strcmp(dut->ap_ssid, "NVCX@7.N") == 0) {
 +		dir = opendir("/sys/kernel/debug/ieee80211");
@@ -30,7 +31,7 @@
 +			snprintf(path, sizeof(path) - 1, "%s/%s",
 +				 "/sys/kernel/debug/ieee80211", entry->d_name);
 +			snprintf(if_path, sizeof(if_path) -1, "%s/%s%s", path, "netdev:",
-+				 sigma_main_ifname);
++				 get_main_ifname(dut));
 +
 +			if (!fopen(if_path, "r"))
 +				continue;

@@ -1,25 +1,6 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -1161,14 +1161,17 @@ static enum sigma_cmd_result cmd_ap_set_
- 	}
- 
- 	val = get_param(cmd, "TxBF");
--	if (val)
-+	if (val) {
- 		dut->ap_txBF = strcasecmp(val, "enable") == 0;
-+		dut->he_sounding = 0;
-+	}
- 
- 	val = get_param(cmd, "MU_TxBF");
- 	if (val) {
- 		if (strcasecmp(val, "enable") == 0) {
- 			dut->ap_txBF = 1;
- 			dut->ap_mu_txBF = 1;
-+			dut->he_sounding = 0;
- 		} else if (strcasecmp(val, "disable") == 0) {
- 			dut->ap_txBF = 0;
- 			dut->ap_mu_txBF = 0;
-@@ -8483,6 +8486,10 @@ skip_key_mgmt:
+@@ -9088,6 +9088,10 @@ skip_key_mgmt:
  						   ifname, dut->he_mcs);
  		}
  
@@ -29,25 +10,16 @@
 +
  	}
  
- 	if (dut->program == PROGRAM_60GHZ && dut->ap_num_ese_allocs > 0) {
-@@ -8955,6 +8962,8 @@ static enum sigma_cmd_result cmd_ap_rese
- 		dut->ap_txBF = 1;
- 		dut->ap_mu_txBF = 1;
- 		dut->ap_numsounddim = -1;
-+		dut->he_sounding = 1;
+ 	if (dut->program == PROGRAM_60GHZ) {
+@@ -9663,6 +9667,7 @@ static enum sigma_cmd_result cmd_ap_rese
+ 	}
+ 
+ 	if (dut->program == PROGRAM_HE) {
 +		dut->he_ackpolicymac = 0;
  		if (dut->device_type == AP_testbed) {
- 			dut->ap_amsdu = VALUE_DISABLED;
- 			dut->ap_bcc = VALUE_DISABLED;
-@@ -8967,6 +8976,7 @@ static enum sigma_cmd_result cmd_ap_rese
- 			dut->ap_tx_streams = 2;
- 			dut->ap_txBF = 0;
- 			dut->ap_mu_txBF = 0;
-+			dut->he_sounding = 0;
+ 			dut->ap_ldpc = VALUE_DISABLED;
  			dut->ap_ba_bufsize = BA_BUFSIZE_64;
-                }
- 	}
-@@ -13146,6 +13156,40 @@ static int mac80211_set_trigger_type(str
+@@ -13885,6 +13890,40 @@ static int mac80211_set_trigger_type(str
  	return SUCCESS_SEND_STATUS;
  }
  
@@ -88,15 +60,15 @@
  
  static int16_t mac80211_he_ltf_mapping(struct sigma_dut *dut,
  				       struct sigma_conn *conn,
-@@ -13231,6 +13275,7 @@ static int mac80211_ap_set_rfeature(stru
+@@ -13967,6 +14006,7 @@ static int mac80211_ap_set_rfeature(stru
  {
  	const char *val;
  	char *ifname, *type = "he";
 +	unsigned char mac_addr[ETH_ALEN];
  
- 	ifname = get_main_ifname();
- 	val = get_param(cmd, "RTS_FORCE");
-@@ -13294,6 +13339,37 @@ static int mac80211_ap_set_rfeature(stru
+ 	ifname = get_main_ifname(dut);
+ 
+@@ -14031,6 +14071,37 @@ static int mac80211_ap_set_rfeature(stru
  		return STATUS_SENT_ERROR;
  	}
  
@@ -136,13 +108,12 @@
  	 * mac80211_he_ar_gi_ltf_mask()
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -903,6 +903,9 @@ struct sigma_dut {
+@@ -938,6 +938,8 @@ struct sigma_dut {
  	bool wifi_hal_initialized;
  #endif /*ANDROID_WIFI_HAL*/
  	int he_mcs;
 +	int he_ackpolicymac;
 +	int ap_he_ackpolicy;
-+	int he_sounding;
- };
- 
- 
+ 	int sae_h2e_default;
+ 	enum {
+ 		SAE_PWE_DEFAULT,
