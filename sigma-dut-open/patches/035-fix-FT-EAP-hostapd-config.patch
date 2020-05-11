@@ -36,8 +36,8 @@
  	if (ap_ft_enabled(dut)) {
 -		unsigned char own_addr[ETH_ALEN];
 -		unsigned char ap2_addr[20];
-+		char own_addr[ETH_ALEN], own_addr_str[20];
-+		char ap2_addr[ETH_ALEN], ap2_addr_str[20];
++		unsigned char own_addr[ETH_ALEN], ap2_addr[ETH_ALEN];
++		char own_addr_str[20], ap2_addr_str[20];
  
  		fprintf(f, "mobility_domain=%s\n",
  			atoi(dut->ap_mobility_domain) ? dut->ap_mobility_domain : "0101");
