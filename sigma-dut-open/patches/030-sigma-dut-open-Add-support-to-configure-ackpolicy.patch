@@ -62,8 +62,8 @@
  				       struct sigma_conn *conn,
 @@ -13967,6 +14006,7 @@ static int mac80211_ap_set_rfeature(stru
  {
- 	const char *val;
- 	char *ifname, *type = "he";
+ 	const char *val, *ifname;;
+ 	char *type = "he";
 +	unsigned char mac_addr[ETH_ALEN];
  
  	ifname = get_main_ifname(dut);

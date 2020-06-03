@@ -13,7 +13,12 @@
  		else
  			snprintf(resp, sizeof(resp), "interface,wlan0_any,"
  				 "agent,1.0,version,%s", version);
-@@ -9499,12 +9499,7 @@ static int ap_inject_frame(struct sigma_
+@@ -9495,16 +9495,11 @@ static int ap_inject_frame(struct sigma_
+ 	unsigned char buf[1000], *pos;
+ 	int s, res;
+ 	unsigned char addr_sta[6], addr_own[6];
+-	char *ifname;
++	const char *ifname;
  	char cbuf[100];
  	struct ifreq ifr;
  
