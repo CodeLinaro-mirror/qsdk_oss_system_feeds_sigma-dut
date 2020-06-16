@@ -1,0 +1,121 @@
+From 935d49562ce2f63d56a4a3ef040e577c6ccaca8c Mon Sep 17 00:00:00 2001
+From: Sriram R <srirrama@codeaurora.org>
+Date: Tue, 16 Jun 2020 12:58:44 +0530
+Subject: [PATCH] ath11k: parse dl mimo command
+
+Parse and apply DL MIMO command from capi and use it
+for apply he sounding mode and disabling DL ofdma.
+
+Signed-off-by: Sriram R <srirrama@codeaurora.org>
+---
+ ap.c        | 39 ++++++++++++++++++++++++++++++++++++---
+ sigma_dut.h |  6 ++++++
+ 2 files changed, 42 insertions(+), 3 deletions(-)
+
+diff --git a/ap.c b/ap.c
+index 23cacea..f48defc 100644
+--- a/ap.c
++++ b/ap.c
+@@ -111,6 +111,7 @@ static void ath_ap_set_params(struct sigma_dut *dut);
+ static int kill_process(struct sigma_dut *dut, char *proc_name,
+ 			unsigned char is_proc_instance_one, int sig);
+ static void mac80211_enable_send_triggers(struct sigma_dut *dut, const char *ifname);
++static void mac80211_set_mu_brp_commands(struct sigma_dut *dut, const char *ifname);
+ 
+ 
+ static int ap_ft_enabled(struct sigma_dut *dut)
+@@ -1739,6 +1740,20 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+ 		}
+ 	}
+ 
++        val = get_param(cmd, "MIMO");
++        if (val) {
++                if (strcasecmp(val, "DL") == 0) {
++                        dut->ap_he_mimo = MIMO_DL;
++                        dut->he_sounding = 0;
++                } else if (strcasecmp(val, "UL") == 0) {
++                        dut->ap_he_mimo = MIMO_UL;
++                } else {
++                        send_resp(dut, conn, SIGMA_INVALID,
++                                "errorCode,Unsupported mimo param");
++                        return 0;
++                }
++        }
++
+ 	val = get_param(cmd, "HE_TXOPDurRTSThr");
+ 	if (val) {
+ 		if (strcasecmp(val, "enable") == 0) {
+@@ -8483,6 +8498,13 @@ skip_key_mgmt:
+ 					   "ath11k-fwtest -i %s -m 0x47 -v 0 47 1",
+ 					   ifname);
+ 		}
++		 if (dut->ap_he_mimo == MIMO_DL) {
++			mac80211_set_mu_brp_commands(dut, ifname);
++			/* Increase MU traffic */
++			run_system_wrapper(dut,
++					   "ath11k-fwtest -i %s -m 0x48 -v 0 100 2",
++					   ifname);
++		}
+ 
+ 		if (dut->ap_he_ulofdma == VALUE_ENABLED) {
+ 			/* he_mu_edca 1 */
+@@ -9080,6 +9102,7 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+ 		dut->ap_he_frag = VALUE_NOT_SET;
+ 		dut->ap_he_dlofdma = VALUE_NOT_SET;
+ 		dut->ap_he_ulofdma = VALUE_NOT_SET;
++		dut->ap_he_mimo = MIMO_NOT_SET;
+ 		dut->ap_he_ppdu = PPDU_NOT_SET;
+ 		dut->ap_ba_bufsize = BA_BUFSIZE_NOT_SET;
+ 		dut->ap_fixed_rate = 0;
+@@ -13211,11 +13234,13 @@ static void mac80211_set_trigger_type_0(struct sigma_dut *dut, const char *ifnam
+ 			   ifname);
+ }
+ 
+-static void mac80211_set_trigger_type_1(struct sigma_dut *dut, const char *ifname)
++static void mac80211_set_mu_brp_commands(struct sigma_dut *dut, const char *ifname)
+ {
+-	/* TriggerType "1" for MU BRP */
+-	run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x47 -v 0 7 1",
++	/* To enable MU_AX with MU_BRP trigger */
++	run_system_wrapper(dut,
++			   "ath11k-fwtest -t 1 -i %s -m 0x00 -v 0 0x87 13",
+ 			   ifname);
++
+ 	/* sets force_1x1_peer to 1 which should be reset to zero for
+ 	 * non MU test cases
+ 	 */
+@@ -13226,6 +13251,14 @@ static void mac80211_set_trigger_type_1(struct sigma_dut *dut, const char *ifnam
+ 			   ifname);
+ }
+ 
++static void mac80211_set_trigger_type_1(struct sigma_dut *dut, const char *ifname)
++{
++	/* TriggerType "1" for MU BRP */
++	run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x47 -v 0 7 1",
++			   ifname);
++	mac80211_set_mu_brp_commands(dut, ifname);
++}
++
+ static void mac80211_set_trigger_type_2(struct sigma_dut *dut, const char *ifname)
+ {
+ 	/* TriggerType "2" for MU BAR */
+diff --git a/sigma_dut.h b/sigma_dut.h
+index d4c2520..084af43 100644
+--- a/sigma_dut.h
++++ b/sigma_dut.h
+@@ -797,6 +797,12 @@ struct sigma_dut {
+ 		STA_dut
+ 	} device_type;
+ 
++        enum mimo {
++                MIMO_NOT_SET,
++                MIMO_DL,
++                MIMO_UL,
++        } ap_he_mimo;
++
+ 	enum {
+ 		DEVROLE_UNKNOWN = 0,
+ 		DEVROLE_STA,
+-- 
+2.7.4
+
