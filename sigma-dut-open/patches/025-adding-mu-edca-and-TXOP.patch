@@ -1,6 +1,6 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -1718,6 +1718,32 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -2529,6 +2529,32 @@ static enum sigma_cmd_result cmd_ap_set_
  		}
  	}
  
@@ -33,7 +33,7 @@
  	return 1;
  }
  
-@@ -6894,6 +6920,50 @@ static int ap_set_force_mcs(struct sigma
+@@ -7451,6 +7477,50 @@ static int ap_set_force_mcs(struct sigma
  	}
  }
  
@@ -84,7 +84,7 @@
  
  enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
  					   struct sigma_conn *conn,
-@@ -7899,6 +7969,19 @@ skip_key_mgmt:
+@@ -8515,6 +8585,19 @@ skip_key_mgmt:
  		fprintf(f, "he_mu_beamformer=%d\n", dut->ap_mu_txBF);
  		/* Disable BSS Color config by default */
  		fprintf(f, "he_bss_color=1\n");
@@ -104,23 +104,3 @@
  	}
  
  	if (dut->ap_key_mgmt == AP_WPA2_OWE && dut->ap_tag_ssid[0][0] &&
-@@ -8831,6 +8914,8 @@ static enum sigma_cmd_result cmd_ap_rese
- 	dut->ap_he_ulofdma = VALUE_NOT_SET;
- 	dut->ap_numsounddim = 0;
- 	dut->ap_bcc = VALUE_DISABLED;
-+	dut->ap_mu_edca = VALUE_DISABLED;
-+	dut->ap_he_rtsthrshld = VALUE_NOT_SET;
- 	if (dut->device_type == AP_testbed) {
- 		dut->ap_he_dlofdma = VALUE_DISABLED;
- 		dut->ap_he_frag = VALUE_DISABLED;
---- a/sigma_dut.h
-+++ b/sigma_dut.h
-@@ -687,6 +687,8 @@ struct sigma_dut {
- 	enum value_not_set_enabled_disabled ap_he_dlofdma;
- 	enum value_not_set_enabled_disabled ap_bcc;
- 	enum value_not_set_enabled_disabled ap_he_frag;
-+	enum value_not_set_enabled_disabled ap_mu_edca;
-+	enum value_not_set_enabled_disabled ap_he_rtsthrshld;
- 
- 	enum ppdu {
- 		PPDU_NOT_SET,
