@@ -4,7 +4,7 @@
  						   ifname, dut->he_mcs);
  		}
  
-+		if (dut->he_sounding)
++		if (dut->he_sounding == VALUE_ENABLED)
 +			run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x47 -v 0 7 0",
 +					   ifname);
 +
