@@ -29,6 +29,8 @@ PKG_SOURCE:=$(PKG)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 include $(INCLUDE_DIR)/package.mk
 
+TARGET_CFLAGS+= -Wall -Werror
+
 define Package/$(PKG_NAME)
   SECTION:=QCA
   CATEGORY:=QCA software
