@@ -18,7 +18,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  
  
  static int ap_ft_enabled(struct sigma_dut *dut)
-@@ -9091,6 +9092,13 @@ skip_key_mgmt:
+@@ -9088,6 +9089,13 @@ skip_key_mgmt:
  					   "ath11k-fwtest -i %s -m 0x47 -v 0 47 1",
  					   ifname);
  		}
@@ -32,7 +32,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  
  		if (dut->ap_he_ulofdma == VALUE_ENABLED) {
  			/* he_mu_edca 1 */
-@@ -13947,11 +13955,13 @@ static void mac80211_set_trigger_type_0(
+@@ -13944,11 +13952,13 @@ static void mac80211_set_trigger_type_0(
  			   ifname);
  }
  
@@ -49,7 +49,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  	/* sets force_1x1_peer to 1 which should be reset to zero for
  	 * non MU test cases
  	 */
-@@ -13962,6 +13972,14 @@ static void mac80211_set_trigger_type_1(
+@@ -13959,6 +13969,14 @@ static void mac80211_set_trigger_type_1(
  			   ifname);
  }
  
