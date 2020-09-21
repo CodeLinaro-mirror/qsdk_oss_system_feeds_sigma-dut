@@ -1,0 +1,337 @@
+From 84024859c34feba116c5bb2163e36f5f415e0db2 Mon Sep 17 00:00:00 2001
+From: Sriram R <srirrama@codeaurora.org>
+Date: Mon, 21 Sep 2020 14:35:55 +0530
+Subject: [PATCH] sigma-dut: Add MBSSID support
+
+Add HE MBSSID commands support in sigma-dut and fill corresponding
+hostapd conf.
+
+NonTxBSSIndex
+NumNonTxBSS
+in set_wireless, get_mac_address and set_security commands
+
+Currently the max no of mbss vaps is set to 1. This
+can be extended by changing the macro value in future
+based on test case requirements
+
+Signed-off-by: Sriram R <srirrama@codeaurora.org>
+---
+ ap.c        | 159 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ sigma_dut.h |  60 +++++++++++++++--------
+ 2 files changed, 199 insertions(+), 20 deletions(-)
+
+--- a/ap.c
++++ b/ap.c
+@@ -638,6 +638,36 @@ static enum sigma_cmd_result cmd_ap_set_
+ 	if (val)
+ 		dut->program = sigma_program_to_enum(val);
+ 
++	val = get_param(cmd, "NonTxBSSIndex");
++	if (val) {
++		int non_tx_bss_idx;
++
++		if (dut->ap_mbssid != VALUE_ENABLED) {
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "errorCode,MBSSID Not enabled");
++			return STATUS_SENT_ERROR;
++		}
++
++		non_tx_bss_idx = atoi(val);
++
++		if (non_tx_bss_idx > dut->mbss.num_non_tx_bss) {
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "errorCode,Invalid NonTxBSSIndex");
++			return STATUS_SENT_ERROR;
++		}
++
++		val = get_param(cmd, "SSID");
++		if (val) {
++			if (strlen(val) > MAX_SSID_LEN)
++				return INVALID_SEND_STATUS;
++
++			snprintf(dut->mbss.conf[non_tx_bss_idx - 1].ssid,
++				 MAX_SSID_LEN, "%s", val);
++		}
++
++		return SUCCESS_SEND_STATUS;
++	}
++
+ 	val = get_param(cmd, "WLAN_TAG");
+ 	if (val) {
+ 		wlan_tag = atoi(val);
+@@ -1945,6 +1975,27 @@ static enum sigma_cmd_result cmd_ap_set_
+ 		}
+ 	}
+ 
++	val = get_param(cmd, "NumNonTxBSS");
++	if (val) {
++		int num_non_tx_bss;
++
++		if (dut->ap_mbssid != VALUE_ENABLED) {
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "errorCode,MBSSID Not enabled");
++			return STATUS_SENT_ERROR;
++		}
++
++		num_non_tx_bss = atoi(val);
++
++		if (num_non_tx_bss > MAX_NON_TX_VAP_COUNT) {
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "errorCode,MBSS Vap Count Support Exceeded");
++			return STATUS_SENT_ERROR;
++		}
++
++		dut->mbss.num_non_tx_bss = num_non_tx_bss;
++	}
++
+ 	val = get_param(cmd, "TWT_RespSupport");
+ 	if (val) {
+ 		if (strcasecmp(val, "enable") == 0) {
+@@ -2228,6 +2279,50 @@ static enum sigma_cmd_result cmd_ap_set_
+ 		}
+ 	}
+ 
++	val = get_param(cmd, "NonTxBSSIndex");
++	if (val) {
++		int non_tx_bss_idx;
++
++		if (dut->ap_mbssid != VALUE_ENABLED) {
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "errorCode,MBSSID Not enabled");
++			return STATUS_SENT_ERROR;
++		}
++
++		non_tx_bss_idx = atoi(val);
++
++		if (non_tx_bss_idx > dut->mbss.num_non_tx_bss) {
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "errorCode,Invalid NonTxBSSIndex");
++			return STATUS_SENT_ERROR;
++		}
++
++		val = get_param(cmd, "KEYMGNT");
++		if (!val)
++			val = get_param(cmd,"KeyMgmtType");
++		if (val) {
++			if (strcasecmp(val, "SAE") == 0) {
++				dut->mbss.conf[non_tx_bss_idx - 1].key_mgmt = AP_WPA2_SAE;
++			} else {
++				/*TODO Add new KEYMGNT when required */
++				send_resp(dut, conn, SIGMA_INVALID,
++					  "errorCode,Unsupported KEYMGNT MBSSID");
++				return 0;
++			}
++		}
++
++		val = get_param(cmd, "PSK");
++		if (val) {
++			if (strlen(val) > MAX_PSK_LEN - 1)
++				return INVALID_SEND_STATUS;
++
++			snprintf(dut->mbss.conf[non_tx_bss_idx - 1].psk, MAX_PSK_LEN,
++				 "%s", val);
++		}
++
++		return SUCCESS_SEND_STATUS;
++	}
++
+ 	val = get_param(cmd, "KEYMGNT");
+ 	if (!val)
+ 		val = get_param(cmd,"KeyMgmtType");
+@@ -9043,6 +9138,75 @@ skip_key_mgmt:
+ 		fprintf(f, "oce=%d\n",
+ 			dut->dev_role == DEVROLE_STA_CFON ? 2 : 1);
+ 	}
++
++	if (dut->program == PROGRAM_HE && dut->ap_mbssid == VALUE_ENABLED) {
++		uint8_t num_bss, bssid_mask, max_bss_count;
++		uint8_t init_val, base_val;
++		uint8_t max_bssid_ind = 0;
++		unsigned char bssid[6];
++		char ifname2[50];
++		int i;
++
++
++		if (get_hwaddr(ifname, bssid)) {
++			fclose(f);
++			return -2;
++		}
++
++		if (!dut->mbss.num_non_tx_bss)
++			return -2;
++
++		/* Sanity check to indicate below logic holds good
++		 * for upto 256 bss(including tx,non-tx bss) support in sigma-dut
++		 * Can be extended if really required
++		 */
++		if (dut->mbss.num_non_tx_bss > 255)
++			return -2;
++
++		num_bss = dut->mbss.num_non_tx_bss;
++
++		do {
++			max_bssid_ind++;
++			num_bss = num_bss >> 1;
++		} while (num_bss);
++
++		max_bss_count = 1 << max_bssid_ind;
++		bssid_mask = max_bss_count - 1;
++
++		base_val = bssid[5] & ~bssid_mask;
++		init_val = bssid[5] & bssid_mask;
++
++		fprintf(f, "\nmultiple_bssid=1\n");
++
++		for (i = 0; i < dut->mbss.num_non_tx_bss; i++) {
++			fprintf(f, "\n");
++
++			/* start from 1 for non tx bssid */
++			bssid[5] = base_val + ((init_val + i + 1) % max_bss_count);
++
++			snprintf(ifname2, sizeof(ifname2), "%s-%d", ifname, i+1);
++			fprintf(f, "bss=%s\n", ifname2);
++			fprintf(f, "ssid=%s\n", dut->mbss.conf[i].ssid);
++			if (dut->bridge)
++				fprintf(f, "bridge=%s\n", dut->bridge);
++
++			fprintf(f, "bssid=%02x:%02x:%02x:%02x:%02x:%02x\n",
++				bssid[0], bssid[1], bssid[2], bssid[3],
++				bssid[4], bssid[5]);
++
++			if (dut->mbss.conf[i].key_mgmt == AP_WPA2_SAE) {
++				fprintf(f, "wpa=2\n");
++				fprintf(f, "wpa_key_mgmt=SAE\n");
++				fprintf(f, "wpa_pairwise=CCMP\n");
++				fprintf(f, "ieee80211w=2\n");
++				fprintf(f, "sae_password=%s\n", dut->mbss.conf[i].psk);
++				if (dut->use_6g)
++					fprintf(f, "sae_pwe=1\n");
++			}
++
++		}
++	}
++
+ 	fclose(f);
+ 	if (dut->use_hostapd_pid_file)
+ 		kill_hostapd_process_pid(dut);
+@@ -10161,6 +10325,8 @@ static enum sigma_cmd_result cmd_ap_rese
+ 		}
+ 		if (get_openwrt_driver_type() == OPENWRT_DRIVER_ATHEROS)
+ 			dut->ap_dfs_mode = AP_DFS_MODE_ENABLED;
++
++		memset(&dut->mbss, 0, sizeof(struct mbss_support));
+ 	}
+ 
+ 	dut->ap_oper_chn = 0;
+@@ -11692,6 +11858,28 @@ static enum sigma_cmd_result cmd_ap_get_
+ 
+ 	get_if_name(dut, ifname, sizeof(ifname), wlan_tag);
+ 
++	val = get_param(cmd, "NonTxBSSIndex");
++	if (val) {
++		int non_tx_bss_idx;
++		char idx[4];
++
++		if (dut->ap_mbssid != VALUE_ENABLED) {
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "errorCode,MBSSID Not enabled");
++			return STATUS_SENT_ERROR;
++		}
++
++		non_tx_bss_idx = atoi(val);
++
++		if (non_tx_bss_idx > dut->mbss.num_non_tx_bss) {
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "errorCode,Invalid NonTxBSSIndex");
++			return STATUS_SENT_ERROR;
++		}
++		snprintf(idx, sizeof(idx), "-%d", non_tx_bss_idx);
++		strlcat(ifname, idx, sizeof(ifname));
++	}
++
+ 	s = socket(AF_INET, SOCK_DGRAM, 0);
+ 	if (s < 0)
+ 		return -1;
+--- a/sigma_dut.h
++++ b/sigma_dut.h
+@@ -344,6 +344,44 @@ enum akm_suite_values {
+ 
+ };
+ 
++enum ap_key_mgmt {
++	AP_OPEN,
++	AP_WPA2_PSK,
++	AP_WPA_PSK,
++	AP_WPA2_EAP,
++	AP_WPA_EAP,
++	AP_WPA2_EAP_MIXED,
++	AP_WPA2_PSK_MIXED,
++	AP_WPA2_SAE,
++	AP_WPA2_PSK_SAE,
++	AP_SUITEB,
++	AP_WPA2_OWE,
++	AP_WPA2_EAP_OSEN,
++	AP_WPA2_FT_EAP,
++	AP_WPA2_FT_PSK,
++	AP_WPA2_EAP_SHA256,
++	AP_WPA2_PSK_SHA256,
++	AP_WPA2_ENT_FT_EAP,
++	AP_OSEN,
++};
++
++/* Update this macro for supporting multiple mbss vaps */
++#define MAX_NON_TX_VAP_COUNT	1
++#define MAX_SSID_LEN		15
++#define MAX_PSK_LEN		20
++
++struct mbss_config {
++	int non_tx_bss_idx;
++	char ssid[MAX_SSID_LEN];
++	enum ap_key_mgmt key_mgmt;
++	char psk[MAX_PSK_LEN];
++};
++
++struct mbss_support {
++	int num_non_tx_bss;
++	struct mbss_config conf[MAX_NON_TX_VAP_COUNT];
++};
++
+ struct sigma_dut {
+ 	const char *main_ifname;
+ 	char *main_ifname_2g;
+@@ -494,26 +532,7 @@ struct sigma_dut {
+ 	enum value_not_set_enabled_disabled ap_dyn_bw_sig;
+ 	int ap_sgi80;
+ 	int ap_p2p_mgmt;
+-	enum ap_key_mgmt {
+-		AP_OPEN,
+-		AP_WPA2_PSK,
+-		AP_WPA_PSK,
+-		AP_WPA2_EAP,
+-		AP_WPA_EAP,
+-		AP_WPA2_EAP_MIXED,
+-		AP_WPA2_PSK_MIXED,
+-		AP_WPA2_SAE,
+-		AP_WPA2_PSK_SAE,
+-		AP_SUITEB,
+-		AP_WPA2_OWE,
+-		AP_WPA2_EAP_OSEN,
+-		AP_WPA2_FT_EAP,
+-		AP_WPA2_FT_PSK,
+-		AP_WPA2_EAP_SHA256,
+-		AP_WPA2_PSK_SHA256,
+-		AP_WPA2_ENT_FT_EAP,
+-		AP_OSEN,
+-	} ap_key_mgmt;
++	enum ap_key_mgmt ap_key_mgmt;
+ 	enum ap_tag_key_mgmt {
+ 		AP2_OPEN,
+ 		AP2_OSEN,
+@@ -961,6 +980,7 @@ struct sigma_dut {
+ 	int ap_6g_only;
+ 	int ap_6g_unsol_prb_resp;
+ 	enum if_band ap_dual_band;
++	struct mbss_support mbss;
+ };
+ 
+ 
