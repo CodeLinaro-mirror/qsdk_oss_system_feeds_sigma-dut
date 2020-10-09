@@ -218,7 +218,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  		snprintf(ifname_str, str_size, "%s_1", ifname);
  	} else {
  		snprintf(ifname_str, str_size, "%s", ifname);
-@@ -7576,6 +7625,214 @@ static int default_muedca_values(struct
+@@ -7576,6 +7625,217 @@ static int default_muedca_values(struct
  	return 0;
  }
  
@@ -405,6 +405,9 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
 +		fprintf(f, "sae_pwe=1\n");
 +	}
 +
++	if (dut->ap_wme)
++		fprintf(f, "wmm_enabled=1\n");
++
 +	/* mirror main interface HE configs */
 +	if (dut->program == PROGRAM_HE) {
 +		fprintf(f, "he_su_beamformer=%d\n", dut->ap_txBF);
@@ -433,7 +436,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
  					   struct sigma_conn *conn,
  					   struct sigma_cmd *cmd)
-@@ -7763,7 +8020,7 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -7763,7 +8023,7 @@ enum sigma_cmd_result cmd_ap_config_comm
                  fprintf(f, "local_pwr_constraint=3\n");
  	}
  
@@ -442,7 +445,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  		int op_class_6g, op_freq_seg0_idx;
  
  		fprintf(f, "ieee80211ax=1\n");
-@@ -7774,29 +8031,8 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -7774,29 +8034,8 @@ enum sigma_cmd_result cmd_ap_config_comm
  			/* Enable fils discovery by default */
  			fprintf(f, "fils_discovery_max_interval=20\n");
  
@@ -474,7 +477,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  
  		fprintf(f, "op_class=%d\n", op_class_6g);
  		fprintf(f, "he_oper_centr_freq_seg0_idx=%d\n",
-@@ -8408,6 +8644,8 @@ skip_key_mgmt:
+@@ -8408,6 +8647,8 @@ skip_key_mgmt:
  		fprintf(f, "gas_comeback_delay=%d\n", dut->ap_gas_cb_delay);
  
  	if(dut->ap_is_dual) {
@@ -483,7 +486,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
                  f_1 = fopen(SIGMA_TMPDIR "/sigma_dut_dual-ap.conf", "w");
                  if (f_1 == NULL) {
  			sigma_dut_print(dut, DUT_MSG_ERROR,
-@@ -8420,10 +8658,10 @@ skip_key_mgmt:
+@@ -8420,10 +8661,10 @@ skip_key_mgmt:
                          case AP_11g:
                          case AP_11b:
                          case AP_11ng:
@@ -496,7 +499,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
                                  fprintf(f_1, "hw_mode=g\n");
                                  break;
                          case AP_11a:
-@@ -8431,22 +8669,36 @@ skip_key_mgmt:
+@@ -8431,22 +8672,36 @@ skip_key_mgmt:
                          case AP_11ac:
                                  if (drv == DRIVER_QNXNTO) {
                                          if (strcmp(get_main_ifname(dut),"unknown") != 0)
@@ -539,7 +542,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
                          default:
                                   fclose(f_1);
                                   return -1;
-@@ -8467,11 +8719,20 @@ skip_key_mgmt:
+@@ -8467,11 +8722,20 @@ skip_key_mgmt:
                          fprintf(f_1, "ht_capab=[HT20]\n");
                  }
  
@@ -562,7 +565,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  
                  switch (dut->ap_key_mgmt) {
                          case AP_OPEN:
-@@ -8521,6 +8782,19 @@ skip_key_mgmt:
+@@ -8521,6 +8785,19 @@ skip_key_mgmt:
                                  fprintf(f_1, "auth_server_shared_secret=%s\n",
                                                  dut->ap_radius_password);
                                  break;
@@ -582,7 +585,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  			default:
                                  break;
                  }
-@@ -8576,7 +8850,7 @@ skip_key_mgmt:
+@@ -8576,7 +8853,7 @@ skip_key_mgmt:
  
  	if ((dut->program == PROGRAM_VHT) ||
  	    (dut->program == PROGRAM_HE && dut->use_5g)) {
@@ -591,7 +594,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  		char vht_capab[256] = "";
  		int len = 0;
  
-@@ -8587,43 +8861,14 @@ skip_key_mgmt:
+@@ -8587,43 +8864,14 @@ skip_key_mgmt:
  			return 0;
  		}
  
@@ -640,7 +643,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  			fprintf(f, "he_oper_centr_freq_seg0_idx=%d\n",
  				vht_oper_centr_freq_idx);
  		}
-@@ -9622,6 +9867,7 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -9622,6 +9870,7 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->ap_regulatory_mode = AP_80211D_MODE_DISABLED;
  	dut->ap_dfs_mode = AP_DFS_MODE_DISABLED;
  	dut->ap_chwidth_offset = SEC_CH_NO;
