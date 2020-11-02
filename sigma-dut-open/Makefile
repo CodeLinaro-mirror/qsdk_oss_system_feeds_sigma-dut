@@ -30,11 +30,14 @@ PKG_SOURCE:=$(PKG)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 include $(INCLUDE_DIR)/package.mk
 
 TARGET_CFLAGS+= -Wall -Werror
+TARGET_CFLAGS+= -DNL80211_SUPPORT -I$(STAGING_DIR)/usr/include/libnl3
+TARGET_LDFLAGS+= -lm -lnl-3 -lnl-genl-3 -lnl-route-3
+
 
 define Package/$(PKG_NAME)
   SECTION:=QCA
   CATEGORY:=QCA software
-  DEPENDS:=+libpthread @$(WIFI_OPEN)
+  DEPENDS:=+libnl +libpthread @$(WIFI_OPEN)
   TITLE:=Sigma DUT
 endef
 
