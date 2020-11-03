@@ -10,15 +10,15 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
 ---
 --- a/ap.c
 +++ b/ap.c
-@@ -110,6 +110,7 @@ static void ath_ap_set_params(struct sig
+@@ -109,6 +109,7 @@ static int ath_ap_start_hostapd(struct s
+ static void ath_ap_set_params(struct sigma_dut *dut);
  static int kill_process(struct sigma_dut *dut, char *proc_name,
  			unsigned char is_proc_instance_one, int sig);
- static void mac80211_enable_send_triggers(struct sigma_dut *dut, const char *ifname);
 +static void mac80211_set_mu_brp_commands(struct sigma_dut *dut, const char *ifname);
  
- 
  static int ap_ft_enabled(struct sigma_dut *dut)
-@@ -9088,6 +9089,13 @@ skip_key_mgmt:
+ {
+@@ -9086,6 +9087,13 @@ skip_key_mgmt:
  					   "ath11k-fwtest -i %s -m 0x47 -v 0 47 1",
  					   ifname);
  		}
@@ -32,7 +32,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  
  		if (dut->ap_he_ulofdma == VALUE_ENABLED) {
  			/* he_mu_edca 1 */
-@@ -13944,11 +13952,13 @@ static void mac80211_set_trigger_type_0(
+@@ -13929,11 +13937,13 @@ static void mac80211_set_trigger_type_0(
  			   ifname);
  }
  
@@ -49,7 +49,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  	/* sets force_1x1_peer to 1 which should be reset to zero for
  	 * non MU test cases
  	 */
-@@ -13959,6 +13969,14 @@ static void mac80211_set_trigger_type_1(
+@@ -13944,6 +13954,14 @@ static void mac80211_set_trigger_type_1(
  			   ifname);
  }
  
