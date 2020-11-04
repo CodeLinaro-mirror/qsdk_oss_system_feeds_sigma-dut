@@ -1,0 +1,31 @@
+From 2f9f3d990ffdb1145a8a89684345a56d10177e98 Mon Sep 17 00:00:00 2001
+From: Lavanya Suresh <lavaks@codeaurora.org>
+Date: Wed, 4 Nov 2020 16:01:10 +0530
+Subject: [PATCH] sigma-dut: Add command for MU DL OFDMA testing
+
+Added additional config required for DL OFDMA testing,
+to avoid low MU TP.
+
+Signed-off-by: Lavanya Suresh <lavaks@codeaurora.org>
+---
+ ap.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/ap.c b/ap.c
+index 1677548..bce5c56 100644
+--- a/ap.c
++++ b/ap.c
+@@ -9748,6 +9748,10 @@ hapd_started:
+ 
+ 		if (dut->ap_he_ppdu == PPDU_MU &&
+ 		    dut->ap_he_dlofdma == VALUE_ENABLED) {
++			/* enable the equal RU allocation */
++			run_system_wrapper(dut,
++					   "ath11k-fwtest -i %s -m 0x4b -v 0 0 1",
++					   ifname);
+ 			/* Increase the min TX time limit for MU MIMO to disable MU MIMO
+ 			 * scheduling */
+ 			run_system_wrapper(dut,
+-- 
+2.7.4
+
