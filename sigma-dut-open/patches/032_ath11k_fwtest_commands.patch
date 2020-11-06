@@ -25,7 +25,7 @@
 +		memset(aifsn, 0, 4);
 +	}
 +
- 	fprintf(f,"he_mu_edca_qos_info_param_count=1\n"
+ 	fprintf(f,"he_mu_edca_qos_info_param_count=0\n"
  		"he_mu_edca_qos_info_q_ack=0\n"
  		"he_mu_edca_qos_info_queue_request=0\n"
  		"he_mu_edca_qos_info_txop_request=0\n"
