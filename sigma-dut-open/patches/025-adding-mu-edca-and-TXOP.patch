@@ -1,6 +1,6 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -2529,6 +2529,32 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -2525,6 +2525,32 @@ static enum sigma_cmd_result cmd_ap_set_
  		}
  	}
  
@@ -33,7 +33,7 @@
  	return 1;
  }
  
-@@ -7451,6 +7477,50 @@ static int ap_set_force_mcs(struct sigma
+@@ -7447,6 +7473,50 @@ static int ap_set_force_mcs(struct sigma
  	}
  }
  
@@ -42,7 +42,7 @@
 +	if(!f)
 +		return -1;
 +
-+	fprintf(f,"he_mu_edca_qos_info_param_count=1\n"
++	fprintf(f,"he_mu_edca_qos_info_param_count=0\n"
 +		"he_mu_edca_qos_info_q_ack=0\n"
 +		"he_mu_edca_qos_info_queue_request=0\n"
 +		"he_mu_edca_qos_info_txop_request=0\n"
@@ -84,7 +84,7 @@
  
  enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
  					   struct sigma_conn *conn,
-@@ -8515,6 +8585,19 @@ skip_key_mgmt:
+@@ -8464,6 +8534,19 @@ skip_key_mgmt:
  		fprintf(f, "he_mu_beamformer=%d\n", dut->ap_mu_txBF);
  		/* Disable BSS Color config by default */
  		fprintf(f, "he_bss_color=1\n");
