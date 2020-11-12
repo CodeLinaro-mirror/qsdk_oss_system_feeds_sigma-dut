@@ -1,6 +1,6 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -8551,6 +8551,12 @@ skip_key_mgmt:
+@@ -8731,6 +8731,12 @@ skip_key_mgmt:
  			sigma_dut_print(dut, DUT_MSG_ERROR, "Failed to remove "
  					"monitor interface");
  
@@ -13,7 +13,7 @@
  		snprintf(path, sizeof(path), "%shostapd",
  			 file_exists("hostapd") ? "./" : "");
  		snprintf(buf, sizeof(buf),
-@@ -8566,6 +8572,7 @@ skip_key_mgmt:
+@@ -8746,6 +8752,7 @@ skip_key_mgmt:
  			 dut->use_hostapd_pid_file ?
  			 " -P " SIGMA_DUT_HOSTAPD_PID_FILE : "",
  			 dut->sigma_tmpdir);

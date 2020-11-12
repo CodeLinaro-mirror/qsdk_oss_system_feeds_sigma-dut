@@ -1,6 +1,6 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -9088,6 +9088,10 @@ skip_key_mgmt:
+@@ -9261,6 +9261,10 @@ skip_key_mgmt:
  						   ifname, dut->he_mcs);
  		}
  
@@ -11,7 +11,7 @@
  	}
  
  	if (dut->program == PROGRAM_60GHZ) {
-@@ -9663,6 +9667,7 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -9846,6 +9850,7 @@ static enum sigma_cmd_result cmd_ap_rese
  	}
  
  	if (dut->program == PROGRAM_HE) {
@@ -19,7 +19,7 @@
  		if (dut->device_type == AP_testbed) {
  			dut->ap_ldpc = VALUE_DISABLED;
  			dut->ap_ba_bufsize = BA_BUFSIZE_64;
-@@ -13885,6 +13890,40 @@ static int mac80211_set_trigger_type(str
+@@ -14069,6 +14074,40 @@ mac80211_he_tx_bandwidth(struct sigma_du
  	return SUCCESS_SEND_STATUS;
  }
  
@@ -58,18 +58,18 @@
 +			   ifname);
 +}
  
- static int16_t mac80211_he_ltf_mapping(struct sigma_dut *dut,
- 				       struct sigma_conn *conn,
-@@ -13967,6 +14006,7 @@ static int mac80211_ap_set_rfeature(stru
- {
- 	const char *val, *ifname;;
- 	char *type = "he";
+ static int mac80211_he_ltf_mapping(struct sigma_dut *dut,
+ 				   const char *val)
+@@ -14147,6 +14186,7 @@ static enum sigma_cmd_result mac80211_ap
+ 	const char *val;
+ 	const char *ifname;
+ 	enum sigma_cmd_result res;
 +	unsigned char mac_addr[ETH_ALEN];
  
  	ifname = get_main_ifname(dut);
  
-@@ -14031,6 +14071,37 @@ static int mac80211_ap_set_rfeature(stru
- 		return STATUS_SENT_ERROR;
+@@ -14206,6 +14246,37 @@ static enum sigma_cmd_result mac80211_ap
+ 			return res;
  	}
  
 +	val = get_param(cmd, "AckPolicy_MAC");
@@ -103,12 +103,20 @@
 +		}
 +	}
 +
- 	/* Extract LTF value before GI because in case of auto-rate,
- 	 * dut->ar_ltf should be set before calling
- 	 * mac80211_he_ar_gi_ltf_mask()
+ 	val = get_param(cmd, "LTF");
+ 	if (val) {
+ 		res = mac80211_he_ltf(dut, conn, ifname, val);
+@@ -14249,7 +14320,6 @@ static int wil6210_ap_set_rfeature(struc
+ }
+ #endif /* __linux__ */
+ 
+-
+ static enum sigma_cmd_result cmd_ap_set_rfeature(struct sigma_dut *dut,
+ 						 struct sigma_conn *conn,
+ 						 struct sigma_cmd *cmd)
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -938,6 +938,8 @@ struct sigma_dut {
+@@ -958,6 +958,8 @@ struct sigma_dut {
  	bool wifi_hal_initialized;
  #endif /*ANDROID_WIFI_HAL*/
  	int he_mcs;

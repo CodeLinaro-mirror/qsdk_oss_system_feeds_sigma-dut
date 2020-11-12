@@ -1,6 +1,6 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -8916,6 +8916,82 @@ skip_key_mgmt:
+@@ -9117,6 +9117,82 @@ skip_key_mgmt:
  		return 0;
  	}
  
@@ -83,7 +83,7 @@
  	if (dut->program == PROGRAM_60GHZ) {
  		if (dut->ap_num_ese_allocs > 0) {
  			/* wait extra time for AP to start */
-@@ -13648,6 +13724,103 @@ static void mac80211_set_assoc_disallow(
+@@ -13781,6 +13857,103 @@ static void mac80211_set_assoc_disallow(
  	}
  }
  
@@ -184,10 +184,10 @@
 +	return SUCCESS_SEND_STATUS;
 +}
 +
- static int mac80211_ap_set_rfeature(struct sigma_dut *dut,
- 				    struct sigma_conn *conn,
- 				    struct sigma_cmd *cmd)
-@@ -13711,6 +13884,13 @@ static int mac80211_ap_set_rfeature(stru
+ static enum sigma_cmd_result
+ mac80211_he_tx_bandwidth(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			 const char *ifname, const char *val, const char *type)
+@@ -13948,6 +14121,13 @@ static enum sigma_cmd_result mac80211_ap
  	if (val)
  		dut->ap_btmreq_bss_term_tsf = atoi(val);
  
@@ -198,6 +198,6 @@
 +		return STATUS_SENT_ERROR;
 +	}
 +
- 	return 1;
- }
- 
+ 	val = get_param(cmd, "txBandwidth");
+ 	if (val) {
+ 		res = mac80211_he_tx_bandwidth(dut, conn, ifname, val,

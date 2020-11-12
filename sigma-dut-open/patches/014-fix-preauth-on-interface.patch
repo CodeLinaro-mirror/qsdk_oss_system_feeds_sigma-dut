@@ -1,6 +1,6 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -7275,8 +7275,10 @@ skip_key_mgmt:
+@@ -8086,8 +8086,10 @@ skip_key_mgmt:
  		free(tmp);
  	}
  

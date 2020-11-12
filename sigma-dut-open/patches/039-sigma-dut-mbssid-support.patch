@@ -22,7 +22,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -638,6 +638,36 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -649,6 +649,36 @@ static enum sigma_cmd_result cmd_ap_set_
  	if (val)
  		dut->program = sigma_program_to_enum(val);
  
@@ -59,7 +59,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  	val = get_param(cmd, "WLAN_TAG");
  	if (val) {
  		wlan_tag = atoi(val);
-@@ -1945,6 +1975,27 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1956,6 +1986,27 @@ static enum sigma_cmd_result cmd_ap_set_
  		}
  	}
  
@@ -87,7 +87,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  	val = get_param(cmd, "TWT_RespSupport");
  	if (val) {
  		if (strcasecmp(val, "enable") == 0) {
-@@ -2228,6 +2279,50 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -2271,6 +2322,50 @@ static enum sigma_cmd_result cmd_ap_set_
  		}
  	}
  
@@ -138,7 +138,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  	val = get_param(cmd, "KEYMGNT");
  	if (!val)
  		val = get_param(cmd,"KeyMgmtType");
-@@ -9043,6 +9138,75 @@ skip_key_mgmt:
+@@ -9215,6 +9310,75 @@ skip_key_mgmt:
  		fprintf(f, "oce=%d\n",
  			dut->dev_role == DEVROLE_STA_CFON ? 2 : 1);
  	}
@@ -214,7 +214,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  	fclose(f);
  	if (dut->use_hostapd_pid_file)
  		kill_hostapd_process_pid(dut);
-@@ -10161,6 +10325,8 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -10343,6 +10507,8 @@ static enum sigma_cmd_result cmd_ap_rese
  		}
  		if (get_openwrt_driver_type() == OPENWRT_DRIVER_ATHEROS)
  			dut->ap_dfs_mode = AP_DFS_MODE_ENABLED;
@@ -223,7 +223,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  	}
  
  	dut->ap_oper_chn = 0;
-@@ -11692,6 +11858,28 @@ static enum sigma_cmd_result cmd_ap_get_
+@@ -11877,6 +12043,28 @@ static enum sigma_cmd_result cmd_ap_get_
  
  	get_if_name(dut, ifname, sizeof(ifname), wlan_tag);
  
@@ -254,7 +254,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  		return -1;
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -344,6 +344,44 @@ enum akm_suite_values {
+@@ -354,6 +354,44 @@ enum akm_suite_values {
  
  };
  
@@ -299,7 +299,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  struct sigma_dut {
  	const char *main_ifname;
  	char *main_ifname_2g;
-@@ -494,26 +532,7 @@ struct sigma_dut {
+@@ -505,26 +543,7 @@ struct sigma_dut {
  	enum value_not_set_enabled_disabled ap_dyn_bw_sig;
  	int ap_sgi80;
  	int ap_p2p_mgmt;
@@ -327,11 +327,11 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  	enum ap_tag_key_mgmt {
  		AP2_OPEN,
  		AP2_OSEN,
-@@ -961,6 +980,7 @@ struct sigma_dut {
+@@ -981,6 +1000,7 @@ struct sigma_dut {
  	int ap_6g_only;
  	int ap_6g_unsol_prb_resp;
  	enum if_band ap_dual_band;
 +	struct mbss_support mbss;
- };
- 
- 
+ 	int ocvc;
+ 	int client_privacy;
+ 	int saquery_oci_freq;

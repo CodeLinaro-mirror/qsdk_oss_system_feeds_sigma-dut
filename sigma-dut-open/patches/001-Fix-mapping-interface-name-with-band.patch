@@ -1,6 +1,6 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -9379,9 +9379,9 @@ static enum sigma_cmd_result cmd_ap_get_
+@@ -9570,9 +9570,9 @@ static enum sigma_cmd_result cmd_ap_get_
  		else
  			version = "Unknown";
  
@@ -13,7 +13,7 @@
  		else
  			snprintf(resp, sizeof(resp), "interface,wlan0_any,"
  				 "agent,1.0,version,%s", version);
-@@ -9495,16 +9495,11 @@ static int ap_inject_frame(struct sigma_
+@@ -9686,16 +9686,11 @@ static int ap_inject_frame(struct sigma_
  	unsigned char buf[1000], *pos;
  	int s, res;
  	unsigned char addr_sta[6], addr_own[6];

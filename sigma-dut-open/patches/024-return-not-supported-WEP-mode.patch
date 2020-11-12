@@ -1,8 +1,6 @@
-Index: sigma-dut-20190930/ap.c
-===================================================================
---- sigma-dut-20190930.orig/ap.c
-+++ sigma-dut-20190930/ap.c
-@@ -7172,8 +7172,15 @@ enum sigma_cmd_result cmd_ap_config_comm
+--- a/ap.c
++++ b/ap.c
+@@ -7900,8 +7900,15 @@ enum sigma_cmd_result cmd_ap_config_comm
  
  	switch (dut->ap_key_mgmt) {
  	case AP_OPEN:
@@ -20,7 +18,7 @@ Index: sigma-dut-20190930/ap.c
  		break;
  	case AP_WPA2_PSK:
  	case AP_WPA2_PSK_MIXED:
-@@ -7690,8 +7697,15 @@ skip_key_mgmt:
+@@ -8452,8 +8459,15 @@ skip_key_mgmt:
  
                  switch (dut->ap_key_mgmt) {
                          case AP_OPEN:

@@ -1,6 +1,6 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -7915,14 +7915,14 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -8081,14 +8081,14 @@ enum sigma_cmd_result cmd_ap_config_comm
  			fprintf(f, "wpa=1\n");
  		switch (dut->ap_pmf) {
  		case AP_PMF_DISABLED:
@@ -21,7 +21,7 @@
  			break;
  		case AP_PMF_REQUIRED:
  			fprintf(f, "wpa_key_mgmt=WPA-EAP-SHA256%s\n",
-@@ -7936,6 +7936,8 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -8102,6 +8102,8 @@ enum sigma_cmd_result cmd_ap_config_comm
  			fprintf(f, "wpa_key_mgmt=FT-EAP\n");
  		else if (dut->ap_key_mgmt == AP_WPA2_ENT_FT_EAP)
  			fprintf(f, "wpa_key_mgmt=FT-EAP WPA-EAP\n");
@@ -30,7 +30,7 @@
  		fprintf(f, "wpa_pairwise=%s\n",
  			hostapd_cipher_name(dut->ap_cipher));
  		if (dut->ap_group_cipher != AP_NO_GROUP_CIPHER_SET)
-@@ -8068,8 +8070,8 @@ skip_key_mgmt:
+@@ -8237,8 +8239,8 @@ skip_key_mgmt:
  				dut->ap_group_mgmt_cipher));
  
  	if (ap_ft_enabled(dut)) {
@@ -41,7 +41,7 @@
  
  		fprintf(f, "mobility_domain=%s\n",
  			atoi(dut->ap_mobility_domain) ? dut->ap_mobility_domain : "0101");
-@@ -8078,35 +8080,48 @@ skip_key_mgmt:
+@@ -8247,35 +8249,48 @@ skip_key_mgmt:
  			memset(own_addr, 0, ETH_ALEN);
  			own_addr[0] = 0x02;
  		}
@@ -110,7 +110,7 @@
  		} else {
  			fprintf(f,
  				"r0kh=ff:ff:ff:ff:ff:ff * 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff\n");
-@@ -8428,6 +8443,8 @@ skip_key_mgmt:
+@@ -8599,6 +8614,8 @@ skip_key_mgmt:
                                  fprintf(f_1, "auth_server_shared_secret=%s\n",
                                                  dut->ap_radius_password);
                                  break;

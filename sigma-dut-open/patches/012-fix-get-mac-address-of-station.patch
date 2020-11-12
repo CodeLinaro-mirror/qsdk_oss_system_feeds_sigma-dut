@@ -1,6 +1,6 @@
 --- a/sta.c
 +++ b/sta.c
-@@ -1571,15 +1571,14 @@ static enum sigma_cmd_result cmd_sta_get
+@@ -1616,15 +1616,14 @@ static enum sigma_cmd_result cmd_sta_get
  						     struct sigma_conn *conn,
  						     struct sigma_cmd *cmd)
  {

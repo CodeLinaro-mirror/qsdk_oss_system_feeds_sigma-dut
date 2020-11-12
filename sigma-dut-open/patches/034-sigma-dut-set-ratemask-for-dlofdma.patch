@@ -1,6 +1,6 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -6912,6 +6912,17 @@ static int ap_set_60g_ese(struct sigma_d
+@@ -7588,6 +7588,17 @@ static int ap_set_60g_ese(struct sigma_d
  	}
  }
  
@@ -18,7 +18,7 @@
  
  static int ap_set_force_mcs(struct sigma_dut *dut, int force, int mcs)
  {
-@@ -7998,6 +8009,35 @@ skip_key_mgmt:
+@@ -8731,6 +8742,35 @@ skip_key_mgmt:
  			fprintf(f, "he_rts_threshold=0");
  	}
  

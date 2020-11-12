@@ -14,8 +14,8 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -14679,6 +14679,32 @@ static enum sigma_cmd_result mac80211_he
- 	return ret;
+@@ -14802,6 +14802,32 @@ static int mac80211_he_ltf_mapping(struc
+ 	return -1;
  }
  
 +static void mac80211_update_unsol_prb_resp(struct sigma_dut *dut,
@@ -45,11 +45,11 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
 +
 +}
  
- static int mac80211_ap_set_rfeature(struct sigma_dut *dut,
- 				    struct sigma_conn *conn,
-@@ -14794,6 +14820,19 @@ static int mac80211_ap_set_rfeature(stru
- 	if (mac80211_he_gi(dut, conn, ifname, val) < 0)
- 		return STATUS_SENT_ERROR;
+ static enum sigma_cmd_result mac80211_he_ltf(struct sigma_dut *dut,
+ 					     struct sigma_conn *conn,
+@@ -14970,6 +14996,19 @@ static enum sigma_cmd_result mac80211_ap
+ 			return res;
+ 	}
  
 +	val = get_param(cmd, "UnsolicitedProbeResp");
 +	if (val) {

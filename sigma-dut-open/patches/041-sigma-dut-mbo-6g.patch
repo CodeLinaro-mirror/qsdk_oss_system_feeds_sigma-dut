@@ -10,11 +10,9 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  ap.c | 25 +++++++++++++++++++++++--
  1 file changed, 23 insertions(+), 2 deletions(-)
 
-diff --git a/ap.c b/ap.c
-index 16d8c4a..4a9e91e 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -753,6 +753,7 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -764,6 +764,7 @@ static enum sigma_cmd_result cmd_ap_set_
  	if (val) {
  		dut->use_6g = 1;
  		is_6g = 1;
@@ -22,7 +20,7 @@ index 16d8c4a..4a9e91e 100644
  	}
  
  	val = get_param(cmd, "Band6Gonly");
-@@ -10327,6 +10328,23 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+@@ -10509,6 +10510,23 @@ static enum sigma_cmd_result cmd_ap_rese
  			dut->ap_dfs_mode = AP_DFS_MODE_ENABLED;
  
  		memset(&dut->mbss, 0, sizeof(struct mbss_support));
@@ -46,7 +44,7 @@ index 16d8c4a..4a9e91e 100644
  	}
  
  	dut->ap_oper_chn = 0;
-@@ -11756,7 +11774,8 @@ enum sigma_cmd_result cmd_ap_send_frame(struct sigma_dut *dut,
+@@ -11941,7 +11959,8 @@ enum sigma_cmd_result cmd_ap_send_frame(
  			return ap_send_frame_vht(dut, conn, cmd);
  		if (strcasecmp(val, "LOC") == 0)
  			return ap_send_frame_loc(dut, conn, cmd);
@@ -56,7 +54,7 @@ index 16d8c4a..4a9e91e 100644
  			return ap_send_frame_mbo(dut, conn, cmd);
  		if (strcasecmp(val, "60GHz") == 0)
  			return ap_send_frame_60g(dut, conn, cmd);
-@@ -14341,7 +14360,9 @@ static int mac80211_update_mbo_pref_ap_list(struct sigma_dut *dut)
+@@ -14479,7 +14498,9 @@ static int mac80211_update_mbo_pref_ap_l
  
  	/* Now add the self AP Address */
  	if (dut->mbo_self_ap_tuple.ap_ne_class == -1) {
@@ -67,6 +65,3 @@ index 16d8c4a..4a9e91e 100644
  			ap_ne_class = 81;
  		else
  			ap_ne_class = 115;
--- 
-2.7.4
-

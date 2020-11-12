@@ -1,6 +1,6 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -8357,6 +8357,16 @@ skip_key_mgmt:
+@@ -9132,6 +9132,16 @@ skip_key_mgmt:
  			pdev_id = 3;
  		}
  

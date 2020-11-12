@@ -1,6 +1,6 @@
 --- a/utils.c
 +++ b/utils.c
-@@ -322,22 +322,29 @@ size_t strlcpy(char *dest, const char *s
+@@ -335,22 +335,29 @@ size_t strlcpy(char *dest, const char *s
  
  size_t strlcat(char *dst, const char *str, size_t size)
  {

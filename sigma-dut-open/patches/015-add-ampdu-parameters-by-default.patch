@@ -1,15 +1,15 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -7636,6 +7636,8 @@ skip_key_mgmt:
- 
- 	if (dut->program == PROGRAM_VHT) {
+@@ -8492,6 +8492,8 @@ skip_key_mgmt:
+ 	if ((dut->program == PROGRAM_VHT) ||
+ 	    (dut->program == PROGRAM_HE && dut->use_5g)) {
  		int vht_oper_centr_freq_idx;
 +		char vht_capab[256] = "";
 +		int len = 0;
  
  		if (check_channel(dut->ap_channel) < 0) {
  			send_resp(dut, conn, SIGMA_INVALID,
-@@ -7682,15 +7684,19 @@ skip_key_mgmt:
+@@ -8543,15 +8545,19 @@ skip_key_mgmt:
  
  		if (dut->ap_sgi80 || dut->ap_txBF ||
  		    dut->ap_ldpc != VALUE_NOT_SET ||
@@ -38,7 +38,7 @@
  		}
  	}
  
-@@ -8310,6 +8316,7 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -9217,6 +9223,7 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->ap_txBF = 0;
  	dut->ap_mu_txBF = 0;
  	dut->ap_chwidth = AP_AUTO;

@@ -1,8 +1,6 @@
-Index: sigma-dut-20200429/ap.c
-===================================================================
---- sigma-dut-20200429.orig/ap.c
-+++ sigma-dut-20200429/ap.c
-@@ -7441,9 +7441,12 @@ enum sigma_cmd_result cmd_ap_config_comm
+--- a/ap.c
++++ b/ap.c
+@@ -7612,9 +7612,12 @@ enum sigma_cmd_result cmd_ap_config_comm
  	const char *ifname;
  	char buf[500];
  	char buf_dual[500];
@@ -16,7 +14,7 @@ Index: sigma-dut-20200429/ap.c
  	const char *key_mgmt;
  #ifdef ANDROID
  	struct group *gr;
-@@ -8664,6 +8667,48 @@ skip_key_mgmt:
+@@ -8843,6 +8846,48 @@ skip_key_mgmt:
  	if (drv == DRIVER_WCN || drv == DRIVER_LINUX_WCN)
  		wcn_config_ap_ldpc(dut, ifname);
  

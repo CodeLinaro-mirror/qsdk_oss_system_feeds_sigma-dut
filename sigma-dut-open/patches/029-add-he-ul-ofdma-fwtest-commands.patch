@@ -1,6 +1,6 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -8340,6 +8340,15 @@ skip_key_mgmt:
+@@ -9118,6 +9118,15 @@ skip_key_mgmt:
  	}
  
  	if(drv == DRIVER_MAC80211 && dut->program == PROGRAM_HE) {
@@ -16,7 +16,7 @@
  
  		/* disable MU BAR */
  		run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x47 -v 0 64 1",
-@@ -8388,6 +8397,18 @@ skip_key_mgmt:
+@@ -9166,6 +9175,18 @@ skip_key_mgmt:
  			/* disable enable_ul_ofdma_efficiency_check */
  			run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x47 -v 0 131 0",
  					   ifname);
@@ -35,7 +35,7 @@
  		}
  
  		if (dut->ap_he_ppdu == PPDU_MU &&
-@@ -8413,6 +8434,41 @@ skip_key_mgmt:
+@@ -9191,6 +9212,41 @@ skip_key_mgmt:
  			run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x4b -v 0 2 1",
  					   ifname);
  		}
@@ -76,4 +76,4 @@
 +		}
  	}
  
- 	if (dut->program == PROGRAM_60GHZ && dut->ap_num_ese_allocs > 0) {
+ 	if (dut->program == PROGRAM_60GHZ) {

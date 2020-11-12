@@ -1,6 +1,6 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -7433,8 +7433,10 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -7604,8 +7604,10 @@ enum sigma_cmd_result cmd_ap_config_comm
  {
  	/* const char *name = get_param(cmd, "NAME"); */
  	FILE *f;
@@ -11,7 +11,7 @@
  	char path[100];
  	char ap_conf_path[100];
  	enum driver_type drv;
-@@ -8139,6 +8141,118 @@ skip_key_mgmt:
+@@ -8318,6 +8320,118 @@ skip_key_mgmt:
  		}
  	}
  
@@ -130,7 +130,7 @@
  	if (dut->program == PROGRAM_WPS) {
  		/* 60G WPS tests requires wps_state of 2 (configured) */
  		int wps_state = is_60g_sigma_dut(dut) ? 2 : 1;
-@@ -8444,6 +8558,21 @@ skip_key_mgmt:
+@@ -8623,6 +8737,21 @@ skip_key_mgmt:
  			 dut->use_hostapd_pid_file ?
  			 " -P " SIGMA_DUT_HOSTAPD_PID_FILE : "",
  			 dut->sigma_tmpdir);
