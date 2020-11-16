@@ -13,7 +13,7 @@ Signed-off-by: Lavanya Suresh <lavaks@codeaurora.org>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -7872,15 +7872,16 @@ static int fill_dual_radio_caps(struct s
+@@ -7870,15 +7870,16 @@ static int fill_dual_radio_caps(struct s
  		if (dut->ap_sgi80 || dut->ap_txBF ||
  		    dut->ap_ldpc != VALUE_NOT_SET ||
  		    dut->ap_tx_stbc || dut->ap_mu_txBF ||
@@ -33,23 +33,24 @@ Signed-off-by: Lavanya Suresh <lavaks@codeaurora.org>
  			len += snprintf(vht_capab + len, sizeof(vht_capab) - len,
  					"[MAX-A-MPDU-LEN-EXP%d][MAX-MPDU-11454]", dut->ap_ampdu_exp);
  			fprintf(f, "vht_capab=%s\n", vht_capab);
-@@ -9036,15 +9037,16 @@ skip_key_mgmt:
+@@ -9031,15 +9032,17 @@ skip_key_mgmt:
+ 
  		if (dut->ap_sgi80 || dut->ap_txBF ||
  		    dut->ap_ldpc != VALUE_NOT_SET ||
- 		    dut->ap_tx_stbc || dut->ap_mu_txBF ||
--		    dut->ap_ampdu_exp) {
--			len += snprintf(vht_capab + len, sizeof(vht_capab) - len, "%s%s%s%s%s",
-+		    dut->ap_ampdu_exp || dut->ap_chwidth) {
-+			len += snprintf(vht_capab + len, sizeof(vht_capab) - len, "%s%s%s%s%s%s",
- 					dut->ap_sgi80 ? "[SHORT-GI-80]" : "",
- 					dut->ap_txBF ?
- 					"[SU-BEAMFORMER][SU-BEAMFORMEE][BF-ANTENNA-2][SOUNDING-DIMENSION-2]" : "",
- 					(dut->ap_ldpc == VALUE_ENABLED) ?
- 					"[RXLDPC]" : "",
- 					dut->ap_tx_stbc ? "[TX-STBC-2BY1][RX-STBC-1]" : "",
--					dut->ap_mu_txBF ? "[MU-BEAMFORMER]" : "");
-+					dut->ap_mu_txBF ? "[MU-BEAMFORMER]" : "",
-+					(dut->ap_chwidth == AP_160) ? "[VHT160-80PLUS80]" : "");
- 			len += snprintf(vht_capab + len, sizeof(vht_capab) - len,
- 					"[MAX-A-MPDU-LEN-EXP%d][MAX-MPDU-11454]", dut->ap_ampdu_exp);
- 			fprintf(f, "vht_capab=%s\n", vht_capab);
+-		    dut->ap_tx_stbc || dut->ap_mu_txBF) {
+-			fprintf(f, "vht_capab=%s%s%s%s%s\n",
++		    dut->ap_tx_stbc || dut->ap_mu_txBF ||
++			dut->ap_chwidth) {
++			fprintf(f, "vht_capab=%s%s%s%s%s%s\n",
+ 				dut->ap_sgi80 ? "[SHORT-GI-80]" : "",
+ 				dut->ap_txBF ?
+ 				"[SU-BEAMFORMER][SU-BEAMFORMEE][BF-ANTENNA-2][SOUNDING-DIMENSION-2]" : "",
+ 				(dut->ap_ldpc == VALUE_ENABLED) ?
+ 				"[RXLDPC]" : "",
+ 				dut->ap_tx_stbc ? "[TX-STBC-2BY1][RX-STBC-1]" : "",
+-				dut->ap_mu_txBF ? "[MU-BEAMFORMER]" : "");
++				dut->ap_mu_txBF ? "[MU-BEAMFORMER]" : "",
++				(dut->ap_chwidth == AP_160) ? "[VHT160-80PLUS80]" : "");
+ 		}
+ 	}
+ 
