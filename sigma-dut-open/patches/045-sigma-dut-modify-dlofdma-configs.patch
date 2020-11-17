@@ -1,6 +1,6 @@
-From 2f9f3d990ffdb1145a8a89684345a56d10177e98 Mon Sep 17 00:00:00 2001
+From b2a40ea8f5aa75ba9f06236d73bdcb065f2c53df Mon Sep 17 00:00:00 2001
 From: Lavanya Suresh <lavaks@codeaurora.org>
-Date: Wed, 4 Nov 2020 16:01:10 +0530
+Date: Mon, 16 Nov 2020 16:11:55 -0800
 Subject: [PATCH] sigma-dut: Add command for MU DL OFDMA testing
 
 Added additional config required for DL OFDMA testing,
@@ -12,20 +12,20 @@ Signed-off-by: Lavanya Suresh <lavaks@codeaurora.org>
  1 file changed, 4 insertions(+)
 
 diff --git a/ap.c b/ap.c
-index 1677548..bce5c56 100644
+index c4b982f7f422..3d6f5ad6f4c6 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -9748,6 +9748,10 @@ hapd_started:
+@@ -8232,6 +8232,10 @@ void ath11k_fw_test_commands(struct sigma_dut *dut, const char *ifname)
  
- 		if (dut->ap_he_ppdu == PPDU_MU &&
- 		    dut->ap_he_dlofdma == VALUE_ENABLED) {
-+			/* enable the equal RU allocation */
-+			run_system_wrapper(dut,
-+					   "ath11k-fwtest -i %s -m 0x4b -v 0 0 1",
-+					   ifname);
- 			/* Increase the min TX time limit for MU MIMO to disable MU MIMO
- 			 * scheduling */
- 			run_system_wrapper(dut,
+ 	if (dut->ap_he_ppdu == PPDU_MU &&
+ 	    dut->ap_he_dlofdma == VALUE_ENABLED) {
++		/* enable the equal RU allocation */
++		run_system_wrapper(dut,
++				   "ath11k-fwtest -i %s -m 0x4b -v 0 0 1",
++				   ifname);
+ 		/* Increase the min TX time limit for MU MIMO to disable MU MIMO
+ 		 * scheduling */
+ 		run_system_wrapper(dut,
 -- 
-2.7.4
+2.25.0
 
