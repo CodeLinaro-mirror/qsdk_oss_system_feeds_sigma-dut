@@ -108,7 +108,7 @@
  
  		if (dut->ap_txBF) {
  			/* Ignore TBTT for NDP */
-@@ -9180,30 +9200,69 @@ skip_key_mgmt:
+@@ -9180,30 +9200,65 @@ skip_key_mgmt:
  		}
  
  		if (dut->ap_he_ulofdma == VALUE_ENABLED) {
@@ -151,10 +151,6 @@
  					   ifname);
 -			/* disable enable_ul_ofdma_efficiency_check */
 -			run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x47 -v 0 131 0",
-+			if (strncmp(dut->ap_ssid, "HE-4.40",7) == 0) {
-+				/* Target RSSI */
-+				run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x4b -v 0 7 -48", ifname);
-+			}
 +
 +			/* enable twt related commands by default, during basic trigger setting for
 +			 * ofdma this can be reset */
@@ -190,16 +186,7 @@
  		}
  
  		if (dut->ap_he_ppdu == PPDU_MU &&
-@@ -9240,8 +9299,6 @@ skip_key_mgmt:
- 			run_system_wrapper(dut, "ath11k-fwtest -t 1 -i %s -m 0x00 -v 0 0x88 0x10000427", ifname);
- 			/* Max UL NSS */
- 			run_system_wrapper(dut, "ath11k-fwtest -t 1 -i %s -m 0x00 -v 0 0x8B 0x02", ifname);
--			/* Target RSSI */
--			run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x4b -v 0 7 -48", ifname);
- 		}
- 		if (strcmp(dut->ap_ssid, "HE-4.40.4") == 0) {
- 			/* Fixed UL MCS */
-@@ -13944,6 +14001,12 @@ static void mac80211_set_assoc_disallow(
+@@ -13913,6 +13968,12 @@ static void mac80211_set_assoc_disallow(
  static void mac80211_set_trigger_type_0(struct sigma_dut *dut, const char *ifname)
  {
  	/* TriggerType "0" for Basic trigger */
