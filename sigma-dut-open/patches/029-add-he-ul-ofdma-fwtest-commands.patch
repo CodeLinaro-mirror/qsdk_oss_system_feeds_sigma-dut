@@ -35,7 +35,7 @@
  		}
  
  		if (dut->ap_he_ppdu == PPDU_MU &&
-@@ -9191,6 +9212,41 @@ skip_key_mgmt:
+@@ -9191,6 +9212,37 @@ skip_key_mgmt:
  			run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x4b -v 0 2 1",
  					   ifname);
  		}
@@ -70,10 +70,16 @@
 +			/* UL LDPC enable */
 +			run_system_wrapper(dut, "ath11k-fwtest -t 1 -i %s -m 0x00 -v 0 0x8A 0x01", ifname);
 +		}
-+		if (strcmp(dut->ap_ssid, "HE-4.49.1") == 0) {
-+			/* Trigger interval */
-+			run_system_wrapper(dut, "ath11k-fwtest -t 2 -i %s -m 0x00 -p %d 0xA2 0xC8", ifname, pdev_id);
-+		}
  	}
  
  	if (dut->program == PROGRAM_60GHZ) {
+@@ -13917,6 +13969,9 @@ static void mac80211_set_trigger_type_3(
+ 
+ static void mac80211_set_trigger_type_4(struct sigma_dut *dut, const char *ifname)
+ {
++	/* Trigger interval */
++	run_system_wrapper(dut, "ath11k-fwtest -t 2 -i %s -m 0x00 -p 1 0xA2 0xC8", ifname);
++
+ 	/* TriggerType "4" for BSRP */
+ 	run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x48 -v 0 63 1000",
+ 			   ifname);

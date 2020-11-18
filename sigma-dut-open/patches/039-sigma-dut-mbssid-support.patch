@@ -24,11 +24,9 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  sigma_dut.h |  60 +++--
  2 files changed, 460 insertions(+), 219 deletions(-)
 
-diff --git a/ap.c b/ap.c
-index 6b22804c4537..8fb9b9e2b9cc 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -647,6 +647,36 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -647,6 +647,36 @@ static enum sigma_cmd_result cmd_ap_set_
  	if (val)
  		dut->program = sigma_program_to_enum(val);
  
@@ -65,7 +63,7 @@ index 6b22804c4537..8fb9b9e2b9cc 100644
  	val = get_param(cmd, "WLAN_TAG");
  	if (val) {
  		wlan_tag = atoi(val);
-@@ -1954,6 +1984,27 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -1954,6 +1984,27 @@ static enum sigma_cmd_result cmd_ap_set_
  		}
  	}
  
@@ -93,7 +91,7 @@ index 6b22804c4537..8fb9b9e2b9cc 100644
  	val = get_param(cmd, "TWT_RespSupport");
  	if (val) {
  		if (strcasecmp(val, "enable") == 0) {
-@@ -2269,6 +2320,56 @@ static enum sigma_cmd_result cmd_ap_set_security(struct sigma_dut *dut,
+@@ -2269,6 +2320,56 @@ static enum sigma_cmd_result cmd_ap_set_
  		}
  	}
  
@@ -150,7 +148,7 @@ index 6b22804c4537..8fb9b9e2b9cc 100644
  	val = get_param(cmd, "KEYMGNT");
  	if (!val)
  		val = get_param(cmd,"KeyMgmtType");
-@@ -7995,6 +8096,210 @@ static int fill_dual_radio_caps(struct sigma_dut *dut, FILE *f)
+@@ -7995,6 +8096,206 @@ static int fill_dual_radio_caps(struct s
  
  }
  
@@ -336,10 +334,6 @@ index 6b22804c4537..8fb9b9e2b9cc 100644
 +		/* UL LDPC enable */
 +		run_system_wrapper(dut, "ath11k-fwtest -t 1 -i %s -m 0x00 -v 0 0x8A 0x01", ifname);
 +	}
-+	if (strcmp(dut->ap_ssid, "HE-4.49.1") == 0) {
-+		/* Trigger interval */
-+		run_system_wrapper(dut, "ath11k-fwtest -t 2 -i %s -m 0x00 -p %d 0xA2 0xC8", ifname, pdev_id);
-+	}
 +
 +	if (dut->ap_bcc == VALUE_ENABLED && dut->ap_fixed_rate) {
 +		if (dut->use_6g)
@@ -361,7 +355,7 @@ index 6b22804c4537..8fb9b9e2b9cc 100644
  enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
  					   struct sigma_conn *conn,
  					   struct sigma_cmd *cmd)
-@@ -9213,6 +9518,91 @@ skip_key_mgmt:
+@@ -9213,6 +9514,91 @@ skip_key_mgmt:
  		fprintf(f, "oce=%d\n",
  			dut->dev_role == DEVROLE_STA_CFON ? 2 : 1);
  	}
@@ -453,7 +447,7 @@ index 6b22804c4537..8fb9b9e2b9cc 100644
  	fclose(f);
  	if (dut->use_hostapd_pid_file)
  		kill_hostapd_process_pid(dut);
-@@ -9510,15 +9900,7 @@ skip_key_mgmt:
+@@ -9510,15 +9896,7 @@ skip_key_mgmt:
  	}
  
  	if(drv == DRIVER_MAC80211 && dut->program == PROGRAM_HE) {
@@ -470,7 +464,7 @@ index 6b22804c4537..8fb9b9e2b9cc 100644
  
  		/* A WAR done for MU_BAR test case. We are disabling anything
  		   related to MU MIMO when dl_ofdma test case is running
-@@ -9530,197 +9912,12 @@ skip_key_mgmt:
+@@ -9530,193 +9908,12 @@ skip_key_mgmt:
  			dut->ap_mu_txBF = 0;
  		}
  
@@ -649,10 +643,6 @@ index 6b22804c4537..8fb9b9e2b9cc 100644
 -			/* UL LDPC enable */
 -			run_system_wrapper(dut, "ath11k-fwtest -t 1 -i %s -m 0x00 -v 0 0x8A 0x01", ifname);
 -		}
--		if (strcmp(dut->ap_ssid, "HE-4.49.1") == 0) {
--			/* Trigger interval */
--			run_system_wrapper(dut, "ath11k-fwtest -t 2 -i %s -m 0x00 -p %d 0xA2 0xC8", ifname, pdev_id);
--		}
 -
 -		if (dut->ap_bcc == VALUE_ENABLED && dut->ap_fixed_rate) {
 -			if (dut->use_6g)
@@ -673,7 +663,7 @@ index 6b22804c4537..8fb9b9e2b9cc 100644
  	}
  
  	if (dut->program == PROGRAM_60GHZ) {
-@@ -10342,6 +10539,8 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+@@ -10338,6 +10535,8 @@ static enum sigma_cmd_result cmd_ap_rese
  		}
  		if (get_openwrt_driver_type() == OPENWRT_DRIVER_ATHEROS)
  			dut->ap_dfs_mode = AP_DFS_MODE_ENABLED;
@@ -682,7 +672,7 @@ index 6b22804c4537..8fb9b9e2b9cc 100644
  	}
  
  	dut->ap_oper_chn = 0;
-@@ -11876,6 +12075,28 @@ static enum sigma_cmd_result cmd_ap_get_mac_address(struct sigma_dut *dut,
+@@ -11872,6 +12071,28 @@ static enum sigma_cmd_result cmd_ap_get_
  
  	get_if_name(dut, ifname, sizeof(ifname), wlan_tag);
  
@@ -711,8 +701,6 @@ index 6b22804c4537..8fb9b9e2b9cc 100644
  	s = socket(AF_INET, SOCK_DGRAM, 0);
  	if (s < 0)
  		return -1;
-diff --git a/sigma_dut.h b/sigma_dut.h
-index 3cd6bb39b0d1..e07f33179858 100644
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
 @@ -354,6 +354,44 @@ enum akm_suite_values {
@@ -796,6 +784,3 @@ index 3cd6bb39b0d1..e07f33179858 100644
  	int ocvc;
  	int client_privacy;
  	int saquery_oci_freq;
--- 
-2.25.0
-
