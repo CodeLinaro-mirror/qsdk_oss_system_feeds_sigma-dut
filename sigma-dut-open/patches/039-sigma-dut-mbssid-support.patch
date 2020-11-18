@@ -148,7 +148,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	val = get_param(cmd, "KEYMGNT");
  	if (!val)
  		val = get_param(cmd,"KeyMgmtType");
-@@ -7995,6 +8096,206 @@ static int fill_dual_radio_caps(struct s
+@@ -7995,6 +8096,210 @@ static int fill_dual_radio_caps(struct s
  
  }
  
@@ -249,6 +249,10 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
 +		run_system_wrapper(dut,
 +				   "ath11k-fwtest -i %s -m 0x47 -v 0 131 0",
 +				   ifname);
++		/* Disable ul_mumimo_efficiency_check */
++		run_system_wrapper(dut,
++				   "ath11k-fwtest -i %s -m 0x47 -v 0 204 0",
++				   ifname);
 +		/* Set random RU allocation */
 +		run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x47 -v 0 9 1",
 +				   ifname);
@@ -260,26 +264,26 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
 +			run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x4b -v 0 7 -48", ifname);
 +		}
 +
-+		if (strncmp(dut->ap_ssid, "HE-4.56.1",9) == 0) {
-+			/* BSR Trigger disable/enable UL trigger frame scheduling */
-+			run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x47 -v 0 42 7",
-+					   ifname);
++		/* enable twt related commands by default, during basic trigger setting for
++		 * ofdma this can be reset */
++		/* BSR Trigger disable/enable UL trigger frame scheduling */
++		run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x47 -v 0 42 7",
++				   ifname);
 +
-+			/* Set twt trigger type to basic trigger */
-+			run_system_wrapper(dut,
-+					   "ath11k-fwtest -i %s -m 0x47 -v 0 95 6",
-+					   ifname);
++		/* Set twt trigger type to basic trigger */
++		run_system_wrapper(dut,
++				   "ath11k-fwtest -i %s -m 0x47 -v 0 95 6",
++				   ifname);
 +
-+			/* Configure hw stuck ssr threshold */
-+			run_system_wrapper(dut,
-+					   "ath11k-fwtest -i %s -m 0x47 -v 0 43 8",
-+					   ifname);
++		/* Configure hw stuck ssr threshold */
++		run_system_wrapper(dut,
++				   "ath11k-fwtest -i %s -m 0x47 -v 0 43 8",
++				   ifname);
 +
-+			/* UL trigger duration */
-+			run_system_wrapper(dut,
-+					   "ath11k-fwtest -i %s -m 0x48 -v 0 63 1000",
-+					   ifname);
-+		}
++		/* UL trigger duration */
++		run_system_wrapper(dut,
++				   "ath11k-fwtest -i %s -m 0x48 -v 0 63 1000",
++				   ifname);
 +	}
 +
 +	if (dut->ap_he_ppdu == PPDU_MU &&
@@ -355,7 +359,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
  					   struct sigma_conn *conn,
  					   struct sigma_cmd *cmd)
-@@ -9213,6 +9514,91 @@ skip_key_mgmt:
+@@ -9213,6 +9518,91 @@ skip_key_mgmt:
  		fprintf(f, "oce=%d\n",
  			dut->dev_role == DEVROLE_STA_CFON ? 2 : 1);
  	}
@@ -447,7 +451,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	fclose(f);
  	if (dut->use_hostapd_pid_file)
  		kill_hostapd_process_pid(dut);
-@@ -9510,15 +9896,7 @@ skip_key_mgmt:
+@@ -9510,15 +9900,7 @@ skip_key_mgmt:
  	}
  
  	if(drv == DRIVER_MAC80211 && dut->program == PROGRAM_HE) {
@@ -464,7 +468,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  
  		/* A WAR done for MU_BAR test case. We are disabling anything
  		   related to MU MIMO when dl_ofdma test case is running
-@@ -9530,193 +9908,12 @@ skip_key_mgmt:
+@@ -9530,198 +9912,12 @@ skip_key_mgmt:
  			dut->ap_mu_txBF = 0;
  		}
  
@@ -553,6 +557,10 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
 -			run_system_wrapper(dut,
 -					   "ath11k-fwtest -i %s -m 0x47 -v 0 131 0",
 -					   ifname);
+-			/* Disable ul_mumimo_efficiency_check */
+-			run_system_wrapper(dut,
+-					   "ath11k-fwtest -i %s -m 0x47 -v 0 204 0",
+-					   ifname);
 -			/* Set random RU allocation */
 -			run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x47 -v 0 9 1",
 -					   ifname);
@@ -564,26 +572,27 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
 -				run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x4b -v 0 7 -48", ifname);
 -			}
 -
--			if (strncmp(dut->ap_ssid, "HE-4.56.1",9) == 0) {
--				/* BSR Trigger disable/enable UL trigger frame scheduling */
--				run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x47 -v 0 42 7",
--						   ifname);
+-			/* enable twt related commands by default, during basic trigger setting for
+-			 * ofdma this can be reset */
 -
--				/* Set twt trigger type to basic trigger */
--				run_system_wrapper(dut,
--						   "ath11k-fwtest -i %s -m 0x47 -v 0 95 6",
--						   ifname);
+-			/* BSR Trigger disable/enable UL trigger frame scheduling */
+-			run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x47 -v 0 42 7",
+-					   ifname);
 -
--				/* Configure hw stuck ssr threshold */
--				run_system_wrapper(dut,
--						   "ath11k-fwtest -i %s -m 0x47 -v 0 43 8",
--						   ifname);
+-			/* Set twt trigger type to basic trigger */
+-			run_system_wrapper(dut,
+-					   "ath11k-fwtest -i %s -m 0x47 -v 0 95 6",
+-					   ifname);
 -
--				/* UL trigger duration */
--				run_system_wrapper(dut,
--						   "ath11k-fwtest -i %s -m 0x48 -v 0 63 1000",
--						   ifname);
--			}
+-			/* Configure hw stuck ssr threshold */
+-			run_system_wrapper(dut,
+-					   "ath11k-fwtest -i %s -m 0x47 -v 0 43 8",
+-					   ifname);
+-
+-			/* UL trigger duration */
+-			run_system_wrapper(dut,
+-					   "ath11k-fwtest -i %s -m 0x48 -v 0 63 1000",
+-					   ifname);
 -		}
 -
 -		if (dut->ap_he_ppdu == PPDU_MU &&
@@ -608,12 +617,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
 -			/* Enable to sort RU allocation */
 -			run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x4b -v 0 2 1",
 -					   ifname);
-+		ath11k_fw_test_commands(dut, ifname);
-+		for (i = 0; i < dut->mbss.num_non_tx_bss; i++) {
-+			char ifname2[50];
-+			snprintf(ifname2, sizeof(ifname2), "%s-%d", ifname, i+1);
-+			ath11k_fw_test_commands(dut, ifname2);
- 		}
+-		}
 -		if (strcmp(dut->ap_ssid, "HE-4.40.1") == 0) {
 -			/* Fixed UL MCS */
 -			run_system_wrapper(dut, "ath11k-fwtest -t 1 -i %s -m 0x00 -v 0 0x88 0x10000407", ifname);
@@ -660,10 +664,16 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
 -			run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x47 -v 0 7 0",
 -					   ifname);
 -
++		ath11k_fw_test_commands(dut, ifname);
++		for (i = 0; i < dut->mbss.num_non_tx_bss; i++) {
++			char ifname2[50];
++			snprintf(ifname2, sizeof(ifname2), "%s-%d", ifname, i+1);
++			ath11k_fw_test_commands(dut, ifname2);
++ 		}
  	}
  
  	if (dut->program == PROGRAM_60GHZ) {
-@@ -10338,6 +10535,8 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -10343,6 +10539,8 @@ static enum sigma_cmd_result cmd_ap_rese
  		}
  		if (get_openwrt_driver_type() == OPENWRT_DRIVER_ATHEROS)
  			dut->ap_dfs_mode = AP_DFS_MODE_ENABLED;
@@ -672,7 +682,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	}
  
  	dut->ap_oper_chn = 0;
-@@ -11872,6 +12071,28 @@ static enum sigma_cmd_result cmd_ap_get_
+@@ -11877,6 +12075,28 @@ static enum sigma_cmd_result cmd_ap_get_
  
  	get_if_name(dut, ifname, sizeof(ifname), wlan_tag);
  
