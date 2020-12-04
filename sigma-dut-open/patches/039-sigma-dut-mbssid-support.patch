@@ -1,4 +1,4 @@
-From 654771cd602208a3147be2e49136b1fff6a19547 Mon Sep 17 00:00:00 2001
+From 8afc4f10522b4f1b11901bc07bd70284f3c309d6 Mon Sep 17 00:00:00 2001
 From: Sriram R <srirrama@codeaurora.org>
 Date: Mon, 16 Nov 2020 10:32:39 -0800
 Subject: [PATCH] sigma-dut: Add MBSSID support
@@ -20,13 +20,15 @@ Support is available for SAE (Hash-to-Element) in 6GHz and WPA2-PSK in
 Signed-off-by: Sriram R <srirrama@codeaurora.org>
 Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
 ---
- ap.c        | 619 +++++++++++++++++++++++++++++++++++-----------------
- sigma_dut.h |  60 +++--
- 2 files changed, 460 insertions(+), 219 deletions(-)
+ ap.c        | 556 ++++++++++++++++++++++++++++++++++++----------------
+ sigma_dut.h |  71 ++++---
+ 2 files changed, 434 insertions(+), 193 deletions(-)
 
+diff --git a/ap.c b/ap.c
+index c7a0316ae68e..900a11996473 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -647,6 +647,36 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -647,6 +647,36 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
  	if (val)
  		dut->program = sigma_program_to_enum(val);
  
@@ -63,7 +65,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	val = get_param(cmd, "WLAN_TAG");
  	if (val) {
  		wlan_tag = atoi(val);
-@@ -1954,6 +1984,27 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1954,6 +1984,27 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
  		}
  	}
  
@@ -91,7 +93,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	val = get_param(cmd, "TWT_RespSupport");
  	if (val) {
  		if (strcasecmp(val, "enable") == 0) {
-@@ -2269,6 +2320,56 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -2269,6 +2320,56 @@ static enum sigma_cmd_result cmd_ap_set_security(struct sigma_dut *dut,
  		}
  	}
  
@@ -148,7 +150,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	val = get_param(cmd, "KEYMGNT");
  	if (!val)
  		val = get_param(cmd,"KeyMgmtType");
-@@ -7995,6 +8096,177 @@ static int fill_dual_radio_caps(struct s
+@@ -7995,6 +8096,177 @@ static int fill_dual_radio_caps(struct sigma_dut *dut, FILE *f)
  
  }
  
@@ -326,7 +328,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
  					   struct sigma_conn *conn,
  					   struct sigma_cmd *cmd)
-@@ -9213,6 +9485,91 @@ skip_key_mgmt:
+@@ -9216,6 +9488,91 @@ skip_key_mgmt:
  		fprintf(f, "oce=%d\n",
  			dut->dev_role == DEVROLE_STA_CFON ? 2 : 1);
  	}
@@ -418,7 +420,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	fclose(f);
  	if (dut->use_hostapd_pid_file)
  		kill_hostapd_process_pid(dut);
-@@ -9510,15 +9867,7 @@ skip_key_mgmt:
+@@ -9513,15 +9870,7 @@ skip_key_mgmt:
  	}
  
  	if(drv == DRIVER_MAC80211 && dut->program == PROGRAM_HE) {
@@ -435,7 +437,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  
  		/* A WAR done for MU_BAR test case. We are disabling anything
  		   related to MU MIMO when dl_ofdma test case is running
-@@ -9530,148 +9879,12 @@ skip_key_mgmt:
+@@ -9533,148 +9882,12 @@ skip_key_mgmt:
  			dut->ap_mu_txBF = 0;
  		}
  
@@ -590,7 +592,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	}
  
  	if (dut->program == PROGRAM_60GHZ) {
-@@ -9705,23 +9918,6 @@ skip_key_mgmt:
+@@ -9708,23 +9921,6 @@ skip_key_mgmt:
  				  "errorCode,Fail to set wps_version_number");
  			return STATUS_SENT;
  		}
@@ -614,7 +616,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	}
  
  	dut->hostapd_running = 1;
-@@ -10310,6 +10506,8 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -10313,6 +10509,8 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
  		}
  		if (get_openwrt_driver_type() == OPENWRT_DRIVER_ATHEROS)
  			dut->ap_dfs_mode = AP_DFS_MODE_ENABLED;
@@ -623,7 +625,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	}
  
  	dut->ap_oper_chn = 0;
-@@ -11844,6 +12042,28 @@ static enum sigma_cmd_result cmd_ap_get_
+@@ -11847,6 +12045,28 @@ static enum sigma_cmd_result cmd_ap_get_mac_address(struct sigma_dut *dut,
  
  	get_if_name(dut, ifname, sizeof(ifname), wlan_tag);
  
@@ -652,9 +654,29 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	s = socket(AF_INET, SOCK_DGRAM, 0);
  	if (s < 0)
  		return -1;
+diff --git a/sigma_dut.h b/sigma_dut.h
+index 3cd6bb39b0d1..ffe6c3ee4d4c 100644
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -354,6 +354,44 @@ enum akm_suite_values {
+@@ -93,6 +93,8 @@ struct sigma_dut;
+ 
+ #define NAN_AWARE_IFACE "wifi-aware0"
+ 
++#define MAX_SSID_LEN		33
++
+ /* Set default operating channel width 80 MHz */
+ #define VHT_DEFAULT_OPER_CHWIDTH AP_80_VHT_OPER_CHWIDTH
+ 
+@@ -173,7 +175,7 @@ struct wfa_cs_p2p_group {
+ 	char ifname[IFNAMSIZ];
+ 	int go;
+ 	char grpid[P2P_GRP_ID_LEN];
+-	char ssid[33];
++	char ssid[MAX_SSID_LEN];
+ };
+ 
+ #ifdef CONFIG_TRAFFIC_AGENT
+@@ -354,6 +356,43 @@ enum akm_suite_values {
  
  };
  
@@ -681,7 +703,6 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
 +
 +/* Update this macro for supporting multiple mbss vaps */
 +#define MAX_NON_TX_VAP_COUNT	2
-+#define MAX_SSID_LEN		15
 +#define MAX_PSK_LEN		20
 +
 +struct mbss_config {
@@ -699,7 +720,31 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  struct sigma_dut {
  	const char *main_ifname;
  	char *main_ifname_2g;
-@@ -505,26 +543,7 @@ struct sigma_dut {
+@@ -410,7 +449,7 @@ struct sigma_dut {
+ 
+ 	struct wfa_cs_p2p_group *groups;
+ 
+-	char infra_ssid[33];
++	char infra_ssid[MAX_SSID_LEN];
+ 	int infra_network_id;
+ 
+ 	enum p2p_mode {
+@@ -448,12 +487,12 @@ struct sigma_dut {
+ 	unsigned int akm_values;
+ 
+ 	/* AP configuration */
+-	char ap_ssid[33];
++	char ap_ssid[MAX_SSID_LEN];
+ 	/*
+ 	 * WLAN-TAG of 1 will use 'ap_' variables;
+ 	 * tag higher than 1 will use 'ap_tag_' variables.
+ 	 */
+-	char ap_tag_ssid[MAX_WLAN_TAGS - 1][33];
++	char ap_tag_ssid[MAX_WLAN_TAGS - 1][MAX_SSID_LEN];
+ 	enum ap_mode {
+ 		AP_11a,
+ 		AP_11g,
+@@ -505,26 +544,7 @@ struct sigma_dut {
  	enum value_not_set_enabled_disabled ap_dyn_bw_sig;
  	int ap_sgi80;
  	int ap_p2p_mgmt;
@@ -727,7 +772,16 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	enum ap_tag_key_mgmt {
  		AP2_OPEN,
  		AP2_OSEN,
-@@ -981,6 +1000,7 @@ struct sigma_dut {
+@@ -615,7 +635,7 @@ struct sigma_dut {
+ 	int ap_qos_map_set;
+ 	int ap_bss_load;
+ 	char ap_osu_server_uri[10][256];
+-	char ap_osu_ssid[33];
++	char ap_osu_ssid[MAX_SSID_LEN];
+ 	int ap_osu_method[10];
+ 	int ap_osu_icon_tag;
+ 	int ap_venue_url;
+@@ -981,6 +1001,7 @@ struct sigma_dut {
  	int ap_6g_only;
  	int ap_6g_unsol_prb_resp;
  	enum if_band ap_dual_band;
@@ -735,3 +789,6 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	int ocvc;
  	int client_privacy;
  	int saquery_oci_freq;
+-- 
+2.25.0
+
