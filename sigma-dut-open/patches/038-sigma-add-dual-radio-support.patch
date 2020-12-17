@@ -601,10 +601,10 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  	    (dut->program == PROGRAM_HE && dut->use_5g)) {
 -		int vht_oper_centr_freq_idx;
 +		int vht_oper_centr_freq_idx, vht_chwidth;
- 		char vht_capab[256] = "";
- 		int len = 0;
  
-@@ -8754,43 +9034,14 @@ skip_key_mgmt:
+ 		if (check_channel(dut->ap_channel) < 0) {
+ 			send_resp(dut, conn, SIGMA_INVALID,
+@@ -8583,43 +8860,14 @@ skip_key_mgmt:
  			return 0;
  		}
  
