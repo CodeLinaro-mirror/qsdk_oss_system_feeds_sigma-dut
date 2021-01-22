@@ -11,14 +11,15 @@ Signed-off-by: Lavanya Suresh <lavaks@codeaurora.org>
  ap.c | 4 ++++
  1 file changed, 4 insertions(+)
 
-diff --git a/ap.c b/ap.c
-index c4b982f7f422..3d6f5ad6f4c6 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -8232,6 +8232,10 @@ void ath11k_fw_test_commands(struct sigma_dut *dut, const char *ifname)
+@@ -8232,6 +8232,13 @@ void ath11k_fw_test_commands(struct sigm
  
  	if (dut->ap_he_ppdu == PPDU_MU &&
  	    dut->ap_he_dlofdma == VALUE_ENABLED) {
++		run_system_wrapper(dut,
++				   "ath11k-fwtest -t 1 -i %s -m 0x00 -v 0 32770 217",
++				   ifname);
 +		/* enable the equal RU allocation */
 +		run_system_wrapper(dut,
 +				   "ath11k-fwtest -i %s -m 0x4b -v 0 0 1",
@@ -26,6 +27,3 @@ index c4b982f7f422..3d6f5ad6f4c6 100644
  		/* Increase the min TX time limit for MU MIMO to disable MU MIMO
  		 * scheduling */
  		run_system_wrapper(dut,
--- 
-2.25.0
-
