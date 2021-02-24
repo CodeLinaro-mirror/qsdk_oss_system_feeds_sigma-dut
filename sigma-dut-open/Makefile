@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG:=sigma-dut
 PKG_NAME:=sigma-dut-open
-PKG_VERSION:=20201014
+PKG_VERSION:=20212301
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
@@ -24,7 +24,7 @@ ifeq ($(DUMP)$(PKG_VERSION),)
 endif
 
 PKG_SOURCE_SUBDIR:=$(PKG)-$(PKG_VERSION)
-PKG_SOURCE_VERSION=1e1e5fdb46a1b0d880b61fbdf9bf70cebddb3a32
+PKG_SOURCE_VERSION=39fd5c47b0afcbdc538ec22c9a102cf05f6c86b3
 PKG_SOURCE:=$(PKG)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 include $(INCLUDE_DIR)/package.mk
