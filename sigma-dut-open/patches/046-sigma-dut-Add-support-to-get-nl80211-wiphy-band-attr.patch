@@ -15,7 +15,7 @@ Signed-off-by: Lavanya Suresh <lavaks@codeaurora.org>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -10257,12 +10257,72 @@ static int antenna_mask_to_nss(unsigned
+@@ -10351,6 +10351,64 @@ static int antenna_mask_to_nss(unsigned
  	return msb + 1;
  }
  
@@ -77,19 +77,20 @@ Signed-off-by: Lavanya Suresh <lavaks@codeaurora.org>
 +	return NL_OK;
 +}
 +
- static int  wiphy_info_handler(struct nl_msg *msg, void *arg)
+ 
+ static int wiphy_info_handler(struct nl_msg *msg, void *arg)
  {
- 	struct nlattr *tb[NL80211_ATTR_MAX + 1];
+@@ -10358,6 +10416,8 @@ static int wiphy_info_handler(struct nl_
  	struct genlmsghdr *gnlh = nlmsg_data(nlmsg_hdr(msg));
  	struct sigma_dut *dut = arg;
  	unsigned int tx_antenna_mask;
 +	struct nlattr *nl_band;
 +	int rem_band;
- 	int nss;
  
  	nla_parse(tb, NL80211_ATTR_MAX, genlmsg_attrdata(gnlh, 0),
-@@ -10274,6 +10334,16 @@ static int  wiphy_info_handler(struct nl
- 		dut->ap_tx_streams = nss;
+ 		  genlmsg_attrlen(gnlh, 0), NULL);
+@@ -10368,6 +10428,16 @@ static int wiphy_info_handler(struct nl_
+ 		dut->ap_tx_streams = antenna_mask_to_nss(tx_antenna_mask);
  	}
  
 +	if (!tb[NL80211_ATTR_WIPHY_BANDS])
@@ -107,7 +108,7 @@ Signed-off-by: Lavanya Suresh <lavaks@codeaurora.org>
  
 --- a/sigma_dut.c
 +++ b/sigma_dut.c
-@@ -1254,6 +1254,11 @@ int main(int argc, char *argv[])
+@@ -1264,6 +1264,11 @@ int main(int argc, char *argv[])
  
  #ifdef NL80211_SUPPORT
  	sigma_dut.nl_ctx = nl80211_init(&sigma_dut);
@@ -119,7 +120,7 @@ Signed-off-by: Lavanya Suresh <lavaks@codeaurora.org>
  #endif /* NL80211_SUPPORT */
  	sigma_dut_register_cmds();
  
-@@ -1321,6 +1326,7 @@ int main(int argc, char *argv[])
+@@ -1331,6 +1336,7 @@ int main(int argc, char *argv[])
  	deinit_sigma_dut(&sigma_dut);
  #ifdef NL80211_SUPPORT
  	nl80211_deinit(&sigma_dut, sigma_dut.nl_ctx);
@@ -129,7 +130,7 @@ Signed-off-by: Lavanya Suresh <lavaks@codeaurora.org>
  #ifdef ANDROID
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -115,6 +115,17 @@ struct wfa_p2p_attribute {
+@@ -117,6 +117,17 @@ struct wfa_p2p_attribute {
  	uint8_t variable[0];
  } __attribute__((packed));
  
@@ -147,7 +148,7 @@ Signed-off-by: Lavanya Suresh <lavaks@codeaurora.org>
  #define WPA_GET_BE32(a) ((((u32) (a)[0]) << 24) | (((u32) (a)[1]) << 16) | \
  			 (((u32) (a)[2]) << 8) | ((u32) (a)[3]))
  #define WPA_PUT_BE32(a, val)					\
-@@ -967,6 +978,7 @@ struct sigma_dut {
+@@ -968,6 +979,7 @@ struct sigma_dut {
  #ifdef NL80211_SUPPORT
  	struct nl80211_ctx *nl_ctx;
  	int config_rsnie;

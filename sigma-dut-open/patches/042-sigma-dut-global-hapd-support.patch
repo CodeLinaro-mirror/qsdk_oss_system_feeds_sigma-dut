@@ -15,12 +15,10 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  sigma_dut.h |   1 +
  3 files changed, 105 insertions(+), 15 deletions(-)
 
-diff --git a/ap.c b/ap.c
-index 57ff5c5..91d97f7 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -7932,6 +7932,46 @@ static int fill_dual_radio_caps(struct sigma_dut *dut, FILE *f)
- 
+@@ -8357,6 +8357,46 @@ void ath11k_fw_test_commands(struct sigm
+ 				   ifname);
  }
  
 +static int add_hapd_ctrl_iface(struct sigma_dut *dut, const char *ifname, const char *sigma_conf)
@@ -66,7 +64,7 @@ index 57ff5c5..91d97f7 100644
  enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
  					   struct sigma_conn *conn,
  					   struct sigma_cmd *cmd)
-@@ -7940,6 +7980,7 @@ enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
+@@ -8365,6 +8405,7 @@ enum sigma_cmd_result cmd_ap_config_comm
  	FILE *f;
  	FILE *f_1;
  	const char *ifname;
@@ -74,7 +72,7 @@ index 57ff5c5..91d97f7 100644
  	char buf[500];
  	char buf_dual[500];
  	char path[100], if_path[100];
-@@ -8743,7 +8784,6 @@ skip_key_mgmt:
+@@ -9178,7 +9219,6 @@ skip_key_mgmt:
  		fprintf(f, "gas_comeback_delay=%d\n", dut->ap_gas_cb_delay);
  
  	if(dut->ap_is_dual) {
@@ -82,7 +80,7 @@ index 57ff5c5..91d97f7 100644
  		int ifidx;
                  f_1 = fopen(SIGMA_TMPDIR "/sigma_dut_dual-ap.conf", "w");
                  if (f_1 == NULL) {
-@@ -8757,10 +8797,10 @@ skip_key_mgmt:
+@@ -9192,10 +9232,10 @@ skip_key_mgmt:
                          case AP_11g:
                          case AP_11b:
                          case AP_11ng:
@@ -95,7 +93,7 @@ index 57ff5c5..91d97f7 100644
                                  fprintf(f_1, "hw_mode=g\n");
                                  break;
                          case AP_11a:
-@@ -8768,19 +8808,19 @@ skip_key_mgmt:
+@@ -9203,19 +9243,19 @@ skip_key_mgmt:
                          case AP_11ac:
                                  if (drv == DRIVER_QNXNTO) {
                                          if (strcmp(get_main_ifname(dut),"unknown") != 0)
@@ -121,7 +119,7 @@ index 57ff5c5..91d97f7 100644
                                  }
                                  fprintf(f_1, "hw_mode=a\n");
                                  break;
-@@ -8792,11 +8832,11 @@ skip_key_mgmt:
+@@ -9227,11 +9267,11 @@ skip_key_mgmt:
  
  				ifidx = get_dual_ifidx(dut);
  				if (ifidx == 0)
@@ -136,7 +134,7 @@ index 57ff5c5..91d97f7 100644
  				break;
                          default:
                                   fclose(f_1);
-@@ -8818,10 +8858,14 @@ skip_key_mgmt:
+@@ -9253,10 +9293,14 @@ skip_key_mgmt:
                          fprintf(f_1, "ht_capab=[HT20]\n");
                  }
  
@@ -153,7 +151,7 @@ index 57ff5c5..91d97f7 100644
  
  		if (fill_dual_radio_caps(dut, f_1)) {
  			fclose(f_1);
-@@ -9275,6 +9319,44 @@ skip_key_mgmt:
+@@ -9719,6 +9763,44 @@ skip_key_mgmt:
  			 dut->hostapd_entropy_log ? dut->hostapd_entropy_log :
  			 "",
  			 dut->sigma_tmpdir);
@@ -198,7 +196,7 @@ index 57ff5c5..91d97f7 100644
  	} else {
  		/*
  		 * It looks like a monitor interface can cause some issues for
-@@ -9334,6 +9416,8 @@ skip_key_mgmt:
+@@ -9778,6 +9860,8 @@ skip_key_mgmt:
  
  	/* allow some time for hostapd to start before returning success */
  	usleep(500000);
@@ -207,20 +205,18 @@ index 57ff5c5..91d97f7 100644
  	if (run_hostapd_cli(dut, "ping") != 0) {
  		send_resp(dut, conn, SIGMA_ERROR,
  			  "errorCode,Failed to talk to hostapd");
-diff --git a/sigma_dut.c b/sigma_dut.c
-index 54cbf29..2e7fde9 100644
 --- a/sigma_dut.c
 +++ b/sigma_dut.c
-@@ -1015,7 +1015,7 @@ int main(int argc, char *argv[])
+@@ -1023,7 +1023,7 @@ int main(int argc, char *argv[])
  
  	for (;;) {
  		c = getopt(argc, argv,
--			   "aAb:Bc:C:dDE:e:fF:gGhH:j:J:i:Ik:K:l:L:m:M:nN:o:O:p:P:qr:R:s:S:tT:uv:VWw:x:y:z:Z:23");
-+			   "aAb:Bc:C:dDE:e:fF:gGhH:j:J:i:Ik:K:l:L:m:M:nN:o:O:p:P:qQr:R:s:S:tT:uv:VWw:x:y:z:Z:23");
+-			   "aAb:Bc:C:dDE:e:fF:gGhH:j:J:i:Ik:K:l:L:m:M:nN:o:O:p:P:qr:R:s:S:tT:uv:VWw:x:y:z:Z:234");
++			   "aAb:Bc:C:dDE:e:fF:gGhH:j:J:i:Ik:K:l:L:m:M:nN:o:O:p:P:qQr:R:s:S:tT:uv:VWw:x:y:z:Z:234");
  		if (c < 0)
  			break;
  		switch (c) {
-@@ -1089,6 +1089,11 @@ int main(int argc, char *argv[])
+@@ -1097,6 +1097,11 @@ int main(int argc, char *argv[])
  		case 'q':
  			sigma_dut.debug_level++;
  			break;
@@ -232,18 +228,3 @@ index 54cbf29..2e7fde9 100644
  		case 'r':
  			if (strcmp(optarg, "HT40") == 0) {
  				sigma_dut.default_11na_ap_chwidth = AP_40;
-diff --git a/sigma_dut.h b/sigma_dut.h
-index 3096040..1cbc698 100644
---- a/sigma_dut.h
-+++ b/sigma_dut.h
-@@ -981,6 +981,7 @@ struct sigma_dut {
-	int ocvc;
-	int client_privacy;
-	int saquery_oci_freq;
-+	int hapd_global_ctrl;
- };
- 
- 
--- 
-2.7.4
-
