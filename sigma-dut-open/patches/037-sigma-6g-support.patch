@@ -22,7 +22,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -666,10 +666,14 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -694,10 +694,14 @@ static enum sigma_cmd_result cmd_ap_set_
  	if (val) {
  		if (strcasecmp(val, "5G") == 0)
  			dut->ap_interface_5g = 1;
@@ -38,7 +38,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  			dut->ap_is_dual = 1;
  	}
  
-@@ -722,6 +726,23 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -750,6 +754,23 @@ static enum sigma_cmd_result cmd_ap_set_
  		}
  	}
  
@@ -62,7 +62,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  	val = get_param(cmd, "CHANNEL");
  	if (val) {
  		const char *pos;
-@@ -769,7 +790,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -797,7 +818,7 @@ static enum sigma_cmd_result cmd_ap_set_
  			free(str);
  			return STATUS_SENT;
  		}
@@ -71,7 +71,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  		     && dut->ap_80plus80 != 1)
  			dut->ap_chwidth = AP_80;
  
-@@ -781,14 +802,16 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -809,14 +830,16 @@ static enum sigma_cmd_result cmd_ap_set_
  				free(str);
  				return STATUS_SENT;
  			}
@@ -90,7 +90,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  			dut->ap_mode = AP_11ng;
  		else if (dut->program == PROGRAM_VHT)
  			dut->ap_mode = AP_11ac;
-@@ -816,6 +839,9 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -844,6 +867,9 @@ static enum sigma_cmd_result cmd_ap_set_
  		dut->use_5g = 1;
  		break;
  	case AP_11ax:
@@ -100,7 +100,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  		if (dut->ap_channel >= 1 && dut->ap_channel <= 14)
  			dut->use_5g = 0;
  		else if (dut->ap_channel >= 36 && dut->ap_channel <= 171)
-@@ -7532,6 +7558,13 @@ static int get_5g_channel_freq(int chan)
+@@ -7560,6 +7586,13 @@ static int get_5g_channel_freq(int chan)
  	return 5000 + chan * 5;
  }
  
@@ -114,7 +114,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  
  static const char * hostapd_cipher_name(enum ap_cipher cipher)
  {
-@@ -7783,7 +7816,7 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -7925,7 +7958,7 @@ enum sigma_cmd_result cmd_ap_config_comm
  		fprintf(f, "hw_mode=ad\n");
  		break;
  	case AP_11ax:
@@ -123,7 +123,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  			fprintf(f, "hw_mode=a\n");
  		else
  			fprintf(f, "hw_mode=g\n");
-@@ -7799,7 +7832,7 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -7941,7 +7974,7 @@ enum sigma_cmd_result cmd_ap_config_comm
  	if ((drv == DRIVER_MAC80211 || drv == DRIVER_QNXNTO ||
  	     drv == DRIVER_LINUX_WCN) &&
  	    (dut->ap_mode == AP_11ng || dut->ap_mode == AP_11na ||
@@ -132,7 +132,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  		int ht40plus = 0, ht40minus = 0;
  		char ht_caps[60];
  		int len = 0;
-@@ -7880,7 +7913,7 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -8022,7 +8055,7 @@ enum sigma_cmd_result cmd_ap_config_comm
  	if ((drv == DRIVER_MAC80211 || drv == DRIVER_QNXNTO ||
  	     drv == DRIVER_LINUX_WCN) &&
  	    (dut->ap_mode == AP_11ac || dut->ap_mode == AP_11na ||
@@ -141,7 +141,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  		if (dut->ap_countrycode[0])
  			fprintf(f, "country_code=%s\n", dut->ap_countrycode);
                  else
-@@ -7891,6 +7924,48 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -8033,6 +8066,48 @@ enum sigma_cmd_result cmd_ap_config_comm
                  fprintf(f, "local_pwr_constraint=3\n");
  	}
  
@@ -190,19 +190,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  	if (drv == DRIVER_LINUX_WCN && dut->ap_mode == AP_11ax) {
  		if (dut->ap_txBF) {
  			fprintf(f, "he_su_beamformer=1\n");
-@@ -9384,7 +9459,10 @@ skip_key_mgmt:
- 		}
- 
- 		if (dut->ap_bcc == VALUE_ENABLED && dut->ap_fixed_rate) {
--			if (dut->ap_channel <= 11)
-+			if (dut->use_6g)
-+				run_system_wrapper(dut, "iw %s set bitrates he-mcs-6 1:%d\n",
-+						   ifname, dut->he_mcs);
-+			else if (dut->ap_channel <= 11)
- 				run_system_wrapper(dut, "iw %s set bitrates he-mcs-2.4 1:%d\n",
- 						   ifname, dut->he_mcs);
- 			else
-@@ -9718,6 +9796,10 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -9698,6 +9773,10 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->ft_bss_mac_cnt = 0;
  	dut->ap_interface_5g = 0;
  	dut->ap_interface_2g = 0;
@@ -213,7 +201,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  	dut->ap_pmf = AP_PMF_DISABLED;
  
  	dut->wsc_fragment = 0;
-@@ -14305,7 +14387,7 @@ static enum sigma_cmd_result mac80211_he
+@@ -14252,7 +14331,7 @@ static enum sigma_cmd_result mac80211_he
  					    const char *val)
  {
  	int16_t he_ltf = 0xFF;
@@ -224,7 +212,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  	if (dut->ar_ltf) {
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -967,6 +967,11 @@ struct sigma_dut {
+@@ -965,6 +965,11 @@ struct sigma_dut {
  		SAE_PWE_H2E
  	} sae_pwe;
  	int owe_ptk_workaround;
@@ -234,5 +222,5 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
 +	int ap_6g_only;
 +	int ap_6g_unsol_prb_resp;
  	int ocvc;
+ 	int beacon_prot;
  	int client_privacy;
- 	int saquery_oci_freq;
