@@ -17,7 +17,7 @@ Signed-off-by: Venkateswara Naralasetty <vnaralas@codeaurora.org>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -10299,9 +10299,42 @@ static void phy_info_vht_capa(struct dut
+@@ -10243,9 +10243,42 @@ static void phy_info_vht_capa(struct dut
  	}
  }
  
@@ -60,7 +60,7 @@ Signed-off-by: Venkateswara Naralasetty <vnaralas@codeaurora.org>
  
  	if (!mode)
  		return 1;
-@@ -10317,6 +10350,13 @@ static int phy_info_band(struct dut_hw_m
+@@ -10261,6 +10294,13 @@ static int phy_info_band(struct dut_hw_m
  	phy_info_vht_capa(mode, tb_band[NL80211_BAND_ATTR_VHT_CAPA],
  			  tb_band[NL80211_BAND_ATTR_VHT_MCS_SET]);
  
@@ -74,7 +74,7 @@ Signed-off-by: Venkateswara Naralasetty <vnaralas@codeaurora.org>
  	/* Other nl80211 band attributes can be parsed here, if required */
  
  	return NL_OK;
-@@ -10351,6 +10391,10 @@ static int wiphy_info_handler(struct nl_
+@@ -10295,15 +10335,54 @@ static int wiphy_info_handler(struct nl_
  			return res;
  	}
  
@@ -85,6 +85,67 @@ Signed-off-by: Venkateswara Naralasetty <vnaralas@codeaurora.org>
  	return 0;
  }
  
++static int protocol_feature_handler(struct nl_msg *msg, void *arg)
++{
++	u32 *feat = arg;
++	struct nlattr *tb_msg[NL80211_ATTR_MAX + 1];
++	struct genlmsghdr *gnlh = nlmsg_data(nlmsg_hdr(msg));
++
++	nla_parse(tb_msg, NL80211_ATTR_MAX, genlmsg_attrdata(gnlh, 0),
++		  genlmsg_attrlen(gnlh, 0), NULL);
++
++	if (tb_msg[NL80211_ATTR_PROTOCOL_FEATURES])
++		*feat = nla_get_u32(tb_msg[NL80211_ATTR_PROTOCOL_FEATURES]);
++
++	return NL_SKIP;
++}
++
++static u32 get_nl80211_protocol_features(struct sigma_dut *dut, int ifindex)
++{
++	u32 feat = 0;
++	struct nl_msg *msg;
++
++	if(!(msg = nl80211_drv_msg(dut, dut->nl_ctx, ifindex, 0,
++				   NL80211_CMD_GET_PROTOCOL_FEATURES))) {
++		sigma_dut_print(dut, DUT_MSG_DEBUG,
++				"%s: could not get protocol feature", __func__);
++		return 0;
++	}
++
++	if (send_and_recv_msgs(dut, dut->nl_ctx, msg, protocol_feature_handler,
++			       &feat) == 0)
++		return feat;
++
++	return 0;
++}
+ 
+ static int mac80211_get_wiphy(struct sigma_dut *dut)
+ {
+ 	struct nl_msg *msg;
+ 	int ret = 0;
+ 	int ifindex;
++	u32 feat;
++	int flags = 0;
+ 
+ 	ifindex = if_nametoindex(dut->main_ifname);
+ 	if (ifindex == 0) {
+@@ -10313,9 +10392,14 @@ static int mac80211_get_wiphy(struct sig
+ 		return -1;
+ 	}
+ 
+-	if (!(msg = nl80211_drv_msg(dut, dut->nl_ctx, ifindex, 0,
++	feat = get_nl80211_protocol_features(dut, ifindex);
++	if (feat & NL80211_PROTOCOL_FEATURE_SPLIT_WIPHY_DUMP)
++		flags = NLM_F_DUMP;
++
++	if (!(msg = nl80211_drv_msg(dut, dut->nl_ctx, ifindex, flags,
+ 				    NL80211_CMD_GET_WIPHY)) ||
+-	    nla_put_u32(msg, NL80211_ATTR_IFINDEX, ifindex)) {
++	    nla_put_u32(msg, NL80211_ATTR_IFINDEX, ifindex) ||
++	    nla_put_flag(msg, NL80211_ATTR_SPLIT_WIPHY_DUMP)) {
+ 		sigma_dut_print(dut, DUT_MSG_DEBUG,
+ 				"%s: could not build get wiphy cmd", __func__);
+ 		nlmsg_free(msg);
 --- a/nl80211_copy.h
 +++ b/nl80211_copy.h
 @@ -2942,6 +2942,22 @@ enum nl80211_mpath_info {
@@ -124,7 +185,7 @@ Signed-off-by: Venkateswara Naralasetty <vnaralas@codeaurora.org>
  #define VHT_CAP_MAX_A_MPDU_LENGTH_EXPONENT_MASK       \
                  (7 << VHT_CAP_MAX_A_MPDU_LENGTH_EXPONENT_SHIFT)
  
-+#define HE_PHY_CAP_MU_BEAMFORMER 0x2 
++#define HE_PHY_CAP_MU_BEAMFORMER 0x2
  
  #define AMPDU_FACTOR_BITS	0x3
  #define AMPDU_DENSITY_OFFSET	2
