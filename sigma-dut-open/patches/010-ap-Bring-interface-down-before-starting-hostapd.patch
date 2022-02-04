@@ -14,9 +14,9 @@
  			 file_exists("hostapd") ? "./" : "");
  		snprintf(buf, sizeof(buf),
 @@ -8746,6 +8752,7 @@ skip_key_mgmt:
- 			 dut->use_hostapd_pid_file ?
- 			 " -P " SIGMA_DUT_HOSTAPD_PID_FILE : "",
- 			 dut->sigma_tmpdir);
+			 dut->sigma_tmpdir,
+			 dut->ap_is_dual ? dut->sigma_tmpdir : "",
+			 dut->ap_is_dual ? "/sigma_dut-ap_0.conf" : "");
 +
  		if (dut->ap_is_dual) {
  			snprintf(buf_dual, sizeof(buf_dual), "%shostapd -B%s%s%s%s " SIGMA_TMPDIR

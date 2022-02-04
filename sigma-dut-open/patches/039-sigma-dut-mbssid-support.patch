@@ -422,8 +422,8 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	int ap_osu_icon_tag;
  	int ap_venue_url;
 @@ -979,12 +999,14 @@ struct sigma_dut {
- 	int ap_6g_only;
  	int ap_6g_unsol_prb_resp;
+	struct dut_hw_modes hw_modes;
  	enum if_band ap_dual_band;
 +	struct mbss_support mbss;
  	int ocvc;
@@ -433,6 +433,6 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	int saquery_oci_freq;
  	char device_driver[32];
 +	int hapd_global_ctrl;
- };
- 
- 
+	int user_config_ap_ocvc;
+	int user_config_ap_beacon_prot;
+	char qm_domain_name[250];

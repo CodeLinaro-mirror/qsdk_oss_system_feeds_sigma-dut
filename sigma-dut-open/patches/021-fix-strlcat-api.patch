@@ -1,6 +1,6 @@
 --- a/utils.c
 +++ b/utils.c
-@@ -335,22 +335,29 @@ size_t strlcpy(char *dest, const char *s
+@@ -371,24 +371,29 @@ size_t strlcpy(char *dest, const char *s
  
  size_t strlcat(char *dst, const char *str, size_t size)
  {
@@ -10,20 +10,7 @@
 +	const char *s = str;
 +	size_t dlen;
 +	size_t n = size;
- 
--	srclen = strlen(str);
--	for (pos = dst; pos - dst < size && *dst; pos++)
--		;
--	dstlen = pos - dst;
--	if (*dst)
--		return dstlen + srclen;
--	if (dstlen + srclen + 1 > size)
--		copy = size - dstlen - 1;
--	else
--		copy = srclen;
--	memcpy(pos, str, copy);
--	pos[copy] = '\0';
--	return dstlen + srclen;
++
 +	/* Find the end of dst and adjust bytes left but don't go past end */
 +	while (n-- != 0 && *d != '\0')
 +		d++;
@@ -40,7 +27,22 @@
 +	s++;
 +	}
 +	*d = '\0';
-+
+ 
+-	srclen = strlen(str);
+-	dstlen = strlen(dst);
+-	pos = dst + dstlen;
+-
+-	if (dstlen >= size)
+-		return dstlen + srclen;
+-
+-	if (dstlen + srclen >= size)
+-		copy = size - dstlen - 1;
+-	else
+-		copy = srclen;
+-
+-	memcpy(pos, str, copy);
+-	pos[copy] = '\0';
+-	return dstlen + srclen;
 +	return (dlen + (s - str)); /* count does not include NUL */
  }
  

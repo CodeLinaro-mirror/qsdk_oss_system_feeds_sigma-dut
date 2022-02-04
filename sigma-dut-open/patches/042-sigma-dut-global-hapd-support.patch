@@ -17,8 +17,8 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -8357,6 +8357,46 @@ void ath11k_fw_test_commands(struct sigm
- 				   ifname);
+@@ -8544,6 +8544,46 @@ static int fill_dual_radio_caps(struct s
+ 
  }
  
 +static int add_hapd_ctrl_iface(struct sigma_dut *dut, const char *ifname, const char *sigma_conf)
@@ -64,15 +64,15 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
  					   struct sigma_conn *conn,
  					   struct sigma_cmd *cmd)
-@@ -8365,6 +8405,7 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -8552,6 +8592,7 @@ enum sigma_cmd_result cmd_ap_config_comm
  	FILE *f;
  	FILE *f_1;
  	const char *ifname;
 +	const char *ifname_dual = NULL;
  	char buf[500];
  	char buf_dual[500];
- 	char path[100], if_path[100];
-@@ -9178,7 +9219,6 @@ skip_key_mgmt:
+ 	char path[100];
+@@ -9436,7 +9477,6 @@ skip_key_mgmt:
  		fprintf(f, "gas_comeback_delay=%d\n", dut->ap_gas_cb_delay);
  
  	if(dut->ap_is_dual) {
@@ -80,7 +80,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  		int ifidx;
                  f_1 = fopen(SIGMA_TMPDIR "/sigma_dut_dual-ap.conf", "w");
                  if (f_1 == NULL) {
-@@ -9192,10 +9232,10 @@ skip_key_mgmt:
+@@ -9450,10 +9490,10 @@ skip_key_mgmt:
                          case AP_11g:
                          case AP_11b:
                          case AP_11ng:
@@ -93,7 +93,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
                                  fprintf(f_1, "hw_mode=g\n");
                                  break;
                          case AP_11a:
-@@ -9203,19 +9243,19 @@ skip_key_mgmt:
+@@ -9461,19 +9501,19 @@ skip_key_mgmt:
                          case AP_11ac:
                                  if (drv == DRIVER_QNXNTO) {
                                          if (strcmp(get_main_ifname(dut),"unknown") != 0)
@@ -119,7 +119,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
                                  }
                                  fprintf(f_1, "hw_mode=a\n");
                                  break;
-@@ -9227,11 +9267,11 @@ skip_key_mgmt:
+@@ -9485,11 +9525,11 @@ skip_key_mgmt:
  
  				ifidx = get_dual_ifidx(dut);
  				if (ifidx == 0)
@@ -134,7 +134,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  				break;
                          default:
                                   fclose(f_1);
-@@ -9253,10 +9293,14 @@ skip_key_mgmt:
+@@ -9511,10 +9551,14 @@ skip_key_mgmt:
                          fprintf(f_1, "ht_capab=[HT20]\n");
                  }
  
@@ -151,7 +151,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  
  		if (fill_dual_radio_caps(dut, f_1)) {
  			fclose(f_1);
-@@ -9719,6 +9763,44 @@ skip_key_mgmt:
+@@ -9991,6 +10035,44 @@ skip_key_mgmt:
  			 dut->hostapd_entropy_log ? dut->hostapd_entropy_log :
  			 "",
  			 dut->sigma_tmpdir);
@@ -196,7 +196,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  	} else {
  		/*
  		 * It looks like a monitor interface can cause some issues for
-@@ -9778,6 +9860,8 @@ skip_key_mgmt:
+@@ -10052,6 +10134,8 @@ skip_key_mgmt:
  
  	/* allow some time for hostapd to start before returning success */
  	usleep(500000);
@@ -207,16 +207,16 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  			  "errorCode,Failed to talk to hostapd");
 --- a/sigma_dut.c
 +++ b/sigma_dut.c
-@@ -1023,7 +1023,7 @@ int main(int argc, char *argv[])
+@@ -1049,7 +1049,7 @@ int main(int argc, char *argv[])
  
  	for (;;) {
  		c = getopt(argc, argv,
--			   "aAb:Bc:C:dDE:e:fF:gGhH:j:J:i:Ik:K:l:L:m:M:nN:o:O:p:P:qr:R:s:S:tT:uv:VWw:x:y:z:Z:234");
-+			   "aAb:Bc:C:dDE:e:fF:gGhH:j:J:i:Ik:K:l:L:m:M:nN:o:O:p:P:qQr:R:s:S:tT:uv:VWw:x:y:z:Z:234");
+-			   "aAb:Bc:C:dDE:e:fF:gGhH:j:J:i:Ik:K:l:L:m:M:nN:o:O:p:P:qr:R:s:S:tT:uv:VWw:x:y:z:Z:2345:6:");
++			   "aAb:Bc:C:dDE:e:fF:gGhH:j:J:i:Ik:K:l:L:m:M:nN:o:O:p:P:qQr:R:s:S:tT:uv:VWw:x:y:z:Z:2345:6:");
  		if (c < 0)
  			break;
  		switch (c) {
-@@ -1097,6 +1097,11 @@ int main(int argc, char *argv[])
+@@ -1123,6 +1123,11 @@ int main(int argc, char *argv[])
  		case 'q':
  			sigma_dut.debug_level++;
  			break;

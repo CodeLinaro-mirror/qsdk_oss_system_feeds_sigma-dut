@@ -3,7 +3,7 @@ From: Sriram R <srirrama@codeaurora.org>
 Date: Sat, 17 Oct 2020 16:47:19 +0530
 Subject: [PATCH] sigma_dut: Add hostapd config for 6G OoB Support
 
-Add "rnr_beacon=1" and "he_co_locate=1" configs
+Add "rnr=1" and "he_co_locate=1" configs
 for dual radio OoB support for 6GHz"
 
 Signed-off-by: Sriram R <srirrama@codeaurora.org>
@@ -21,7 +21,7 @@ index 91d97f7..ead9e2d 100644
  			fprintf(f, "he_rts_threshold=0\n");
 +
 +		if (dut->ap_dual_band == BAND_5G || dut->ap_dual_band == BAND_2G)
-+			fprintf(f, "rnr_beacon=1\n");
++			fprintf(f, "rnr=1\n");
  	}
  
  	return 0;
