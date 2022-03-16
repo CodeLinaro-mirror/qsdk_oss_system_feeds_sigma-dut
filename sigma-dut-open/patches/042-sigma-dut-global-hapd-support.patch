@@ -17,8 +17,8 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -8544,6 +8544,46 @@ static int fill_dual_radio_caps(struct s
- 
+@@ -8363,6 +8363,46 @@ static int default_muedca_values(struct
+ 	return 0;
  }
  
 +static int add_hapd_ctrl_iface(struct sigma_dut *dut, const char *ifname, const char *sigma_conf)
@@ -64,94 +64,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
  					   struct sigma_conn *conn,
  					   struct sigma_cmd *cmd)
-@@ -8552,6 +8592,7 @@ enum sigma_cmd_result cmd_ap_config_comm
- 	FILE *f;
- 	FILE *f_1;
- 	const char *ifname;
-+	const char *ifname_dual = NULL;
- 	char buf[500];
- 	char buf_dual[500];
- 	char path[100];
-@@ -9436,7 +9477,6 @@ skip_key_mgmt:
- 		fprintf(f, "gas_comeback_delay=%d\n", dut->ap_gas_cb_delay);
- 
- 	if(dut->ap_is_dual) {
--		const char* ifname2;
- 		int ifidx;
-                 f_1 = fopen(SIGMA_TMPDIR "/sigma_dut_dual-ap.conf", "w");
-                 if (f_1 == NULL) {
-@@ -9450,10 +9490,10 @@ skip_key_mgmt:
-                         case AP_11g:
-                         case AP_11b:
-                         case AP_11ng:
--                                ifname2 = drv == DRIVER_MAC80211 ? "wlan1" : "ath1";
-+                                ifname_dual = drv == DRIVER_MAC80211 ? "wlan1" : "ath1";
-                                 if (drv == DRIVER_QNXNTO && \
- 			           (strcmp(get_main_ifname(dut),"unknown") != 0))
--                                        ifname2 = get_main_ifname(dut);
-+                                        ifname_dual = get_main_ifname(dut);
-                                 fprintf(f_1, "hw_mode=g\n");
-                                 break;
-                         case AP_11a:
-@@ -9461,19 +9501,19 @@ skip_key_mgmt:
-                         case AP_11ac:
-                                 if (drv == DRIVER_QNXNTO) {
-                                         if (strcmp(get_main_ifname(dut),"unknown") != 0)
--                                                ifname2 = get_main_ifname(dut);
-+                                                ifname_dual = get_main_ifname(dut);
-                                         else
--                                                ifname2 = "wlan0";
-+                                                ifname_dual = "wlan0";
-                                 } else if (drv == DRIVER_MAC80211) {
-                                         if (if_nametoindex("wlan1") > 0)
--                                                ifname2 = "wlan1";
-+                                                ifname_dual = "wlan1";
-                                         else
--                                                ifname2 = "wlan0";
-+                                                ifname_dual = "wlan0";
-                                 } else {
-                                         if (if_nametoindex("ath1") > 0)
--                                                ifname2 = "ath1";
-+                                                ifname_dual = "ath1";
-                                         else
--                                                ifname2 = "ath0";
-+                                                ifname_dual = "ath0";
-                                 }
-                                 fprintf(f_1, "hw_mode=a\n");
-                                 break;
-@@ -9485,11 +9525,11 @@ skip_key_mgmt:
- 
- 				ifidx = get_dual_ifidx(dut);
- 				if (ifidx == 0)
--					ifname2 = "wlan0";
-+					ifname_dual = "wlan0";
- 				else if (ifidx == 1)
--					ifname2 = "wlan1";
-+					ifname_dual = "wlan1";
- 				else
--					ifname2 = "wlan2";
-+					ifname_dual = "wlan2";
- 				break;
-                         default:
-                                  fclose(f_1);
-@@ -9511,10 +9551,14 @@ skip_key_mgmt:
-                         fprintf(f_1, "ht_capab=[HT20]\n");
-                 }
- 
--                fprintf(f_1, "interface=%s\n", ifname2);
-+                fprintf(f_1, "interface=%s\n", ifname_dual);
-                 fprintf(f_1, "bridge=%s\n", dut->bridge);
-                 fprintf(f_1, "channel=%d\n", dut->ap_channel_1);
--                fprintf(f_1, "ctrl_interface=/var/run/hostapd\n");
-+
-+		if (sigma_hapd_ctrl)
-+			fprintf(f_1, "ctrl_interface=%s\n", sigma_hapd_ctrl);
-+		else
-+			fprintf(f_1, "ctrl_interface=/var/run/hostapd\n");
- 
- 		if (fill_dual_radio_caps(dut, f_1)) {
- 			fclose(f_1);
-@@ -9991,6 +10035,44 @@ skip_key_mgmt:
+@@ -9664,6 +9704,50 @@ skip_key_mgmt:
  			 dut->hostapd_entropy_log ? dut->hostapd_entropy_log :
  			 "",
  			 dut->sigma_tmpdir);
@@ -172,20 +85,26 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
 +					"Failed to run '%s'", buf);
 +		}
 +
-+		if (add_hapd_ctrl_iface(dut, ifname, "sigma_dut-ap.conf")) {
-+			send_resp(dut, conn, SIGMA_ERROR,
-+				  "errorCode,Failed to add hapd iface");
-+			return 0;
-+		}
-+
-+		if (dut->ap_is_dual && ifname_dual) {
-+			snprintf(buf, sizeof(buf), "ifconfig %s down", ifname_dual);
++		if (dut->ap_is_dual && dut->dual_ap_ifname) {
++			snprintf(buf, sizeof(buf), "ifconfig %s down", dut->dual_ap_ifname);
 +			if (system(buf) != 0) {
 +				sigma_dut_print(dut, DUT_MSG_INFO,
 +						"Failed to run '%s'", buf);
 +			}
 +
-+			if (add_hapd_ctrl_iface(dut, ifname_dual, "sigma_dut_dual-ap.conf")) {
++			if (add_hapd_ctrl_iface(dut, ifname, "sigma_dut-ap_0.conf")) {
++				send_resp(dut, conn, SIGMA_ERROR,
++					  "errorCode,Failed to add hapd iface");
++				return 0;
++			}
++
++			if (add_hapd_ctrl_iface(dut, dut->dual_ap_ifname, "sigma_dut-ap.conf")) {
++				send_resp(dut, conn, SIGMA_ERROR,
++					  "errorCode,Failed to add second hapd iface");
++				return 0;
++			}
++		} else {
++			if (add_hapd_ctrl_iface(dut, ifname, "sigma_dut-ap.conf")) {
 +				send_resp(dut, conn, SIGMA_ERROR,
 +					  "errorCode,Failed to add hapd iface");
 +				return 0;
@@ -196,7 +115,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  	} else {
  		/*
  		 * It looks like a monitor interface can cause some issues for
-@@ -10052,6 +10134,8 @@ skip_key_mgmt:
+@@ -9709,6 +9793,8 @@ skip_key_mgmt:
  
  	/* allow some time for hostapd to start before returning success */
  	usleep(500000);
@@ -211,8 +130,8 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  
  	for (;;) {
  		c = getopt(argc, argv,
--			   "aAb:Bc:C:dDE:e:fF:gGhH:j:J:i:Ik:K:l:L:m:M:nN:o:O:p:P:qr:R:s:S:tT:uv:VWw:x:y:z:Z:2345:6:");
-+			   "aAb:Bc:C:dDE:e:fF:gGhH:j:J:i:Ik:K:l:L:m:M:nN:o:O:p:P:qQr:R:s:S:tT:uv:VWw:x:y:z:Z:2345:6:");
+-			   "aAb:Bc:C:dDE:e:fF:gGhH:j:J:i:Ik:K:l:L:m:M:nN:o:O:p:P:qr:R:s:S:tT:uU:v:VWw:x:y:z:Z:2345:6:");
++			   "aAb:Bc:C:dDE:e:fF:gGhH:j:J:i:Ik:K:l:L:m:M:nN:o:O:p:P:qQr:R:s:S:tT:uU:v:VWw:x:y:z:Z:2345:6:");
  		if (c < 0)
  			break;
  		switch (c) {

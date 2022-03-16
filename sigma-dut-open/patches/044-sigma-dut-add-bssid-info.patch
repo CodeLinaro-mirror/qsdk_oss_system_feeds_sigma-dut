@@ -11,21 +11,19 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  ap.c | 11 +++++++++++
  1 file changed, 11 insertions(+)
 
-diff --git a/ap.c b/ap.c
-index ead9e2d..1677548 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -7996,6 +7996,7 @@ enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
- #ifdef ANDROID
- 	struct group *gr;
- #endif /* ANDROID */
+@@ -8424,6 +8424,7 @@ enum sigma_cmd_result cmd_ap_config_comm
+ 	enum ap_chwidth chwidth;
+ 	enum sec_ch_offset offset;
+ 	int chan;
 +	unsigned char main_bssid[6];
  
  	drv = get_driver_type(dut);
  
-@@ -8217,6 +8218,16 @@ enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
- 	if (dut->ap_bcnint)
- 		fprintf(f, "beacon_int=%d\n", dut->ap_bcnint);
+@@ -8685,6 +8686,16 @@ write_conf:
+ 	if (dut->ap_start_disabled)
+ 		fprintf(f, "start_disabled=1\n");
  
 +	/* add the bssid of the main iface before other bss are added to this conf */
 +	if (get_hwaddr(ifname, main_bssid)) {
@@ -40,6 +38,3 @@ index ead9e2d..1677548 100644
  	if (dut->ap_akm_values) {
  		struct {
  			int akm;
--- 
-2.7.4
-

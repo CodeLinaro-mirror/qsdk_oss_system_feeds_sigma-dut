@@ -1,6 +1,6 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -8081,14 +8081,14 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -8591,14 +8591,14 @@ write_conf:
  			fprintf(f, "wpa=1\n");
  		switch (dut->ap_pmf) {
  		case AP_PMF_DISABLED:
@@ -21,7 +21,7 @@
  			break;
  		case AP_PMF_REQUIRED:
  			fprintf(f, "wpa_key_mgmt=WPA-EAP-SHA256%s\n",
-@@ -8102,6 +8102,8 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -8612,6 +8612,8 @@ write_conf:
  			fprintf(f, "wpa_key_mgmt=FT-EAP\n");
  		else if (dut->ap_key_mgmt == AP_WPA2_ENT_FT_EAP)
  			fprintf(f, "wpa_key_mgmt=FT-EAP WPA-EAP\n");
@@ -30,7 +30,7 @@
  		fprintf(f, "wpa_pairwise=%s\n",
  			hostapd_cipher_name(dut->ap_cipher));
  		if (dut->ap_group_cipher != AP_NO_GROUP_CIPHER_SET)
-@@ -8237,8 +8239,8 @@ skip_key_mgmt:
+@@ -8747,8 +8749,8 @@ skip_key_mgmt:
  				dut->ap_group_mgmt_cipher));
  
  	if (ap_ft_enabled(dut)) {
@@ -41,7 +41,7 @@
  
  		fprintf(f, "mobility_domain=%s\n",
  			atoi(dut->ap_mobility_domain) ? dut->ap_mobility_domain : "0101");
-@@ -8247,35 +8249,48 @@ skip_key_mgmt:
+@@ -8757,35 +8759,48 @@ skip_key_mgmt:
  			memset(own_addr, 0, ETH_ALEN);
  			own_addr[0] = 0x02;
  		}
@@ -94,14 +94,14 @@
 -				own_addr[3], own_addr[4], own_addr[5]);
 +				own_addr[3], own_addr[4], own_addr[5],
 +				own_addr_str);
- 			fprintf(f,
--				"r1kh=%s %s 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff\n",
--				ap2_addr, ap2_addr);
++			fprintf(f,
 +				"r0kh=%02x:%02x:%02x:%02x:%02x:%02x %s 000102030405060708090a0b0c0d0e0f\n",
 +				ap2_addr[0], ap2_addr[1], ap2_addr[2],
 +				ap2_addr[3], ap2_addr[4], ap2_addr[5],
 +				ap2_addr_str);
-+			fprintf(f,
+ 			fprintf(f,
+-				"r1kh=%s %s 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff\n",
+-				ap2_addr, ap2_addr);
 +				"r1kh=%02x:%02x:%02x:%02x:%02x:%02x %02x:%02x:%02x:%02x:%02x:%02x 000102030405060708090a0b0c0d0e0f\n",
 +				ap2_addr[0], ap2_addr[1], ap2_addr[2],
 +				ap2_addr[3], ap2_addr[4], ap2_addr[5],
@@ -110,12 +110,3 @@
  		} else {
  			fprintf(f,
  				"r0kh=ff:ff:ff:ff:ff:ff * 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff\n");
-@@ -8599,6 +8614,8 @@ skip_key_mgmt:
-                                 fprintf(f_1, "auth_server_shared_secret=%s\n",
-                                                 dut->ap_radius_password);
-                                 break;
-+			default:
-+                                break;
-                 }
-                 fclose(f_1);
-         }

@@ -14,7 +14,44 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -14802,6 +14802,32 @@ static int mac80211_he_ltf_mapping(struc
+@@ -818,6 +818,14 @@ static enum sigma_cmd_result cmd_ap_set_
+ 		}
+ 	}
+ 
++	val = get_param(cmd, "UnsolicitedProbeResp");
++	if (val) {
++		if (strcasecmp(val, "enable") == 0)
++			dut->ap_6g_unsol_prb_resp = 1;
++		else
++			dut->ap_6g_unsol_prb_resp = 0;
++	}
++
+ 	/* Overwrite the AP channel with DFS channel if configured */
+ 	val = get_param(cmd, "dfs_chan");
+ 	if (val) {
+@@ -9320,8 +9328,11 @@ skip_key_mgmt:
+ 			if (check_band(dut, BAND_6G, conf_counter)) {
+ 				fprintf(f, "op_class=%d\n",
+ 					get_6g_ch_op_class(chan));
+-				/* Enable fils discovery by default */
+-				fprintf(f, "fils_discovery_max_interval=20\n");
++
++				if (dut->ap_6g_unsol_prb_resp)
++					fprintf(f, "unsol_bcast_probe_resp_interval=20\n");
++				else
++					fprintf(f, "fils_discovery_max_interval=20\n");
+ 			}
+ 		}
+ 		 if (dut->ap_he_mimo == MIMO_DL) {
+@@ -10416,6 +10427,7 @@ static enum sigma_cmd_result cmd_ap_rese
+ 	dut->ap_ampdu_exp = 0;
+ 	dut->ap_max_mpdu_len = 0;
+ 	dut->ap_band_6g = 0;
++	dut->ap_6g_unsol_prb_resp = 0;
+ 
+ 	dut->ap_band = BAND_UNKNOWN;
+ 	dut->ap_band_1 = BAND_UNKNOWN;
+@@ -15031,6 +15043,32 @@ static int mac80211_he_ltf_mapping(struc
  	return -1;
  }
  
@@ -47,8 +84,8 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  
  static enum sigma_cmd_result mac80211_he_ltf(struct sigma_dut *dut,
  					     struct sigma_conn *conn,
-@@ -14970,6 +14996,19 @@ static enum sigma_cmd_result mac80211_ap
- 			return res;
+@@ -15243,6 +15281,19 @@ static enum sigma_cmd_result mac80211_ap
+ 		}
  	}
  
 +	val = get_param(cmd, "UnsolicitedProbeResp");
@@ -67,3 +104,13 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  	return SUCCESS_SEND_STATUS;
  }
  
+--- a/sigma_dut.h
++++ b/sigma_dut.h
+@@ -1073,6 +1073,7 @@ struct sigma_dut {
+ 	int dscp_use_iptables;
+ 	struct mbss_support mbss;
+ 	int hapd_global_ctrl;
++	int ap_6g_unsol_prb_resp;
+ 
+ 	const char *dual_ap_ifname;
+ 	enum if_band ap_band, ap_band_1;

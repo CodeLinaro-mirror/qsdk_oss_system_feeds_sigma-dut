@@ -1,6 +1,6 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -2203,11 +2203,17 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -2289,11 +2289,17 @@ static enum sigma_cmd_result cmd_ap_set_
  		if (strcasecmp(val, "WPA2-PSK") == 0 ||
  		    (security && strcasecmp(security, "PSK") == 0 &&
  		     strcasecmp(val, "WPA2") == 0)) {
@@ -20,7 +20,7 @@
  			dut->ap_cipher = AP_CCMP;
  		} else if (strcasecmp(val, "SuiteB") == 0) {
  			dut->ap_key_mgmt = AP_SUITEB;
-@@ -7918,6 +7924,8 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -8377,6 +8383,8 @@ write_conf:
  			key_mgmt = "SAE";
  		else if (dut->ap_key_mgmt == AP_WPA2_PSK_SAE)
  			key_mgmt = "WPA-PSK SAE";
@@ -29,7 +29,7 @@
  		else
  			key_mgmt = "WPA-PSK";
  		switch (dut->ap_pmf) {
-@@ -7941,8 +7949,6 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -8400,8 +8408,6 @@ write_conf:
  		}
  		if (dut->ap_key_mgmt == AP_WPA2_PSK_SHA256)
  			fprintf(f, "wpa_key_mgmt=WPA-PSK-SHA256\n");
@@ -38,7 +38,7 @@
  		fprintf(f, "wpa_pairwise=%s\n",
  			hostapd_cipher_name(dut->ap_cipher));
  		if (dut->ap_group_cipher != AP_NO_GROUP_CIPHER_SET)
-@@ -8131,26 +8137,50 @@ skip_key_mgmt:
+@@ -8590,26 +8596,50 @@ skip_key_mgmt:
  
  	if (ap_ft_enabled(dut)) {
  		unsigned char own_addr[ETH_ALEN];
@@ -98,7 +98,7 @@
  	}
  
  	if (dut->rsne_override)
-@@ -8335,6 +8365,25 @@ skip_key_mgmt:
+@@ -8795,6 +8825,25 @@ skip_key_mgmt:
  		}
  	}
  
@@ -121,10 +121,10 @@
 +	if (dut->ap_gas_cb_delay)
 +		fprintf(f, "gas_comeback_delay=%d\n", dut->ap_gas_cb_delay);
 +
- 	if(dut->ap_is_dual) {
-                 f_1 = fopen(SIGMA_TMPDIR "/sigma_dut_dual-ap.conf", "w");
-                 if (f_1 == NULL) {
-@@ -10545,6 +10594,366 @@ static int ath_ap_send_frame_mbo(struct
+ 	if (dut->program == PROGRAM_WPS) {
+ 		/* 60G WPS tests requires wps_state of 2 (configured) */
+ 		int wps_state = is_60g_sigma_dut(dut) ? 2 : 1;
+@@ -11162,6 +11211,366 @@ static int ath_ap_send_frame_mbo(struct
  	return 1;
  }
  
@@ -491,7 +491,7 @@
  
  static int ap_send_frame_vht(struct sigma_dut *dut, struct sigma_conn *conn,
  			     struct sigma_cmd *cmd)
-@@ -10597,6 +11006,8 @@ static int ap_send_frame_mbo(struct sigm
+@@ -11214,6 +11623,8 @@ static int ap_send_frame_mbo(struct sigm
  			     struct sigma_cmd *cmd)
  {
  	switch (get_driver_type(dut)) {
@@ -500,7 +500,7 @@
  	case DRIVER_ATHEROS:
  		return ath_ap_send_frame_mbo(dut, conn, cmd);
  	case DRIVER_OPENWRT:
-@@ -13093,6 +13504,185 @@ static int mac80211_vht_chnum_band(struc
+@@ -13737,6 +14148,185 @@ static int mac80211_vht_chnum_band(struc
  	return 0;
  }
  
@@ -686,7 +686,7 @@
  
  static enum sigma_cmd_result
  mac80211_he_tx_bandwidth(struct sigma_dut *dut, struct sigma_conn *conn,
-@@ -13228,6 +13818,39 @@ static enum sigma_cmd_result mac80211_ap
+@@ -13915,6 +14505,39 @@ static enum sigma_cmd_result mac80211_ap
  	if (val && mac80211_vht_chnum_band(dut, ifname, val) < 0)
  		return -1;
  

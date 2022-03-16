@@ -26,7 +26,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -677,6 +677,36 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -685,6 +685,36 @@ static enum sigma_cmd_result cmd_ap_set_
  	if (val)
  		dut->program = sigma_program_to_enum(val);
  
@@ -63,7 +63,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	val = get_param(cmd, "WLAN_TAG");
  	if (val) {
  		wlan_tag = atoi(val);
-@@ -1984,6 +2014,27 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -2013,6 +2043,27 @@ static enum sigma_cmd_result cmd_ap_set_
  		}
  	}
  
@@ -91,8 +91,8 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	val = get_param(cmd, "TWT_RespSupport");
  	if (val) {
  		if (strcasecmp(val, "enable") == 0) {
-@@ -2299,6 +2350,56 @@ static enum sigma_cmd_result cmd_ap_set_
- 		}
+@@ -2352,6 +2403,56 @@ static enum sigma_cmd_result cmd_ap_set_
+ 		return 1;
  	}
  
 +	val = get_param(cmd, "NonTxBSSIndex");
@@ -120,7 +120,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
 +			if (strcasecmp(val, "SAE") == 0) {
 +				dut->mbss.conf[non_tx_bss_idx - 1].key_mgmt = AP_WPA2_SAE;
 +			} else {
-+				if (dut->use_6g) {
++				if (check_band(dut, BAND_6G, 0)) {
 +					send_resp(dut, conn, SIGMA_INVALID,
 +						  "errorCode,Unsupported 6GHz KeyMgmtType");
 +					return 0;
@@ -148,12 +148,12 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	val = get_param(cmd, "KEYMGNT");
  	if (!val)
  		val = get_param(cmd,"KeyMgmtType");
-@@ -9357,6 +9458,91 @@ skip_key_mgmt:
+@@ -9386,6 +9487,91 @@ skip_key_mgmt:
  		fprintf(f, "oce=%d\n",
  			dut->dev_role == DEVROLE_STA_CFON ? 2 : 1);
  	}
 +
-+	if (dut->program == PROGRAM_HE && dut->ap_mbssid == VALUE_ENABLED) {
++	if (dut->program == PROGRAM_HE && dut->ap_mbssid == VALUE_ENABLED && !conf_counter) {
 +		uint8_t num_bss, bssid_mask, max_bss_count;
 +		uint8_t init_val, base_val;
 +		uint8_t max_bssid_ind = 0;
@@ -224,7 +224,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
 +				fprintf(f, "wpa_pairwise=CCMP\n");
 +				fprintf(f, "ieee80211w=2\n");
 +				fprintf(f, "sae_password=%s\n", dut->mbss.conf[i].psk);
-+				if (dut->use_6g)
++				if (check_band(dut, BAND_6G, conf_counter))
 +					fprintf(f, "sae_pwe=1\n");
 +			}
 +
@@ -238,10 +238,10 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
 +	}
 +
  	fclose(f);
- 	if (dut->use_hostapd_pid_file)
- 		kill_hostapd_process_pid(dut);
-@@ -9711,8 +9897,16 @@ skip_key_mgmt:
  
+ 	if (dut->ap_is_dual && conf_counter == 0) {
+@@ -9682,8 +9868,16 @@ skip_key_mgmt:
+ 		}
  	}
  
 -	if (drv == DRIVER_MAC80211 && dut->program == PROGRAM_HE)
@@ -256,9 +256,9 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
 +		}
 +	}
  
- 	dut->hostapd_running = 1;
- 	return 1;
-@@ -10370,6 +10564,8 @@ static enum sigma_cmd_result cmd_ap_rese
+ 	if (dut->bridge && dut->ap_is_dual) {
+ 		if (run_system_wrapper(dut, "ifconfig %s up", dut->bridge)
+@@ -10544,6 +10738,8 @@ static enum sigma_cmd_result cmd_ap_rese
  		}
  		if (get_openwrt_driver_type() == OPENWRT_DRIVER_ATHEROS)
  			dut->ap_dfs_mode = AP_DFS_MODE_ENABLED;
@@ -266,8 +266,8 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
 +		memset(&dut->mbss, 0, sizeof(struct mbss_support));
  	}
  
- #ifdef NL80211_SUPPORT
-@@ -11910,6 +12106,28 @@ static enum sigma_cmd_result cmd_ap_get_
+ 
+@@ -12103,6 +12299,28 @@ static enum sigma_cmd_result cmd_ap_get_
  
  	get_if_name(dut, ifname, sizeof(ifname), wlan_tag);
  
@@ -298,7 +298,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  		return -1;
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -93,6 +93,8 @@ struct sigma_dut;
+@@ -95,6 +95,8 @@ struct sigma_dut;
  
  #define NAN_AWARE_IFACE "wifi-aware0"
  
@@ -307,7 +307,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  /* Set default operating channel width 80 MHz */
  #define VHT_DEFAULT_OPER_CHWIDTH AP_80_VHT_OPER_CHWIDTH
  
-@@ -173,7 +175,7 @@ struct wfa_cs_p2p_group {
+@@ -185,7 +187,7 @@ struct wfa_cs_p2p_group {
  	char ifname[IFNAMSIZ];
  	int go;
  	char grpid[P2P_GRP_ID_LEN];
@@ -316,8 +316,8 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  };
  
  #ifdef CONFIG_TRAFFIC_AGENT
-@@ -354,6 +356,43 @@ enum akm_suite_values {
- 
+@@ -404,6 +406,43 @@ enum if_band {
+ 	BAND_6G
  };
  
 +enum ap_key_mgmt {
@@ -360,7 +360,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  struct sigma_dut {
  	const char *main_ifname;
  	char *main_ifname_2g;
-@@ -410,7 +449,7 @@ struct sigma_dut {
+@@ -462,7 +501,7 @@ struct sigma_dut {
  
  	struct wfa_cs_p2p_group *groups;
  
@@ -369,7 +369,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	int infra_network_id;
  
  	enum p2p_mode {
-@@ -448,12 +487,12 @@ struct sigma_dut {
+@@ -500,12 +539,12 @@ struct sigma_dut {
  	unsigned int akm_values;
  
  	/* AP configuration */
@@ -384,7 +384,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	enum ap_mode {
  		AP_11a,
  		AP_11g,
-@@ -505,26 +544,7 @@ struct sigma_dut {
+@@ -559,26 +598,7 @@ struct sigma_dut {
  	enum value_not_set_enabled_disabled ap_dyn_bw_sig;
  	int ap_sgi80;
  	int ap_p2p_mgmt;
@@ -412,7 +412,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	enum ap_tag_key_mgmt {
  		AP2_OPEN,
  		AP2_OSEN,
-@@ -615,7 +635,7 @@ struct sigma_dut {
+@@ -670,7 +690,7 @@ struct sigma_dut {
  	int ap_qos_map_set;
  	int ap_bss_load;
  	char ap_osu_server_uri[10][256];
@@ -421,18 +421,12 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	int ap_osu_method[10];
  	int ap_osu_icon_tag;
  	int ap_venue_url;
-@@ -979,12 +999,14 @@ struct sigma_dut {
- 	int ap_6g_unsol_prb_resp;
-	struct dut_hw_modes hw_modes;
- 	enum if_band ap_dual_band;
+@@ -1051,6 +1071,8 @@ struct sigma_dut {
+ 	unsigned int prev_disable_scs_support;
+ 	unsigned int prev_disable_mscs_support;
+ 	int dscp_use_iptables;
 +	struct mbss_support mbss;
- 	int ocvc;
- 	int beacon_prot;
- 	int client_privacy;
- 	int client_privacy_default;
- 	int saquery_oci_freq;
- 	char device_driver[32];
 +	int hapd_global_ctrl;
-	int user_config_ap_ocvc;
-	int user_config_ap_beacon_prot;
-	char qm_domain_name[250];
+ 
+ 	const char *dual_ap_ifname;
+ 	enum if_band ap_band, ap_band_1;

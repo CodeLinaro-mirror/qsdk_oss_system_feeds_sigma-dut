@@ -12,15 +12,23 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -764,6 +764,7 @@ static enum sigma_cmd_result cmd_ap_set_
- 	if (val) {
- 		dut->use_6g = 1;
- 		is_6g = 1;
-+		dut->ap_mbo = 1;
- 	}
+@@ -123,6 +123,7 @@ static void ath_ap_set_params(struct sig
+ static int kill_process(struct sigma_dut *dut, char *proc_name,
+ 			unsigned char is_proc_instance_one, int sig);
+ static void mac80211_set_mu_brp_commands(struct sigma_dut *dut, const char *ifname);
++static bool check_band(struct sigma_dut *dut, enum if_band band, bool second_iface);
  
- 	val = get_param(cmd, "Band6Gonly");
-@@ -10509,6 +10510,23 @@ static enum sigma_cmd_result cmd_ap_rese
+ 
+ static int fwtest_cmd_wrapper(struct sigma_dut *dut, const char *arg,
+@@ -813,6 +814,7 @@ static enum sigma_cmd_result cmd_ap_set_
+ 		if (atoi(val) >= 5935 && atoi(val) <= 7115) {
+ 			is_6g = 1;
+ 			dut->ap_band_6g = 1;
++			dut->ap_mbo = 1;
+ 		} else {
+ 			dut->ap_band_6g = 0;
+ 		}
+@@ -10751,6 +10753,23 @@ static enum sigma_cmd_result cmd_ap_rese
  			dut->ap_dfs_mode = AP_DFS_MODE_ENABLED;
  
  		memset(&dut->mbss, 0, sizeof(struct mbss_support));
@@ -43,8 +51,8 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
 +		dut->ap_assoc_delay = 0;
  	}
  
- 	dut->ap_oper_chn = 0;
-@@ -11941,7 +11959,8 @@ enum sigma_cmd_result cmd_ap_send_frame(
+ 
+@@ -12195,7 +12214,8 @@ enum sigma_cmd_result cmd_ap_send_frame(
  			return ap_send_frame_vht(dut, conn, cmd);
  		if (strcasecmp(val, "LOC") == 0)
  			return ap_send_frame_loc(dut, conn, cmd);
@@ -54,12 +62,12 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  			return ap_send_frame_mbo(dut, conn, cmd);
  		if (strcasecmp(val, "60GHz") == 0)
  			return ap_send_frame_60g(dut, conn, cmd);
-@@ -14479,7 +14498,9 @@ static int mac80211_update_mbo_pref_ap_l
+@@ -14758,7 +14778,9 @@ static int mac80211_update_mbo_pref_ap_l
  
  	/* Now add the self AP Address */
  	if (dut->mbo_self_ap_tuple.ap_ne_class == -1) {
 -		if (dut->ap_channel <= 11)
-+		if (dut->use_6g)
++		if (check_band(dut, BAND_6G, 0))
 +			ap_ne_class = 131;
 +		else if (dut->ap_channel <= 11)
  			ap_ne_class = 81;
