@@ -8,6 +8,7 @@ PKG_RELEASE:=1
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/qca/sigma-dut.git
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG)-$(PKG_VERSION)
+PKG_MIRROR_MD5SUM:=skip
 PKG_MD5SUM:=skip
 
 WIFI_ath9k:=PACKAGE_kmod-ath9k
