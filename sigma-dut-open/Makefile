@@ -2,12 +2,13 @@ include $(TOPDIR)/rules.mk
 
 PKG:=sigma-dut
 PKG_NAME:=sigma-dut-open
-PKG_VERSION:=20212301
+PKG_VERSION:=20220204
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/qca/sigma-dut.git
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG)-$(PKG_VERSION)
+PKG_MIRROR_MD5SUM:=skip
 PKG_MD5SUM:=skip
 
 WIFI_ath9k:=PACKAGE_kmod-ath9k
@@ -25,7 +26,7 @@ ifeq ($(DUMP)$(PKG_VERSION),)
 endif
 
 PKG_SOURCE_SUBDIR:=$(PKG)-$(PKG_VERSION)
-PKG_SOURCE_VERSION=39fd5c47b0afcbdc538ec22c9a102cf05f6c86b3
+PKG_SOURCE_VERSION=5180c4ea9ae4ba4b39b20fc6d70f4251630a8811
 PKG_SOURCE:=$(PKG)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 include $(INCLUDE_DIR)/package.mk

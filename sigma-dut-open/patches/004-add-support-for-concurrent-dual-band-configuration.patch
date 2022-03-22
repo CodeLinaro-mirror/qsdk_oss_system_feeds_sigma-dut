@@ -131,9 +131,9 @@
  		/* 60G WPS tests requires wps_state of 2 (configured) */
  		int wps_state = is_60g_sigma_dut(dut) ? 2 : 1;
 @@ -8623,6 +8737,21 @@ skip_key_mgmt:
- 			 dut->use_hostapd_pid_file ?
- 			 " -P " SIGMA_DUT_HOSTAPD_PID_FILE : "",
- 			 dut->sigma_tmpdir);
+			 dut->sigma_tmpdir,
+			 dut->ap_is_dual ? dut->sigma_tmpdir : "",
+			 dut->ap_is_dual ? "/sigma_dut-ap_0.conf" : "");
 +		if (dut->ap_is_dual) {
 +			snprintf(buf_dual, sizeof(buf_dual), "%shostapd -B%s%s%s%s " SIGMA_TMPDIR
 +				"/sigma_dut_dual-ap.conf",

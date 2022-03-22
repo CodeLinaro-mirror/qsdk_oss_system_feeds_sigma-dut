@@ -97,9 +97,9 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
 +		if (dut->use_6g)
 +			break;
 +
- 		if (dut->ap_channel >= 1 && dut->ap_channel <= 14)
- 			dut->use_5g = 0;
- 		else if (dut->ap_channel >= 36 && dut->ap_channel <= 171)
+		if (dut->ap_band_6g)
+			dut->use_5g = 1;
+		else if (dut->ap_channel >= 1 && dut->ap_channel <= 14)
 @@ -7560,6 +7586,13 @@ static int get_5g_channel_freq(int chan)
  	return 5000 + chan * 5;
  }
@@ -115,14 +115,14 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  static const char * hostapd_cipher_name(enum ap_cipher cipher)
  {
 @@ -7925,7 +7958,7 @@ enum sigma_cmd_result cmd_ap_config_comm
- 		fprintf(f, "hw_mode=ad\n");
- 		break;
- 	case AP_11ax:
--		if (dut->use_5g)
-+		if (dut->use_6g || dut->use_5g)
- 			fprintf(f, "hw_mode=a\n");
- 		else
- 			fprintf(f, "hw_mode=g\n");
+		 * should be set. So check the channel parameter of 2.4 GHz and
+		 * 5 GHz respectively, and then set hw_mode; other conditions
+		 * remain. */
+-		if (dut->use_5g) {
++		if (dut->use_6g || dut->use_5g) {
+			if (dut->ap_is_dual) {
+				int chan;
+
 @@ -7941,7 +7974,7 @@ enum sigma_cmd_result cmd_ap_config_comm
  	if ((drv == DRIVER_MAC80211 || drv == DRIVER_QNXNTO ||
  	     drv == DRIVER_LINUX_WCN) &&
@@ -221,6 +221,6 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
 +	int use_6g;
 +	int ap_6g_only;
 +	int ap_6g_unsol_prb_resp;
- 	int ocvc;
- 	int beacon_prot;
- 	int client_privacy;
+	struct dut_hw_modes hw_modes;
+	int ocvc;
+	int beacon_prot;
