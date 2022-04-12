@@ -1,6 +1,8 @@
+diff --git a/ap.c b/ap.c
+index 1e3d61d..ba2a57b 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -7855,6 +7855,12 @@ skip_key_mgmt:
+@@ -9113,6 +9113,12 @@ skip_key_mgmt:
  			sigma_dut_print(dut, DUT_MSG_ERROR, "Failed to remove "
  					"monitor interface");
  
@@ -12,4 +14,4 @@
 +
  		snprintf(path, sizeof(path), "%shostapd",
  			 file_exists("hostapd") ? "./" : "");
- 		snprintf(buf, sizeof(buf), "%s -B%s%s%s%s%s " SIGMA_TMPDIR
+ 		snprintf(buf, sizeof(buf),

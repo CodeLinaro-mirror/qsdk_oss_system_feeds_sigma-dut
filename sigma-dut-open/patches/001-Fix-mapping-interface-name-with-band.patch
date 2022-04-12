@@ -1,37 +1,8 @@
+diff --git a/ap.c b/ap.c
+index fa6a1ef..9fb9b10 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -6879,28 +6879,13 @@ enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
- 	case AP_11g:
- 	case AP_11b:
- 	case AP_11ng:
--		ifname = (drv == DRIVER_MAC80211) ? "wlan0" : "ath0";
--		if ((drv == DRIVER_QNXNTO || drv == DRIVER_LINUX_WCN) &&
--		    sigma_main_ifname)
--			ifname = sigma_main_ifname;
-+		ifname = get_main_ifname();
- 		fprintf(f, "hw_mode=g\n");
- 		break;
- 	case AP_11a:
- 	case AP_11na:
- 	case AP_11ac:
--		if (drv == DRIVER_QNXNTO || drv == DRIVER_LINUX_WCN) {
--			if (sigma_main_ifname)
--				ifname = sigma_main_ifname;
--			else
--				ifname = "wlan0";
--		} else if (drv == DRIVER_MAC80211) {
--			if (if_nametoindex("wlan1") > 0)
--				ifname = "wlan1";
--			else
--				ifname = "wlan0";
--		} else {
--			ifname = get_main_ifname();
--		}
-+		ifname = get_main_ifname();
- 		fprintf(f, "hw_mode=a\n");
- 		break;
- 	case AP_11ad:
-@@ -8621,9 +8606,9 @@ static enum sigma_cmd_result cmd_ap_get_info(struct sigma_dut *dut,
+@@ -10365,9 +10365,9 @@ static enum sigma_cmd_result cmd_ap_get_info(struct sigma_dut *dut,
  		else
  			version = "Unknown";
  
@@ -44,7 +15,12 @@
  		else
  			snprintf(resp, sizeof(resp), "interface,wlan0_any,"
  				 "agent,1.0,version,%s", version);
-@@ -8737,12 +8722,7 @@ static int ap_inject_frame(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -10481,16 +10481,11 @@ static int ap_inject_frame(struct sigma_dut *dut, struct sigma_conn *conn,
+ 	unsigned char buf[1000], *pos;
+ 	int s, res;
+ 	unsigned char addr_sta[6], addr_own[6];
+-	char *ifname;
++	const char *ifname;
  	char cbuf[100];
  	struct ifreq ifr;
  
@@ -54,7 +30,7 @@
 -		ifname = "wlan1";
 -	else
 -		ifname = "wlan0";
-+	ifname = get_main_ifname();
++	ifname = get_main_ifname(dut);
  
  	if (hwaddr_aton(sta_addr, addr_sta) < 0)
  		return -1;

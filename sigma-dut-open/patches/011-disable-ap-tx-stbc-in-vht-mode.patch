@@ -1,6 +1,8 @@
+diff --git a/ap.c b/ap.c
+index ba2a57b..053c991 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -6953,7 +6953,7 @@ enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
+@@ -8171,7 +8171,7 @@ write_conf:
  		fprintf(f, "ht_capab=%s%s%s\n",
  			ht40plus ? "[HT40+]" : "",
  			ht40minus ? "[HT40-]" : "",
@@ -9,21 +11,21 @@
  	}
  
  	if ((drv == DRIVER_MAC80211 || drv == DRIVER_QNXNTO ||
-@@ -7688,7 +7688,7 @@ skip_key_mgmt:
- 				"[SU-BEAMFORMER][SU-BEAMFORMEE][BF-ANTENNA-2][SOUNDING-DIMENSION-2]" : "",
+@@ -8903,7 +8903,7 @@ skip_key_mgmt:
  				(dut->ap_ldpc == VALUE_ENABLED) ?
  				"[RXLDPC]" : "",
--				dut->ap_tx_stbc ? "[TX-STBC-2BY1][RX-STBC-1]" : "",
-+				dut->ap_tx_stbc ? "[TX-STBC-2BY1][RX-STBC-1]" : "[RX-STBC-1]",
- 				dut->ap_mu_txBF ? "[MU-BEAMFORMER]" : "");
- 		}
- 	}
-@@ -8453,7 +8453,7 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
- 		dut->ap_tx_streams = 3;
- 		dut->ap_vhtmcs_map = 0;
- 		dut->ap_chwidth = AP_80;
--		dut->ap_tx_stbc = 1;
-+		dut->ap_tx_stbc = 0;
- 		dut->ap_dyn_bw_sig = VALUE_ENABLED;
- 		if (get_openwrt_driver_type() == OPENWRT_DRIVER_ATHEROS)
- 			dut->ap_dfs_mode = AP_DFS_MODE_ENABLED;
+ 				(dut->ap_tx_stbc == VALUE_ENABLED) ?
+-				"[TX-STBC-2BY1][RX-STBC-1]" : "",
++				"[TX-STBC-2BY1][RX-STBC-1]" : "[RX-STBC-1]",
+ 				dut->ap_mu_txBF ? "[MU-BEAMFORMER]" : "",
+ 				dut->ap_chwidth == AP_160 ? "[VHT160]" :
+ 				(dut->ap_chwidth == AP_80_80 ?
+@@ -10021,7 +10021,7 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+ 		 * is still not set, query it from the wiphy to see if it is
+ 		 * supported by the driver.
+ 		 */
+-		if (drv == DRIVER_LINUX_WCN)
++		if (drv == DRIVER_LINUX_WCN || drv == DRIVER_MAC80211)
+ 			dut->ap_tx_stbc = VALUE_NOT_SET;
+ 		else
+ 			dut->ap_tx_stbc = VALUE_ENABLED;

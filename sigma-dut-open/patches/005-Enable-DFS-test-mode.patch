@@ -1,9 +1,11 @@
+diff --git a/ap.c b/ap.c
+index b0860a1..b9b5ecf 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -6984,7 +6984,8 @@ enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
+@@ -8205,7 +8205,8 @@ write_conf:
  	        else if (dut->ap_channel >= 52 && dut->ap_channel <= 144) {
                           fprintf(f, "country_code=US\n"
-                          	"ieee80211d=1\n"
+                                 "ieee80211d=1\n"
 -                                "ieee80211h=1\n");
 +                                "ieee80211h=1\n"
 +		                "dfs_test_mode=1\n");

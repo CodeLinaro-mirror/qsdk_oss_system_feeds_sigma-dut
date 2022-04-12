@@ -1,14 +1,16 @@
+diff --git a/ap.c b/ap.c
+index 9fb9b10..b0860a1 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -6979,6 +6979,11 @@ enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
+@@ -8202,6 +8202,11 @@ write_conf:
  			fprintf(f, "ieee80211d=1\n");
  			fprintf(f, "ieee80211h=1\n");
  		}
 +	        else if (dut->ap_channel >= 52 && dut->ap_channel <= 144) {
 +                         fprintf(f, "country_code=US\n"
-+                         	"ieee80211d=1\n"
++                                "ieee80211d=1\n"
 +                                "ieee80211h=1\n");
 +                }
  	}
  
- 	fprintf(f, "interface=%s\n", ifname);
+ 	if (drv == DRIVER_LINUX_WCN && dut->ap_mode == AP_11ax) {

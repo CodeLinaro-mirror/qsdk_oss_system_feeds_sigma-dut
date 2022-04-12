@@ -2,12 +2,13 @@ include $(TOPDIR)/rules.mk
 
 PKG:=sigma-dut
 PKG_NAME:=sigma-dut-open
-PKG_VERSION:=20190926
+PKG_VERSION:=20220408
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/qca/sigma-dut.git
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG)-$(PKG_VERSION)
+#CONFIG_GIT_MIRROR=https://git.codelinaro.org/clo/qsdk/
 
 WIFI_ath9k:=PACKAGE_kmod-ath9k
 WIFI_ath10k:=PACKAGE_kmod-ath10k
@@ -23,15 +24,19 @@ ifeq ($(DUMP)$(PKG_VERSION),)
 endif
 
 PKG_SOURCE_SUBDIR:=$(PKG)-$(PKG_VERSION)
-PKG_SOURCE_VERSION=1a686bd3b26f4a0b4d9848483a33202eee6627e4
+PKG_SOURCE_VERSION=f6c8ab5693612bc430513924f177ee8cb60688a8
 PKG_SOURCE:=$(PKG)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 include $(INCLUDE_DIR)/package.mk
 
+TARGET_CFLAGS+= -std=c99
+TARGET_CFLAGS+= -DNL80211_SUPPORT -I$(STAGING_DIR)/usr/include/libnl3
+TARGET_LDFLAGS+= -lm -lnl-3 -lnl-genl-3 -lnl-route-3
+
 define Package/$(PKG_NAME)
   SECTION:=QCA
   CATEGORY:=QCA software
-  DEPENDS:=+libpthread @$(WIFI_OPEN)
+  DEPENDS:=+libnl +libpthread @$(WIFI_OPEN)
   TITLE:=Sigma DUT
 endef
 
