@@ -17,7 +17,40 @@ Signed-off-by: Venkateswara Naralasetty <vnaralas@codeaurora.org>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -10243,9 +10243,42 @@ static void phy_info_vht_capa(struct dut
+@@ -8222,11 +8222,13 @@ static int fill_dual_radio_caps(struct s
+ 		if (dut->ap_sgi80 || dut->ap_txBF ||
+ 		    dut->ap_ldpc != VALUE_NOT_SET ||
+ 		    dut->ap_tx_stbc || dut->ap_mu_txBF ||
+-		    dut->ap_ampdu_exp || dut->ap_chwidth_1) {
+-			len += snprintf(vht_capab + len, sizeof(vht_capab) - len, "%s%s%s%s%s%s",
++		    dut->ap_ampdu_exp || dut->ap_chwidth_1 ||
++		    dut->ap_su_txBF) {
++			len += snprintf(vht_capab + len, sizeof(vht_capab) - len, "%s%s%s%s%s%s%s",
+ 					dut->ap_sgi80 ? "[SHORT-GI-80]" : "",
+ 					dut->ap_txBF ?
+-					"[SU-BEAMFORMER][SU-BEAMFORMEE][BF-ANTENNA-2][SOUNDING-DIMENSION-2]" : "",
++					"[SU-BEAMFORMER][BF-ANTENNA-2][SOUNDING-DIMENSION-2]" : "",
++					dut->ap_su_txBF ? "[SU-BEAMFORMEE]":"",
+ 					(dut->ap_ldpc == VALUE_ENABLED) ?
+ 					"[RXLDPC]" : "",
+ 					dut->ap_tx_stbc ? "[TX-STBC-2BY1][RX-STBC-1]" : "",
+@@ -9398,11 +9400,12 @@ skip_key_mgmt:
+ 		    dut->ap_ldpc != VALUE_NOT_SET ||
+ 		    dut->ap_tx_stbc || dut->ap_mu_txBF ||
+ 		    dut->ap_chwidth || dut->ap_ampdu_exp ||
+-		    dut->ap_max_mpdu_len) {
+-			len += snprintf(vht_capab + len, sizeof(vht_capab) - len, "%s%s%s%s%s%s",
++		    dut->ap_max_mpdu_len || dut->ap_su_txBF) {
++			len += snprintf(vht_capab + len, sizeof(vht_capab) - len, "%s%s%s%s%s%s%s",
+ 				dut->ap_sgi80 ? "[SHORT-GI-80]" : "",
+ 				dut->ap_txBF ?
+-				"[SU-BEAMFORMER][SU-BEAMFORMEE][BF-ANTENNA-2][SOUNDING-DIMENSION-2]" : "",
++				"[SU-BEAMFORMER][BF-ANTENNA-2][SOUNDING-DIMENSION-2]" : "",
++				dut->ap_su_txBF ? "[SU-BEAMFORMEE]":"",
+ 				(dut->ap_ldpc == VALUE_ENABLED) ?
+ 				"[RXLDPC]" : "",
+ 				dut->ap_tx_stbc ? "[TX-STBC-2BY1][RX-STBC-1]" : "",
+@@ -10247,9 +10250,42 @@ static void phy_info_vht_capa(struct dut
  	}
  }
  
@@ -60,7 +93,7 @@ Signed-off-by: Venkateswara Naralasetty <vnaralas@codeaurora.org>
  
  	if (!mode)
  		return 1;
-@@ -10261,6 +10294,13 @@ static int phy_info_band(struct dut_hw_m
+@@ -10265,6 +10301,13 @@ static int phy_info_band(struct dut_hw_m
  	phy_info_vht_capa(mode, tb_band[NL80211_BAND_ATTR_VHT_CAPA],
  			  tb_band[NL80211_BAND_ATTR_VHT_MCS_SET]);
  
@@ -74,13 +107,17 @@ Signed-off-by: Venkateswara Naralasetty <vnaralas@codeaurora.org>
  	/* Other nl80211 band attributes can be parsed here, if required */
  
  	return NL_OK;
-@@ -10295,15 +10335,54 @@ static int wiphy_info_handler(struct nl_
+@@ -10299,15 +10342,58 @@ static int wiphy_info_handler(struct nl_
  			return res;
  	}
  
 +	if (dut->program == PROGRAM_HE && dut->hw_modes &&
 +	    !(dut->hw_modes->ap_phy_capab[4] & HE_PHY_CAP_MU_BEAMFORMER))
 +		dut->ap_mu_txBF = 0;
++
++	if (dut->program == PROGRAM_HE && dut->hw_modes &&
++	    !(dut->hw_modes->vht_capab & IEEE80211_VHT_CAP_SU_BEAMFORMEE_CAPABLE))
++		dut->ap_su_txBF = 0;
 +
  	return 0;
  }
@@ -129,7 +166,7 @@ Signed-off-by: Venkateswara Naralasetty <vnaralas@codeaurora.org>
  
  	ifindex = if_nametoindex(dut->main_ifname);
  	if (ifindex == 0) {
-@@ -10313,9 +10392,14 @@ static int mac80211_get_wiphy(struct sig
+@@ -10317,9 +10403,14 @@ static int mac80211_get_wiphy(struct sig
  		return -1;
  	}
  
@@ -146,6 +183,14 @@ Signed-off-by: Venkateswara Naralasetty <vnaralas@codeaurora.org>
  		sigma_dut_print(dut, DUT_MSG_DEBUG,
  				"%s: could not build get wiphy cmd", __func__);
  		nlmsg_free(msg);
+@@ -10394,6 +10485,7 @@ static enum sigma_cmd_result cmd_ap_rese
+ 	dut->ap_rx_amsdu = VALUE_NOT_SET;
+ 	dut->ap_txBF = 0;
+ 	dut->ap_mu_txBF = 0;
++	dut->ap_su_txBF = 1;
+ 	dut->ap_chwidth = AP_AUTO;
+ 	dut->ap_ampdu_exp = 7;
+ 	dut->ap_max_mpdu_len = 0;
 --- a/nl80211_copy.h
 +++ b/nl80211_copy.h
 @@ -2942,6 +2942,22 @@ enum nl80211_mpath_info {
@@ -181,15 +226,17 @@ Signed-off-by: Venkateswara Naralasetty <vnaralas@codeaurora.org>
  	__NL80211_BAND_ATTR_AFTER_LAST,
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -125,6 +125,7 @@ struct wfa_p2p_attribute {
+@@ -125,6 +125,9 @@ struct wfa_p2p_attribute {
  #define VHT_CAP_MAX_A_MPDU_LENGTH_EXPONENT_MASK       \
                  (7 << VHT_CAP_MAX_A_MPDU_LENGTH_EXPONENT_SHIFT)
  
++#define IEEE80211_VHT_CAP_SU_BEAMFORMEE_CAPABLE 0x00001000
++
 +#define HE_PHY_CAP_MU_BEAMFORMER 0x2
  
  #define AMPDU_FACTOR_BITS	0x3
  #define AMPDU_DENSITY_OFFSET	2
-@@ -135,6 +136,7 @@ struct dut_hw_modes {
+@@ -135,6 +138,7 @@ struct dut_hw_modes {
          u8 ampdu_params;
          u32 vht_capab;
          u8 vht_mcs_set[8];
@@ -197,3 +244,11 @@ Signed-off-by: Venkateswara Naralasetty <vnaralas@codeaurora.org>
  };
  
  #define WPA_GET_BE32(a) ((((u32) (a)[0]) << 24) | (((u32) (a)[1]) << 16) | \
+@@ -677,6 +681,7 @@ struct sigma_dut {
+ 	} ap_vht_chwidth;
+ 	int ap_txBF;
+ 	int ap_mu_txBF;
++	int ap_su_txBF;
+ 	enum ap_regulatory_mode {
+ 		AP_80211D_MODE_DISABLED,
+ 		AP_80211D_MODE_ENABLED,
