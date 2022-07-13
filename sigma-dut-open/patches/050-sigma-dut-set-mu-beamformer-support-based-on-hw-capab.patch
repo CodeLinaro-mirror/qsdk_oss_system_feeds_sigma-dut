@@ -115,7 +115,7 @@ Signed-off-by: Venkateswara Naralasetty <vnaralas@codeaurora.org>
 +	    !(dut->hw_modes->ap_phy_capab[4] & HE_PHY_CAP_MU_BEAMFORMER))
 +		dut->ap_mu_txBF = 0;
 +
-+	if (dut->program == PROGRAM_HE && dut->hw_modes &&
++	if ((dut->program == PROGRAM_VHT || dut->program == PROGRAM_HE) && dut->hw_modes &&
 +	    !(dut->hw_modes->vht_capab & IEEE80211_VHT_CAP_SU_BEAMFORMEE_CAPABLE))
 +		dut->ap_su_txBF = 0;
 +
