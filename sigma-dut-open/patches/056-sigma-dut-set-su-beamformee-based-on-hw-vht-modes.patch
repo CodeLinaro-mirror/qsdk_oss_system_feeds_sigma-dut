@@ -39,7 +39,7 @@ index 4157a306ed24..03aebd4c8bc8 100644
  	    !(dut->hw_modes.ap_he_phy_capab[33 / 8] & (1 << (33 % 8))))
  		dut->ap_mu_txBF = 0;
  
-+	if (dut->program == PROGRAM_HE &&
++	if ((dut->program == PROGRAM_VHT || dut->program == PROGRAM_HE) &&
 +	    !(dut->hw_modes.vht_capab & IEEE80211_VHT_CAP_SU_BEAMFORMEE_CAPABLE))
 +		dut->ap_su_txBF = 0;
 +
