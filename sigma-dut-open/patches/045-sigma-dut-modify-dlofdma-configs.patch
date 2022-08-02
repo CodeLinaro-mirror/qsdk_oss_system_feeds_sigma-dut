@@ -13,11 +13,11 @@ Signed-off-by: Lavanya Suresh <lavaks@codeaurora.org>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -7951,6 +7951,9 @@ static void fwtest_set_he_params(struct
+@@ -7942,6 +7942,9 @@ static void fwtest_set_he_params(struct
  
  	if (dut->ap_he_ppdu == PPDU_MU &&
  	    dut->ap_he_dlofdma == VALUE_ENABLED) {
-+		fwtest_cmd_wrapper(dut, "-m 0x00 -v 0 32770 217", ifname);
++		fwtest_cmd_wrapper(dut, "-m 0x00 -v 0 32770 153", ifname);
 +		/* enable the equal RU allocation */
 +		fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 0 1", ifname);
  		/* Increase the min TX time limit for MU MIMO to
