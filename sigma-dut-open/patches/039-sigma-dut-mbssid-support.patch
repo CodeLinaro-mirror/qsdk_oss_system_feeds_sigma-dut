@@ -63,7 +63,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	val = get_param(cmd, "WLAN_TAG");
  	if (val) {
  		wlan_tag = atoi(val);
-@@ -2013,6 +2043,27 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1996,6 +2026,27 @@ static enum sigma_cmd_result cmd_ap_set_
  		}
  	}
  
@@ -91,7 +91,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	val = get_param(cmd, "TWT_RespSupport");
  	if (val) {
  		if (strcasecmp(val, "enable") == 0) {
-@@ -2352,6 +2403,56 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -2335,6 +2386,56 @@ static enum sigma_cmd_result cmd_ap_set_
  		return 1;
  	}
  
@@ -148,7 +148,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	val = get_param(cmd, "KEYMGNT");
  	if (!val)
  		val = get_param(cmd,"KeyMgmtType");
-@@ -9386,6 +9487,91 @@ skip_key_mgmt:
+@@ -9366,6 +9467,91 @@ skip_key_mgmt:
  		fprintf(f, "oce=%d\n",
  			dut->dev_role == DEVROLE_STA_CFON ? 2 : 1);
  	}
@@ -190,7 +190,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
 +		base_val = bssid[5] & ~bssid_mask;
 +		init_val = bssid[5] & bssid_mask;
 +
-+		fprintf(f, "\nmultiple_bssid=1\n");
++		fprintf(f, "\nmbssid=1\n");
 +
 +		for (i = 0; i < dut->mbss.num_non_tx_bss; i++) {
 +			fprintf(f, "\n");
@@ -240,7 +240,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	fclose(f);
  
  	if (dut->ap_is_dual && conf_counter == 0) {
-@@ -9682,8 +9868,16 @@ skip_key_mgmt:
+@@ -9662,8 +9848,16 @@ skip_key_mgmt:
  		}
  	}
  
@@ -258,7 +258,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  
  	if (dut->bridge && dut->ap_is_dual) {
  		if (run_system_wrapper(dut, "ifconfig %s up", dut->bridge)
-@@ -10544,6 +10738,8 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -10524,6 +10718,8 @@ static enum sigma_cmd_result cmd_ap_rese
  		}
  		if (get_openwrt_driver_type() == OPENWRT_DRIVER_ATHEROS)
  			dut->ap_dfs_mode = AP_DFS_MODE_ENABLED;
@@ -267,7 +267,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	}
  
  
-@@ -12103,6 +12299,28 @@ static enum sigma_cmd_result cmd_ap_get_
+@@ -12083,6 +12279,28 @@ static enum sigma_cmd_result cmd_ap_get_
  
  	get_if_name(dut, ifname, sizeof(ifname), wlan_tag);
  
