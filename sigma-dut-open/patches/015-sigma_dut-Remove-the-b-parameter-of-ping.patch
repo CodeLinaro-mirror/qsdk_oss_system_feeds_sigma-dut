@@ -1,0 +1,28 @@
+From 17d90d25070aad68d43d7ac390b54b99cb9077a0 Mon Sep 17 00:00:00 2001
+From: Ronghua Zeng <quic_ronghuaz@quicinc.com>
+Date: Mon, 10 Oct 2022 14:31:00 +0800
+Subject: [PATCH] sigma_dut: Remove the '-b' parameter of ping.
+
+The current ping does not support '-b' parameter.
+
+Signed-off-by: Ronghua Zeng <quic_ronghuaz@quicinc.com>
+---
+ traffic.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/traffic.c b/traffic.c
+index acec3c4..ee2dbc0 100644
+--- a/traffic.c
++++ b/traffic.c
+@@ -141,7 +141,7 @@ static enum sigma_cmd_result cmd_traffic_send_ping(struct sigma_dut *dut,
+ 	else
+ 		intf_arg[0] = '\0';
+ 	fprintf(f, "#!" SHELL "\n"
+-		"ping%s -b -c %d%s -s %d%s -q%s %s > %s"
++		"ping%s -c %d%s -s %d%s -q%s %s > %s"
+ 		"/sigma_dut-ping.%d &\n"
+ 		"echo $! > %s/sigma_dut-ping-pid.%d\n",
+ 		type == 2 ? "6" : "", pkts, int_arg, size, extra,
+-- 
+2.7.4
+
