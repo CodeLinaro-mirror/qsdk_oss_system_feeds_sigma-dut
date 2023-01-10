@@ -13,18 +13,16 @@ Signed-off-by: Karthikeyan Kathirvel <quic_kathirve@quicinc.com>
  sigma_dut.h |  3 +++
  2 files changed, 13 insertions(+), 3 deletions(-)
 
-diff --git a/ap.c b/ap.c
-index 4157a306ed24..03aebd4c8bc8 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -9425,12 +9425,14 @@ skip_key_mgmt:
- 		    dut->ap_ldpc != VALUE_NOT_SET ||
- 		    dut->ap_tx_stbc == VALUE_ENABLED || dut->ap_mu_txBF ||
- 		    dut->ap_ampdu_exp || dut->ap_max_mpdu_len ||
--		    dut->ap_chwidth == AP_160 || dut->ap_chwidth == AP_80_80) &&
-+		    dut->ap_chwidth == AP_160 || dut->ap_chwidth == AP_80_80 ||
-+			dut->ap_su_txBF) &&
- 		    check_band(dut, BAND_5G, conf_counter)) {
+@@ -9551,12 +9551,14 @@ skip_key_mgmt:
+ 		     dut->ap_tx_stbc == VALUE_ENABLED || dut->ap_mu_txBF ||
+ 		     dut->ap_ampdu_exp || dut->ap_max_mpdu_len ||
+ 		     dut->ap_chwidth == AP_160 ||
+-		     dut->ap_chwidth == AP_80_80) &&
++		     dut->ap_chwidth == AP_80_80 ||
++		     dut->ap_su_txBF) &&
+ 		     check_band(dut, BAND_5G, conf_counter)) {
 -			fprintf(f, "vht_capab=%s%s%s%s%s%s",
 +			fprintf(f, "vht_capab=%s%s%s%s%s%s%s",
  				dut->ap_sgi80 ? "[SHORT-GI-80]" : "",
@@ -35,7 +33,7 @@ index 4157a306ed24..03aebd4c8bc8 100644
  				(dut->ap_ldpc == VALUE_ENABLED) ?
  				"[RXLDPC]" : "",
  				(dut->ap_tx_stbc == VALUE_ENABLED) ?
-@@ -10385,6 +10387,10 @@ static int wiphy_info_handler(struct nl_msg *msg, void *arg)
+@@ -10511,6 +10513,10 @@ static int wiphy_info_handler(struct nl_
  	    !(dut->hw_modes.ap_he_phy_capab[33 / 8] & (1 << (33 % 8))))
  		dut->ap_mu_txBF = 0;
  
@@ -46,7 +44,7 @@ index 4157a306ed24..03aebd4c8bc8 100644
  	return 0;
  }
  
-@@ -10546,6 +10552,7 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+@@ -10672,6 +10678,7 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->ap_rx_amsdu = VALUE_NOT_SET;
  	dut->ap_txBF = 0;
  	dut->ap_mu_txBF = 0;
@@ -54,11 +52,9 @@ index 4157a306ed24..03aebd4c8bc8 100644
  	dut->ap_chwidth = AP_AUTO;
  	dut->ap_ampdu_exp = 0;
  	dut->ap_max_mpdu_len = 0;
-diff --git a/sigma_dut.h b/sigma_dut.h
-index f8fc0ba66ea3..442f8a491198 100644
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -100,6 +100,8 @@ struct sigma_dut;
+@@ -101,6 +101,8 @@ struct sigma_dut;
  /* Set default operating channel width 80 MHz */
  #define VHT_DEFAULT_OPER_CHWIDTH AP_80_VHT_OPER_CHWIDTH
  
@@ -67,7 +63,7 @@ index f8fc0ba66ea3..442f8a491198 100644
  typedef unsigned int u32;
  typedef uint16_t u16;
  typedef unsigned char u8;
-@@ -711,6 +713,7 @@ struct sigma_dut {
+@@ -721,6 +723,7 @@ struct sigma_dut {
  	} ap_vht_chwidth;
  	int ap_txBF;
  	int ap_mu_txBF;
@@ -75,6 +71,3 @@ index f8fc0ba66ea3..442f8a491198 100644
  	enum ap_regulatory_mode {
  		AP_80211D_MODE_DISABLED,
  		AP_80211D_MODE_ENABLED,
--- 
-2.7.4
-
