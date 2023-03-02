@@ -17,7 +17,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -8363,6 +8363,46 @@ static int default_muedca_values(struct
+@@ -8408,6 +8408,46 @@ static int default_muedca_values(struct
  	return 0;
  }
  
@@ -64,7 +64,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
  					   struct sigma_conn *conn,
  					   struct sigma_cmd *cmd)
-@@ -9664,6 +9704,50 @@ skip_key_mgmt:
+@@ -9744,6 +9784,50 @@ skip_key_mgmt:
  			 dut->hostapd_entropy_log ? dut->hostapd_entropy_log :
  			 "",
  			 dut->sigma_tmpdir);
@@ -115,7 +115,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  	} else {
  		/*
  		 * It looks like a monitor interface can cause some issues for
-@@ -9709,6 +9793,8 @@ skip_key_mgmt:
+@@ -9789,6 +9873,8 @@ skip_key_mgmt:
  
  	/* allow some time for hostapd to start before returning success */
  	usleep(500000);
@@ -126,16 +126,16 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  			  "errorCode,Failed to talk to hostapd");
 --- a/sigma_dut.c
 +++ b/sigma_dut.c
-@@ -1049,7 +1049,7 @@ int main(int argc, char *argv[])
+@@ -1050,7 +1050,7 @@ int main(int argc, char *argv[])
  
  	for (;;) {
  		c = getopt(argc, argv,
--			   "aAb:Bc:C:dDE:e:fF:gGhH:j:J:i:Ik:K:l:L:m:M:nN:o:O:p:P:qr:R:s:S:tT:uU:v:VWw:x:y:z:Z:2345:6:");
-+			   "aAb:Bc:C:dDE:e:fF:gGhH:j:J:i:Ik:K:l:L:m:M:nN:o:O:p:P:qQr:R:s:S:tT:uU:v:VWw:x:y:z:Z:2345:6:");
+-			   "aAb:Bc:C:dDE:e:fF:gGhH:j:J:i:Ik:K:l:L:m:M:nN:o:O:p:P:qr:R:s:S:tT:uU:v:VWw:x:y:z:Z:2345:6:7");
++			   "aAb:Bc:C:dDE:e:fF:gGhH:j:J:i:Ik:K:l:L:m:M:nN:o:O:p:P:qQr:R:s:S:tT:uU:v:VWw:x:y:z:Z:2345:6:7");
  		if (c < 0)
  			break;
  		switch (c) {
-@@ -1123,6 +1123,11 @@ int main(int argc, char *argv[])
+@@ -1124,6 +1124,11 @@ int main(int argc, char *argv[])
  		case 'q':
  			sigma_dut.debug_level++;
  			break;

@@ -25,7 +25,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -675,6 +675,8 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -734,6 +734,8 @@ static enum sigma_cmd_result cmd_ap_set_
  	unsigned int wlan_tag = 1;
  	const char *ifname = get_main_ifname(dut);
  	char buf[128];
@@ -34,7 +34,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  
  	/* Allow program to be overridden if specified in the ap_set_wireless
  	 * to support some 60 GHz test scripts where the program may be 60 GHz
-@@ -695,6 +697,8 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -754,6 +756,8 @@ static enum sigma_cmd_result cmd_ap_set_
  				  "errorCode,Invalid WLAN_TAG");
  			return STATUS_SENT;
  		}
@@ -43,7 +43,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  	}
  
  	val = get_param(cmd, "Interface");
-@@ -770,15 +774,18 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -829,15 +833,18 @@ static enum sigma_cmd_result cmd_ap_set_
  			}
  		} else {
  			dut->ap_tag_channel[wlan_tag - 2] = atoi(val);
@@ -64,7 +64,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  	}
  
  	/* Overwrite the AP channel with DFS channel if configured */
-@@ -804,6 +811,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -863,6 +870,7 @@ static enum sigma_cmd_result cmd_ap_set_
  	val = get_param(cmd, "MODE");
  	if (val) {
  		char *str, *pos;
@@ -72,7 +72,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  
  		str = strdup(val);
  		if (str == NULL)
-@@ -813,29 +821,35 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -872,29 +880,35 @@ static enum sigma_cmd_result cmd_ap_set_
  			*pos++ = '\0';
  		if (wlan_tag != 2)
  			dut->ap_is_dual = 0;
@@ -125,7 +125,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  
  		free(str);
  	} else if (dut->ap_mode == AP_inval) {
-@@ -882,6 +896,30 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -941,6 +955,30 @@ static enum sigma_cmd_result cmd_ap_set_
  	if (dut->ap_is_dual)
  		dut->use_5g = 1;
  
@@ -156,7 +156,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  	val = get_param(cmd, "WME");
  	if (val) {
  		if (strcasecmp(val, "on") == 0)
-@@ -996,10 +1034,16 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1055,10 +1093,16 @@ static enum sigma_cmd_result cmd_ap_set_
  
  	val = get_param(cmd, "OFFSET");
  	if (val) {
@@ -175,7 +175,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  	}
  
  	val = get_param(cmd, "MCS_FIXEDRATE");
-@@ -1152,23 +1196,28 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1211,23 +1255,28 @@ static enum sigma_cmd_result cmd_ap_set_
  	val = get_param(cmd, "WIDTH");
  	if (val) {
  		if (strcasecmp(val, "20") == 0)
@@ -210,7 +210,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  	}
  
  	/* TODO: WIDTH_SCAN */
-@@ -2256,6 +2305,10 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -2322,6 +2371,10 @@ static enum sigma_cmd_result cmd_ap_set_
  				   wlan_tag == 2) {
  				dut->ap_tag_key_mgmt[wlan_tag - 2] =
  					AP2_WPA2_OWE;
@@ -221,7 +221,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  			} else {
  				send_resp(dut, conn, SIGMA_INVALID,
  					  "errorCode,Unsupported KEYMGNT");
-@@ -3552,7 +3605,11 @@ static void get_if_name(struct sigma_dut
+@@ -3618,7 +3671,11 @@ static void get_if_name(struct sigma_dut
  		snprintf(ifname_str, str_size, "%s%d", ifname, wlan_tag - 1);
  	} else if ((drv == DRIVER_MAC80211 || drv == DRIVER_LINUX_WCN) &&
  		   wlan_tag == 2) {
@@ -234,7 +234,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  	} else {
  		snprintf(ifname_str, str_size, "%s", ifname);
  	}
-@@ -7561,8 +7618,22 @@ static void set_ebtables_forward_drop(st
+@@ -7627,8 +7684,22 @@ static void set_ebtables_forward_drop(st
  				"Failed to set ebtables rule");
  }
  
@@ -247,18 +247,18 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
 +			return true;
 +		return false;
 +	}
-+
+ 
+-static int check_channel(struct sigma_dut *dut, int channel)
 +	/* Compare band of corresponding iface */
 +	return ((!second_iface && dut->ap_band == band) ||
 +		(second_iface && dut->ap_band_1 == band));
 +}
- 
--static int check_channel(struct sigma_dut *dut, int channel)
++
 +static int check_channel(struct sigma_dut *dut, int channel, bool second_iface)
  {
  	int channel_list[] = { 36, 40, 44, 48, 52, 60, 64, 100, 104, 108, 112,
  			       116, 120, 124, 128, 132, 140, 144, 149, 153, 157,
-@@ -7576,7 +7647,7 @@ static int check_channel(struct sigma_du
+@@ -7642,7 +7713,7 @@ static int check_channel(struct sigma_du
  	int num_chan, *chan_list;
  	int i;
  
@@ -267,7 +267,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  		num_chan = ARRAY_SIZE(chan_list_6g);
  		chan_list = chan_list_6g;
  	} else {
-@@ -7634,15 +7705,15 @@ static int get_6g_ch_op_class(int channe
+@@ -7700,15 +7771,15 @@ static int get_6g_ch_op_class(int channe
  
  
  static int get_oper_centr_freq_seq_idx(struct sigma_dut *dut, int chwidth,
@@ -286,7 +286,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  		return get_oper_center_freq_6g(chwidth, channel);
  
  	if (channel >= 36 && channel <= 64)
-@@ -8085,6 +8156,22 @@ static void set_second_ap_security_conf(
+@@ -8151,6 +8222,22 @@ static void set_second_ap_security_conf(
  			hostapd_cipher_name(dut->ap_cipher));
  		fprintf(file, "wpa_passphrase=%s\n", dut->ap_tag_passphrase[0]);
  		break;
@@ -309,7 +309,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  	default:
  		fprintf(file, "wpa=1\n");
  		break;
-@@ -8161,6 +8248,10 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -8228,6 +8315,10 @@ enum sigma_cmd_result cmd_ap_config_comm
  #ifdef ANDROID
  	struct group *gr;
  #endif /* ANDROID */
@@ -320,7 +320,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  
  	drv = get_driver_type(dut);
  
-@@ -8207,8 +8298,17 @@ write_conf:
+@@ -8281,8 +8372,17 @@ write_conf:
  		if (run_system_wrapper(dut, "cp %s %s", f1, f2) != 0)
  			sigma_dut_print(dut, DUT_MSG_INFO,
  					"Failed to copy %s to %s", f1, f2);
@@ -338,7 +338,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  	}
  
  	concat_sigma_tmpdir(dut, "/sigma_dut-ap.conf", ap_conf_path,
-@@ -8223,7 +8323,7 @@ write_conf:
+@@ -8297,7 +8397,7 @@ write_conf:
  
  	ifname = get_hostapd_ifname(dut);
  
@@ -347,7 +347,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  	case AP_11g:
  	case AP_11b:
  	case AP_11ng:
-@@ -8238,29 +8338,10 @@ write_conf:
+@@ -8312,29 +8412,10 @@ write_conf:
  		fprintf(f, "hw_mode=ad\n");
  		break;
  	case AP_11ax:
@@ -380,7 +380,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  		break;
  	default:
  		fclose(f);
-@@ -8275,45 +8356,45 @@ write_conf:
+@@ -8349,45 +8430,45 @@ write_conf:
  
  	if ((drv == DRIVER_MAC80211 || drv == DRIVER_QNXNTO ||
  	     drv == DRIVER_LINUX_WCN) &&
@@ -443,7 +443,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  			ht40minus = 1;
  			ht40plus = 0;
  		}
-@@ -8332,20 +8413,26 @@ write_conf:
+@@ -8406,20 +8487,26 @@ write_conf:
  
  	if ((drv == DRIVER_MAC80211 || drv == DRIVER_QNXNTO ||
  	     drv == DRIVER_LINUX_WCN) &&
@@ -478,7 +478,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  				ht40minus = 1;
  
  			fprintf(f, "ht_capab=%s%s\n",
-@@ -8356,8 +8443,8 @@ write_conf:
+@@ -8430,8 +8517,8 @@ write_conf:
  
  	if ((drv == DRIVER_MAC80211 || drv == DRIVER_QNXNTO ||
  	     drv == DRIVER_LINUX_WCN) &&
@@ -489,7 +489,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  		if (dut->ap_countrycode[0])
  			fprintf(f, "country_code=%s\n", dut->ap_countrycode);
                  else
-@@ -8368,7 +8455,7 @@ write_conf:
+@@ -8442,7 +8529,7 @@ write_conf:
                  fprintf(f, "local_pwr_constraint=3\n");
  	}
  
@@ -498,7 +498,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  		if (dut->ap_txBF) {
  			fprintf(f, "he_su_beamformer=1\n");
  			fprintf(f, "he_su_beamformee=1\n");
-@@ -8384,7 +8471,11 @@ write_conf:
+@@ -8458,7 +8545,11 @@ write_conf:
  	if (conf_counter == 1) {
  		char ifname2[50];
  
@@ -511,7 +511,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  		if (if_nametoindex(ifname2) == 0) {
  			if (ap_create_or_remove_interface(dut, ifname2, true)
  			    >= 0) {
-@@ -8403,10 +8494,7 @@ write_conf:
+@@ -8477,10 +8568,7 @@ write_conf:
  	if (dut->bridge)
  		fprintf(f, "bridge=%s\n", dut->bridge);
  
@@ -523,7 +523,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  
  	if (sigma_hapd_ctrl)
  		fprintf(f, "ctrl_interface=%s\n", sigma_hapd_ctrl);
-@@ -8821,7 +8909,7 @@ skip_key_mgmt:
+@@ -8897,7 +8985,7 @@ skip_key_mgmt:
  		fprintf(f, "sae_groups=%s\n", dut->ap_sae_groups);
  
  	if (dut->sae_pwe != SAE_PWE_DEFAULT || dut->sae_h2e_default ||
@@ -532,7 +532,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  		const char *sae_pwe = NULL;
  
  		if (dut->sae_pwe == SAE_PWE_LOOP && sae_pw_id_used(dut))
-@@ -9056,58 +9144,64 @@ skip_key_mgmt:
+@@ -9137,10 +9225,11 @@ skip_key_mgmt:
  		fprintf(f, "he_rts_threshold=1024\n");
  
  	if ((dut->program == PROGRAM_VHT) ||
@@ -546,7 +546,8 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  			send_resp(dut, conn, SIGMA_INVALID,
  				  "errorCode,Invalid channel");
  			fclose(f);
- 			return 0;
+@@ -9154,48 +9243,53 @@ skip_key_mgmt:
+ 					   ifname);
  		}
  
 -		switch (dut->ap_chwidth) {
@@ -609,24 +610,19 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
 +				fprintf(f, "fils_discovery_max_interval=20\n");
 +			}
  		}
- 		 if (dut->ap_he_mimo == MIMO_DL) {
- 			mac80211_set_mu_brp_commands(dut, ifname);
-@@ -9119,11 +9213,12 @@ skip_key_mgmt:
  
- 		find_ap_ampdu_exp_and_max_mpdu_len(dut);
- 
--		if (dut->ap_sgi80 || dut->ap_txBF ||
-+		if ((dut->ap_sgi80 || dut->ap_txBF ||
- 		    dut->ap_ldpc != VALUE_NOT_SET ||
- 		    dut->ap_tx_stbc == VALUE_ENABLED || dut->ap_mu_txBF ||
- 		    dut->ap_ampdu_exp || dut->ap_max_mpdu_len ||
--		    dut->ap_chwidth == AP_160 || dut->ap_chwidth == AP_80_80) {
-+		    dut->ap_chwidth == AP_160 || dut->ap_chwidth == AP_80_80) &&
-+		    check_band(dut, BAND_5G, conf_counter)) {
+ 		if (dut->use_5g) {
+@@ -9223,7 +9317,8 @@ skip_key_mgmt:
+ 		     dut->ap_tx_stbc == VALUE_ENABLED || dut->ap_mu_txBF ||
+ 		     dut->ap_ampdu_exp || dut->ap_max_mpdu_len ||
+ 		     dut->ap_chwidth == AP_160 ||
+-		     dut->ap_chwidth == AP_80_80)) {
++		     dut->ap_chwidth == AP_80_80) &&
++		     check_band(dut, BAND_5G, conf_counter)) {
  			fprintf(f, "vht_capab=%s%s%s%s%s%s",
  				dut->ap_sgi80 ? "[SHORT-GI-80]" : "",
  				dut->ap_txBF ?
-@@ -10109,6 +10204,9 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -10209,6 +10304,9 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->ap_max_mpdu_len = 0;
  	dut->ap_band_6g = 0;
  
@@ -636,7 +632,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  	dut->ap_rsn_preauth = 0;
  	dut->ap_wpsnfc = 0;
  	dut->ap_bss_load = -1;
-@@ -10117,6 +10215,7 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -10217,6 +10315,7 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->ap_regulatory_mode = AP_80211D_MODE_DISABLED;
  	dut->ap_dfs_mode = AP_DFS_MODE_DISABLED;
  	dut->ap_chwidth_offset = SEC_CH_NO;
@@ -644,7 +640,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  
  	dut->mbo_pref_ap_cnt = 0;
  	dut->ft_bss_mac_cnt = 0;
-@@ -10408,7 +10507,7 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -10507,7 +10606,7 @@ static enum sigma_cmd_result cmd_ap_rese
  				dut->ap_mu_txBF = 0;
  			} else {
  				dut->ap_txBF = 1;
@@ -653,7 +649,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  			}
  			dut->he_sounding = VALUE_ENABLED;
  			if (drv == DRIVER_LINUX_WCN) {
-@@ -14311,7 +14410,7 @@ static int mac80211_vht_chnum_band(struc
+@@ -14419,7 +14518,7 @@ static int mac80211_vht_chnum_band(struc
  	if (result)
  		chwidth = atoi(result);
  
@@ -662,7 +658,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  	if (center_freq_idx < 0) {
  		free(token);
  		return -1;
-@@ -14661,7 +14760,7 @@ mac80211_he_tx_bandwidth(struct sigma_du
+@@ -14769,7 +14868,7 @@ mac80211_he_tx_bandwidth(struct sigma_du
  
  	width = atoi(val);
  	center_freq_idx = get_oper_centr_freq_seq_idx(dut, width,
@@ -673,28 +669,28 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  
 --- a/sigma_dut.c
 +++ b/sigma_dut.c
-@@ -995,9 +995,9 @@ static void print_license(void)
+@@ -996,9 +996,9 @@ static void print_license(void)
  
  static void usage(void)
  {
--	printf("usage: sigma_dut [-aABdfGqDIntuVW234] [-p<port>] "
-+	printf("usage: sigma_dut [-aABdfGqDIntuUVW234] [-p<port>] "
+-	printf("usage: sigma_dut [-aABdfGqDIntuVW2347] [-p<port>] "
++	printf("usage: sigma_dut [-aABdfGqDIntuUVW2347] [-p<port>] "
  	       "[-s<sniffer>] [-m<set_maccaddr.sh>] \\\n"
 -	       "       [-M<main ifname>] [-R<radio ifname>] "
 +	       "       [-M<main ifname>] [-R<radio ifname>] [-U<second radio ifname>]"
  	       "[-S<station ifname>] [-P<p2p_ifname>]\\\n"
  	       "       [-T<throughput pktsize>] \\\n"
  	       "       [-w<wpa_supplicant/hostapd ctrl_iface dir>] \\\n"
-@@ -1049,7 +1049,7 @@ int main(int argc, char *argv[])
+@@ -1050,7 +1050,7 @@ int main(int argc, char *argv[])
  
  	for (;;) {
  		c = getopt(argc, argv,
--			   "aAb:Bc:C:dDE:e:fF:gGhH:j:J:i:Ik:K:l:L:m:M:nN:o:O:p:P:qr:R:s:S:tT:uv:VWw:x:y:z:Z:2345:6:");
-+			   "aAb:Bc:C:dDE:e:fF:gGhH:j:J:i:Ik:K:l:L:m:M:nN:o:O:p:P:qr:R:s:S:tT:uU:v:VWw:x:y:z:Z:2345:6:");
+-			   "aAb:Bc:C:dDE:e:fF:gGhH:j:J:i:Ik:K:l:L:m:M:nN:o:O:p:P:qr:R:s:S:tT:uv:VWw:x:y:z:Z:2345:6:7");
++			   "aAb:Bc:C:dDE:e:fF:gGhH:j:J:i:Ik:K:l:L:m:M:nN:o:O:p:P:qr:R:s:S:tT:uU:v:VWw:x:y:z:Z:2345:6:7");
  		if (c < 0)
  			break;
  		switch (c) {
-@@ -1217,6 +1217,9 @@ int main(int argc, char *argv[])
+@@ -1218,6 +1218,9 @@ int main(int argc, char *argv[])
  				       "Use iface down/up in reset cmd");
  		       sigma_dut.iface_down_on_reset = 1;
  		       break;
@@ -706,8 +702,8 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  			break;
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -397,6 +397,13 @@ struct dscp_policy_data {
- 	struct dscp_policy_data *next;
+@@ -407,6 +407,13 @@ enum dpp_mdns_role {
+ 	DPP_MDNS_BOOTSTRAPPING,
  };
  
 +enum if_band {
@@ -720,7 +716,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  struct sigma_dut {
  	const char *main_ifname;
  	char *main_ifname_2g;
-@@ -577,6 +584,7 @@ struct sigma_dut {
+@@ -587,6 +594,7 @@ struct sigma_dut {
  		AP2_OSEN,
  		AP2_WPA2_PSK,
  		AP2_WPA2_OWE,
@@ -728,7 +724,7 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  	} ap_tag_key_mgmt[MAX_WLAN_TAGS - 1];
  	int ap_add_sha256;
  	int ap_add_sha384;
-@@ -848,6 +856,7 @@ struct sigma_dut {
+@@ -858,6 +866,7 @@ struct sigma_dut {
  	} ap_wmmps;
  
  	enum sec_ch_offset ap_chwidth_offset;
@@ -736,10 +732,10 @@ Signed-off-by: Sriram R <quic_srirrama@quicinc.com>
  
  	char *ap_dpp_conf_addr;
  	char *ap_dpp_conf_pkhash;
-@@ -1042,6 +1051,9 @@ struct sigma_dut {
- 	unsigned int prev_disable_scs_support;
- 	unsigned int prev_disable_mscs_support;
+@@ -1056,6 +1065,9 @@ struct sigma_dut {
  	int dscp_use_iptables;
+ 	int autoconnect_default;
+ 	int dhcp_client_running;
 +
 +	const char *dual_ap_ifname;
 +	enum if_band ap_band, ap_band_1;
