@@ -1,0 +1,37 @@
+From 74c6426e385fc04a6dc9940883a4494bdad1e4f7 Mon Sep 17 00:00:00 2001
+From: Manish Dharanenthiran <quic_mdharane@quicinc.com>
+Date: Wed, 15 Mar 2023 18:12:30 +0530
+Subject: [PATCH] sigma_dut: Disable MU BAR in DL MU MIMO case
+
+For some WFA stations, if MU BAR is enabled in DL MU MIMO
+case, PER is increased hence the MCS gets reduced. Because
+of this, most of the packets are sent in SU PPDU instead of
+MU PPDU.
+
+Fix this by disabling MU_BAR for all DL MU MIMO case.
+
+Signed-off-by: Manish Dharanenthiran <quic_mdharane@quicinc.com>
+---
+ ap.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/ap.c b/ap.c
+index 5e6ad8c..c907c99 100644
+--- a/ap.c
++++ b/ap.c
+@@ -8171,6 +8171,12 @@ static void fwtest_set_he_params(struct sigma_dut *dut, const char *ifname)
+ 		fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 21 0", ifname);
+ 	}
+ 
++	/* Disable MU_BAR for DL MU MIMO */
++	if (dut->ap_he_ppdu == PPDU_MU && dut->ap_he_mimo == MIMO_DL)
++		run_system_wrapper(dut,
++				   "ath11k-fwtest -i %s -m 0x47 -v 2 166 1",
++				   ifname);
++
+ }
+ 
+ 
+-- 
+2.17.1
+
