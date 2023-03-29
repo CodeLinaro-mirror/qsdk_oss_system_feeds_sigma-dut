@@ -17,15 +17,13 @@ Signed-off-by: Manish Dharanenthiran <quic_mdharane@quicinc.com>
  ap.c | 20 +++++++++++++-------
  1 file changed, 13 insertions(+), 7 deletions(-)
 
-diff --git a/ap.c b/ap.c
-index b80223b..dfee453 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -8409,6 +8409,19 @@ static void fwtest_set_he_params(struct sigma_dut *dut, const char *ifname)
+@@ -8462,6 +8462,19 @@ static void fwtest_set_he_params(struct
  		fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 21 0", ifname);
  	}
  
-+	if (dut->ap_he_mimo == MIMO_DL) {
++	if (dut->ap_band != BAND_2G && dut->ap_he_mimo == MIMO_DL) {
 +		mac80211_set_mu_brp_commands(dut, ifname);
 +		/* Increase MU traffic */
 +		run_system_wrapper(dut,
@@ -40,8 +38,8 @@ index b80223b..dfee453 100644
 +				   ifname);
  }
  
- 
-@@ -9671,13 +9684,6 @@ skip_key_mgmt:
+ static void fwtest_set_he_params_link_id(struct sigma_dut *dut, const char *ifname, int link_id)
+@@ -9915,13 +9928,6 @@ skip_key_mgmt:
  			fclose(f);
  			return 0;
  		}
@@ -55,6 +53,3 @@ index b80223b..dfee453 100644
  
  		switch (chwidth) {
  		case AP_20:
--- 
-2.17.1
-
