@@ -15,14 +15,20 @@ Signed-off-by: Manish Dharanenthiran <quic_mdharane@quicinc.com>
  ap.c | 6 ++++++
  1 file changed, 6 insertions(+)
 
-diff --git a/ap.c b/ap.c
-index 5e6ad8c..c907c99 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -8171,6 +8171,12 @@ static void fwtest_set_he_params(struct sigma_dut *dut, const char *ifname)
+@@ -8171,6 +8171,20 @@ static void fwtest_set_he_params(struct
  		fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 21 0", ifname);
  	}
  
++	if (dut->ap_band == BAND_2G && dut->ap_he_mimo == MIMO_DL) {
++	       mac80211_set_mu_brp_commands(dut, ifname);
++	       /* Increase MU traffic */
++	       run_system_wrapper(dut,
++	       		   "ath11k-fwtest -i %s -m 0x48 -v 0 100 2",
++	       		   ifname);
++	}
++
 +	/* Disable MU_BAR for DL MU MIMO */
 +	if (dut->ap_he_ppdu == PPDU_MU && dut->ap_he_mimo == MIMO_DL)
 +		run_system_wrapper(dut,
@@ -32,6 +38,17 @@ index 5e6ad8c..c907c99 100644
  }
  
  
--- 
-2.17.1
-
+@@ -9449,13 +9463,6 @@ skip_key_mgmt:
+ 					fprintf(f, "fils_discovery_max_interval=20\n");
+ 			}
+ 		}
+-		 if (dut->ap_he_mimo == MIMO_DL) {
+-			mac80211_set_mu_brp_commands(dut, ifname);
+-			/* Increase MU traffic */
+-			run_system_wrapper(dut,
+-					   "ath11k-fwtest -i %s -m 0x48 -v 0 100 2",
+-					   ifname);
+-		}
+ 
+ 		find_ap_ampdu_exp_and_max_mpdu_len(dut);
+ 
