@@ -23,16 +23,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  
  
  static int fwtest_cmd_wrapper(struct sigma_dut *dut, const char *arg,
-@@ -131,14 +131,26 @@ static int fwtest_cmd_wrapper(struct sig
- {
- 	int ret = -1;
- 
--	if (strncmp(dut->device_driver, "ath11k", 6) == 0 ||
--	    strncmp(dut->device_driver, "ath12k", 6) == 0)
-+	if (strncmp(dut->device_driver, "ath11k", 6) == 0)
- 		ret = run_system_wrapper(dut, "ath11k-fwtest -i %s %s",
- 					 ifname, arg);
- 
+@@ -139,6 +139,19 @@ static int fwtest_cmd_wrapper(struct sig
  	return ret;
  }
  
@@ -52,7 +43,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  static int ap_ft_enabled(struct sigma_dut *dut)
  {
  	return dut->ap_ft_oa == 1 ||
-@@ -240,7 +252,6 @@ int get_hwaddr(const char *ifname, unsig
+@@ -240,7 +253,6 @@ int get_hwaddr(const char *ifname, unsig
  	return 0;
  }
  
@@ -60,7 +51,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  static void ath_ap_set_group_id(struct sigma_dut *dut, const char *ifname,
  				const char *val)
  {
-@@ -942,6 +953,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -942,6 +954,7 @@ static enum sigma_cmd_result cmd_ap_set_
  	if (dut->ap_is_dual) {
  		if (!dut->dual_ap_ifname) {
  			dut->ap_is_mld = 1;
@@ -68,7 +59,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  			/* CH width values need to be swapped in
  			 * order to correspond to correct config */
  			chwidth = dut->ap_chwidth;
-@@ -7996,7 +8008,7 @@ static void set_ebtables_forward_drop(st
+@@ -7996,7 +8009,7 @@ static void set_ebtables_forward_drop(st
  				"Failed to set ebtables rule");
  }
  
@@ -77,7 +68,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  {
  	/* Single band only */
  	if (!dut->ap_is_dual || (dut->ap_band == dut->ap_band_1) ||
-@@ -8007,8 +8019,8 @@ static bool check_band(struct sigma_dut
+@@ -8007,8 +8020,8 @@ static bool check_band(struct sigma_dut
  	}
  
  	/* Compare band of corresponding iface */
@@ -88,7 +79,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  }
  
  static int check_channel(struct sigma_dut *dut, int channel, bool second_iface)
-@@ -8424,6 +8436,179 @@ static void fwtest_set_he_params(struct
+@@ -8424,6 +8437,179 @@ static void fwtest_set_he_params(struct
  
  }
  
@@ -268,7 +259,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  
  #define IEEE80211_VHT_CAP_TXSTBC                               ((u32) (1 << 7))
  
-@@ -8730,7 +8915,7 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -8730,7 +8916,7 @@ enum sigma_cmd_result cmd_ap_config_comm
  	enum ap_mode mode;
  	enum ap_chwidth chwidth;
  	enum sec_ch_offset offset;
@@ -277,7 +268,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  	unsigned char main_bssid[6];
  	char ifname2[50];
  	bool mld_sae_set = false;
-@@ -8776,12 +8961,16 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -8776,12 +8962,16 @@ enum sigma_cmd_result cmd_ap_config_comm
  write_conf:
  	if (conf_counter) {
  		const char *f1, *f2;
@@ -296,7 +287,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  
  		sigma_dut_print(dut, DUT_MSG_DEBUG, "f1 %s, f2 %s", f1, f2);
  		if (run_system_wrapper(dut, "cp %s %s", f1, f2) != 0)
-@@ -8810,6 +8999,18 @@ write_conf:
+@@ -8810,6 +9000,18 @@ write_conf:
  		return -2;
  	}
  
@@ -315,7 +306,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  	ifname = get_hostapd_ifname(dut);
  
  	switch (mode) {
-@@ -10027,6 +10228,9 @@ skip_key_mgmt:
+@@ -10027,6 +10229,9 @@ skip_key_mgmt:
  	if (dut->ap_is_dual && conf_counter == 0) {
  		conf_counter++;
  		goto write_conf;
@@ -325,7 +316,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  	}
  
  	if (dut->use_hostapd_pid_file)
-@@ -10368,7 +10572,8 @@ hapd_started:
+@@ -10368,7 +10573,8 @@ hapd_started:
  		}
  	}
  
@@ -335,7 +326,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  		int i;
  
  		fwtest_set_he_params(dut, ifname);
-@@ -10377,6 +10582,12 @@ hapd_started:
+@@ -10377,6 +10583,12 @@ hapd_started:
  			snprintf(ifname2, sizeof(ifname2), "%s-%d", ifname, i+1);
  			fwtest_set_he_params(dut, ifname2);
  		}
@@ -348,7 +339,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  	}
  
  	if (dut->bridge && dut->ap_is_dual) {
-@@ -10907,6 +11118,9 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -10907,6 +11119,9 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->ap_mode = AP_inval;
  	dut->ap_mode_1 = AP_inval;
  	dut->ap_is_mld = 0;
@@ -358,7 +349,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  
  	dut->ap_allow_vht_wep = 0;
  	dut->ap_allow_vht_tkip = 0;
-@@ -12825,6 +13039,7 @@ static enum sigma_cmd_result cmd_ap_get_
+@@ -12825,6 +13040,7 @@ static enum sigma_cmd_result cmd_ap_get_
  	struct ifreq ifr;
  	int s, wlan_tag = 1;
  	const char *val;
