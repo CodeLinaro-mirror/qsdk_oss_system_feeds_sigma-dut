@@ -16,39 +16,16 @@ Signed-off-by: Karthikeyan Kathirvel <quic_kathirve@quicinc.com>
  sigma_dut.h |  1 +
  2 files changed, 22 insertions(+), 2 deletions(-)
 
-diff --git a/ap.c b/ap.c
-index 50fab8d5cf75..41df9c6e5cde 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -15646,7 +15661,7 @@ static void mac80211_set_assoc_disallow(struct sigma_dut *dut, const char *ifnam
- 	}
- }
- 
--static void mac80211_set_trigger_type_0(struct sigma_dut *dut, const char *ifname)
-+static void mac80211_set_trigger_type_0(struct sigma_dut *dut, const char *ifname, int link_id)
- {
- 	/* TriggerType "0" for Basic trigger */
- 	run_system_wrapper(dut,
-@@ -15687,6 +15702,10 @@ static void mac80211_set_trigger_type_0(struct sigma_dut *dut, const char *ifnam
+@@ -15690,6 +15690,10 @@ static void mac80211_set_trigger_type_0(
  		fwtest_cmd_wrapper(dut, "-m 0x47 -v 0 302 0", ifname);
  	}
  
-+	/* set ul duration to 1000 usec and enable a fw war for not dropping mcs
++	/* set ul duration to 1908 usec and enable a fw war for not dropping mcs
 +	 * (the new parameter with value 1 will do this) */
 +	if (dut->ap_he_ulofdma == VALUE_ENABLED && dut->program == PROGRAM_HE)
-+		fwtest_linkid_cmd_wrapper(dut, "-m 0x48 -v 0 63 1000 1", ifname, link_id);
++		fwtest_cmd_wrapper(dut, "-m 0x48 -v 0 63 1908 1", ifname);
  }
  
  static void mac80211_set_trigger_type_0_eht(struct sigma_dut *dut, const char *ifname, int link_id)
-@@ -15791,7 +15810,7 @@ static int mac80211_set_trigger_type(struct sigma_dut *dut, const char *ifname,
- 		if (dut->program == PROGRAM_EHT)
- 			mac80211_set_trigger_type_0_eht(dut, ifname, link_id);
- 		else
--			mac80211_set_trigger_type_0(dut, ifname);
-+			mac80211_set_trigger_type_0(dut, ifname, link_id);
- 		break;
- 	case 1:
- 		mac80211_set_trigger_type_1(dut, ifname);
--- 
-2.38.0
-
