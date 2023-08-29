@@ -1,6 +1,6 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -767,7 +767,8 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -999,7 +999,8 @@ static enum sigma_cmd_result cmd_ap_set_
  			free(str);
  			return STATUS_SENT;
  		}
@@ -10,7 +10,7 @@
  			dut->ap_chwidth = AP_80;
  
  		if (pos) {
-@@ -778,7 +779,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1010,7 +1011,7 @@ static enum sigma_cmd_result cmd_ap_set_
  				free(str);
  				return STATUS_SENT;
  			}
@@ -19,19 +19,19 @@
  				dut->ap_chwidth_1 = AP_80;
  			dut->ap_is_dual = 1;
  		}
-@@ -7776,7 +7777,8 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -8415,7 +8416,8 @@ write_conf:
  
  	if ((drv == DRIVER_MAC80211 || drv == DRIVER_QNXNTO ||
  	     drv == DRIVER_LINUX_WCN) &&
--	    (dut->ap_mode == AP_11ac || dut->ap_mode == AP_11na)) {
-+	    (dut->ap_mode == AP_11ac || dut->ap_mode == AP_11na ||
-+	     (dut->ap_mode == AP_11ax && dut->ap_channel >= 36))) {
+-	    (mode == AP_11ac || mode == AP_11na)) {
++	    (mode == AP_11ac || mode == AP_11na ||
++	     (mode == AP_11ax && dut->ap_channel >= 36))) {
  		if (dut->ap_countrycode[0])
  			fprintf(f, "country_code=%s\n", dut->ap_countrycode);
-                 else
-@@ -8562,6 +8564,13 @@ skip_key_mgmt:
- 		}
+		else
+@@ -9171,6 +9173,13 @@ skip_key_mgmt:
  	}
+ skip_vht_parameters_set:
  
 +	if (dut->program == PROGRAM_HE) {
 +		fprintf(f, "he_su_beamformer=%d\n", dut->ap_txBF);
@@ -43,7 +43,7 @@
  	if (dut->ap_key_mgmt == AP_WPA2_OWE && dut->ap_tag_ssid[0][0] &&
  	    dut->ap_tag_key_mgmt[0] == AP2_OPEN) {
  		/* OWE transition mode */
-@@ -9287,7 +9296,8 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -10131,7 +10140,8 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->eap_fragment = 0;
  	dut->wps_forced_version = 0;
  

@@ -12,11 +12,9 @@ Signed-off-by: Hari Chandrakanthan <quic_haric@quicinc.com>
  ap.c | 44 +++++++++++++++++++++++++-------------------
  1 file changed, 25 insertions(+), 19 deletions(-)
 
-diff --git a/ap.c b/ap.c
-index e6232eb..0e3d3bf 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -7809,28 +7809,34 @@ static int get_oper_center_freq_6g(int chwidth, int channel)
+@@ -7995,28 +7995,34 @@ static int get_oper_center_freq_6g(int c
  	}
  }
  
@@ -69,7 +67,7 @@ index e6232eb..0e3d3bf 100644
  static int get_oper_centr_freq_seq_idx(struct sigma_dut *dut, int chwidth,
  				       int channel, bool second_iface)
  {
-@@ -9430,7 +9436,7 @@ skip_key_mgmt:
+@@ -9672,7 +9678,7 @@ skip_key_mgmt:
  				vht_oper_centr_freq_idx);
  			if (check_band(dut, BAND_6G, conf_counter)) {
  				fprintf(f, "op_class=%d\n",
@@ -78,6 +76,3 @@ index e6232eb..0e3d3bf 100644
  
  				if (dut->ap_6g_unsol_prb_resp)
  					fprintf(f, "unsol_bcast_probe_resp_interval=20\n");
--- 
-2.7.4
-

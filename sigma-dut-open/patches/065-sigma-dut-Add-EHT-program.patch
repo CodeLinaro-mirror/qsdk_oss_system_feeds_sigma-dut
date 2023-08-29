@@ -313,23 +313,3 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
 +	int run_set_param;
  
  	int ap_ocvc;
- 
-@@ -943,6 +946,7 @@ struct sigma_dut {
- 		PROGRAM_QM,
- 		PROGRAM_HS2_R4,
- 		PROGRAM_HS2_2022,
-+		PROGRAM_EHT,
- 	} program;
- 
- 	enum device_type {
---- a/utils.c
-+++ b/utils.c
-@@ -177,6 +177,8 @@ enum sigma_program sigma_program_to_enum
- 		return PROGRAM_HE;
- 	if (strcasecmp(prog, "QM") == 0)
- 		return PROGRAM_QM;
-+	if (strcasecmp(prog, "EHT") == 0)
-+		return PROGRAM_EHT;
- 
- 	return PROGRAM_UNKNOWN;
- }
