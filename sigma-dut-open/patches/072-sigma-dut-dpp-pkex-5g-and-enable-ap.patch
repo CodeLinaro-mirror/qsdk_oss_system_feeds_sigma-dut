@@ -1,0 +1,122 @@
+From 03520d52799054caf94a3a464d98cab553138d91 Mon Sep 17 00:00:00 2001
+From: Arunpandi Kannan <quic_arunpand@quicinc.com>
+Date: Thu, 2 Nov 2023 22:29:46 +0530
+Subject: [PATCH] sigma_dut: DPP pkex 5G change and AP interface enable change
+
+Add support to enable 5G channels for pkex method and changes
+for enabling AP VAP for all dpp tests
+
+Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
+---
+ dpp.c | 53 ++++++++++++++++++++++++++++++++++++-----------------
+ 1 file changed, 36 insertions(+), 17 deletions(-)
+
+diff --git a/dpp.c b/dpp.c
+index 3ae2bbf..96ebe3b 100644
+--- a/dpp.c
++++ b/dpp.c
+@@ -261,8 +261,6 @@ static int dpp_hostapd_run(struct sigma_dut *dut, bool chirp_chan)
+ 	dut->ap_mode = dut->ap_channel <= 14 ? AP_11ng : AP_11na;
+ 	dut->ap_key_mgmt = AP_OPEN;
+ 	dut->ap_cipher = AP_PLAIN;
+-	if (!dut->ap_dpp_conf_addr || !dut->ap_dpp_conf_pkhash)
+-		dut->ap_start_disabled = 1;
+ 	return cmd_ap_config_commit(dut, NULL, NULL) == 1 ? 0 : -1;
+ }
+ 
+@@ -473,16 +471,26 @@ dpp_get_local_bootstrap(struct sigma_dut *dut, struct sigma_conn *conn,
+ 
+ 		/* Default channel list (normal DUT case) */
+ 		if (sigma_dut_is_ap(dut) && dut->hostapd_running &&
+-		    dut->ap_oper_chn &&
+-		    dut->ap_channel > 0 && dut->ap_channel <= 13)
++		    dut->ap_oper_chn) {
+ 			channel = dut->ap_channel;
+-		res = snprintf(buf, sizeof(buf),
+-			       "DPP_BOOTSTRAP_GEN type=%s curve=%s chan=81/%d%s%s%s%s%s",
+-			       type, curve, channel, include_mac ? " mac=" : "",
+-			       include_mac ? mac : "",
+-			       uri_curves ? " supported_curves=" : "",
+-			       uri_curves ? uri_curves : "",
+-			       host);
++			if (channel <= 14) {
++				res = snprintf(buf, sizeof(buf),
++					       "DPP_BOOTSTRAP_GEN type=%s curve=%s chan=81/%d%s%s%s%s%s",
++					       type, curve, channel, include_mac ? " mac=" : "",
++					       include_mac ? mac : "",
++					       uri_curves ? " supported_curves=" : "",
++					       uri_curves ? uri_curves : "",
++					       host);
++			} else {
++				res = snprintf(buf, sizeof(buf),
++					       "DPP_BOOTSTRAP_GEN type=%s curve=%s chan=115/%d mac=%s",
++					       type, curve, channel, mac);
++			}
++		} else {
++			res = snprintf(buf, sizeof(buf),
++				       "DPP_BOOTSTRAP_GEN type=%s curve=%s chan=81/%d mac=%s",
++				       type, curve, channel, mac);
++		}
+ 	}
+ 
+ 	if (res < 0 || res >= sizeof(buf) ||
+@@ -852,6 +860,10 @@ static int dpp_hostapd_conf_update(struct sigma_dut *dut,
+ 		goto out;
+ 	}
+ 
++	if (psk_akm)
++		wpa_command(ifname, "SET ieee80211w 1");
++	else
++		wpa_command(ifname, "SET ieee80211w 2");
+ 	if (pass_len) {
+ 		snprintf(buf2, sizeof(buf2), "SET wpa_passphrase %s",
+ 			 pass);
+@@ -1910,14 +1922,18 @@ static enum sigma_cmd_result dpp_automatic_dpp(struct sigma_dut *dut,
+ 
+ 	pkex_identifier[0] = '\0';
+ 	if (is_pkex_bs(bs)) {
+-		if (sigma_dut_is_ap(dut) && dut->ap_channel != 6) {
++		if (sigma_dut_is_ap(dut) && (dut->ap_channel != 6) &&
++			(dut->ap_channel != 44) && (dut->ap_channel != 149)) {
+ 			/* For now, have to make operating channel match DPP
+ 			 * listen channel. This should be removed once hostapd
+ 			 * has support for DPP listen on non-operating channel.
+ 			 */
+ 			sigma_dut_print(dut, DUT_MSG_INFO,
+ 					"Update hostapd operating channel to match listen needs");
+-			dut->ap_channel = 6;
++			if (dut->ap_channel <= 14)
++				dut->ap_channel = 6;
++			else
++				dut->ap_channel = 44;
+ 
+ 			if (get_driver_type(dut) == DRIVER_OPENWRT) {
+ 				snprintf(buf, sizeof(buf),
+@@ -1925,8 +1941,8 @@ static enum sigma_cmd_result dpp_automatic_dpp(struct sigma_dut *dut,
+ 					 dut->hostapd_ifname, dut->ap_channel);
+ 				run_system(dut, buf);
+ 			}
+-
+-			if (wpa_command(ifname, "SET channel 6") < 0 ||
++			snprintf(buf, sizeof(buf), "SET channel %d", dut->ap_channel);
++			if (wpa_command(ifname, buf) < 0 ||
+ 			    wpa_command(ifname, "DISABLE") < 0 ||
+ 			    wpa_command(ifname, "ENABLE") < 0) {
+ 				send_resp(dut, conn, SIGMA_ERROR,
+@@ -2701,8 +2717,11 @@ static enum sigma_cmd_result dpp_automatic_dpp(struct sigma_dut *dut,
+ 			freq = channel_to_freq(dut, dut->ap_channel);
+ 
+ 		if (is_pkex_bs(bs)) {
+-			/* default: channel 6 for PKEX */
+-			freq = 2437;
++			/* default: channel 6 or 44 for PKEX */
++			if (dut->ap_channel <= 14)
++				freq = 2437;
++			else
++				freq = 5220;
+ 		}
+ 
+ 		delay_qr_resp = get_param(cmd, "DPPDelayQRResponse");
+-- 
+2.17.1
+
