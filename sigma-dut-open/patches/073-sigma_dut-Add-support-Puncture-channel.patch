@@ -1,0 +1,72 @@
+From 424a97728371fedef992f873d7b74072eb4fbdb4 Mon Sep 17 00:00:00 2001
+From: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
+Date: Tue, 21 Nov 2023 12:36:36 +0530
+Subject: [PATCH] sigma_dut: Add WFA testcase support for 6 GHz channels puncturing
+
+Adds support for WFA testcases for static ru puncturing of 6 GHz channels.
+
+Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
+---
+ ap.c        | 22 ++++++++++++++++++++++
+ sigma_dut.c |  3 ++-
+ sigma_dut.h |  1 +
+ 3 files changed, 25 insertions(+), 1 deletion(-)
+
+--- a/ap.c
++++ b/ap.c
+@@ -2502,6 +2502,27 @@ static enum sigma_cmd_result cmd_ap_set_
+ 		dut->eht_txmcs = atoi(val);
+ 	}
+ 
++	val = get_param(cmd, "PunctChannel");
++	if (val) {
++		int bitval = 0;
++		int base_channel = 0;
++		int param;
++		int index;
++
++		param = atoi(val);
++		if (dut->ap_interface_6g) {
++			base_channel = dut->ap_channel - 4;
++			bitval = (param - base_channel) / 4;
++		} else {
++			bitval = (param - dut->ap_channel) / 4;
++		}
++
++		index = 1 << bitval;
++
++		dut->ru_punct_bitmap = index;
++		sigma_dut_print(dut, DUT_MSG_DEBUG, "ru_punct_bitmap=0x%X",
++				dut->ru_punct_bitmap);
++	}
+ 	return SUCCESS_SEND_STATUS;
+ }
+ 
+@@ -10396,6 +10417,9 @@ skip_vht_parameters_set:
+ 		}
+ 	}
+ 
++	if (dut->ru_punct_bitmap)
++		fprintf (f, "ru_punct_bitmap=0x%X", dut->ru_punct_bitmap);
++
+ 	fclose(f);
+ 
+ 	if (dut->ap_is_dual && conf_counter == 0) {
+@@ -11602,6 +11626,7 @@ static enum sigma_cmd_result cmd_ap_rese
+ 	dut->eht_txmcs = 0;
+ 	dut->ap_ehtmcs_map = 0;
+ 	dut->run_set_param = 0;
++	dut->ru_punct_bitmap = 0;
+ 
+ 	if (dut->device_type == AP_testbed) {
+ 		dut->ap_he_dlofdma = VALUE_DISABLED;
+--- a/sigma_dut.h
++++ b/sigma_dut.h
+@@ -1187,6 +1187,7 @@ struct sigma_dut {
+ 	int i2rlmr_iftmr;
+ 	int i2rlmrpolicy;
+ 	int rnm_mfp;
++	u16 ru_punct_bitmap;
+ 	struct device_pairing_info dev_info;
+ 	struct peer_pairing_info peer_info;
+ };
