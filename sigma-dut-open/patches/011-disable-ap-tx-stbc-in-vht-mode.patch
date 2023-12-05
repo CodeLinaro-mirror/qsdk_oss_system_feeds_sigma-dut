@@ -1,17 +1,17 @@
 diff --git a/ap.c b/ap.c
-index ba2a57b..053c991 100644
+index 3d7e92a..91aa938 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -8171,7 +8171,7 @@ write_conf:
- 		fprintf(f, "ht_capab=%s%s%s\n",
+@@ -8168,7 +8168,7 @@ write_conf:
+ 			"[SHORT-GI-20][SHORT-GI-40]",
  			ht40plus ? "[HT40+]" : "",
  			ht40minus ? "[HT40-]" : "",
--			tx_stbc ? "[TX-STBC]" : "");
+-			tx_stbc ? "[TX-STBC][RX-STBC1]" : "");
 +			tx_stbc ? "[TX-STBC][RX-STBC1]" : "[RX-STBC1]");
  	}
  
  	if ((drv == DRIVER_MAC80211 || drv == DRIVER_QNXNTO ||
-@@ -8903,7 +8903,7 @@ skip_key_mgmt:
+@@ -8900,7 +8900,7 @@ skip_key_mgmt:
  				(dut->ap_ldpc == VALUE_ENABLED) ?
  				"[RXLDPC]" : "",
  				(dut->ap_tx_stbc == VALUE_ENABLED) ?
@@ -20,7 +20,7 @@ index ba2a57b..053c991 100644
  				dut->ap_mu_txBF ? "[MU-BEAMFORMER]" : "",
  				dut->ap_chwidth == AP_160 ? "[VHT160]" :
  				(dut->ap_chwidth == AP_80_80 ?
-@@ -10021,7 +10021,7 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+@@ -10018,7 +10018,7 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
  		 * is still not set, query it from the wiphy to see if it is
  		 * supported by the driver.
  		 */

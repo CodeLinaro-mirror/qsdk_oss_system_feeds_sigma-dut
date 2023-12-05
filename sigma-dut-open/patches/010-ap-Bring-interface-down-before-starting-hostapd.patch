@@ -1,8 +1,8 @@
 diff --git a/ap.c b/ap.c
-index 1e3d61d..ba2a57b 100644
+index f1b6d4d..3d7e92a 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -9113,6 +9113,12 @@ skip_key_mgmt:
+@@ -9110,6 +9110,12 @@ skip_key_mgmt:
  			sigma_dut_print(dut, DUT_MSG_ERROR, "Failed to remove "
  					"monitor interface");
  

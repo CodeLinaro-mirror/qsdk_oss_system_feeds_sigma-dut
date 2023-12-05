@@ -1,19 +1,22 @@
 diff --git a/ap.c b/ap.c
-index b9b5ecf..1e3d61d 100644
+index b9b5ecf..f1b6d4d 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -1341,6 +1341,10 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -8164,10 +8164,11 @@ write_conf:
+ 			ht40plus = 0;
  		}
+ 
+-		fprintf(f, "ht_capab=%s%s%s\n",
++		fprintf(f, "ht_capab=%s%s%s%s\n",
++			"[SHORT-GI-20][SHORT-GI-40]",
+ 			ht40plus ? "[HT40+]" : "",
+ 			ht40minus ? "[HT40-]" : "",
+-			tx_stbc ? "[TX-STBC]" : "");
++			tx_stbc ? "[TX-STBC][RX-STBC1]" : "");
  	}
  
-+	val = get_param(cmd, "MU_TxBF");
-+	if (val)
-+		dut->ap_mu_txBF = strcasecmp(val, "enable") == 0;
-+
- 	/* UNSUPPORTED: tx_lgi_rate */
- 
- 	val = get_param(cmd, "wpsnfc");
-@@ -8899,7 +8903,7 @@ skip_key_mgmt:
+ 	if ((drv == DRIVER_MAC80211 || drv == DRIVER_QNXNTO ||
+@@ -8899,7 +8900,7 @@ skip_key_mgmt:
  				(dut->ap_ldpc == VALUE_ENABLED) ?
  				"[RXLDPC]" : "",
  				(dut->ap_tx_stbc == VALUE_ENABLED) ?
