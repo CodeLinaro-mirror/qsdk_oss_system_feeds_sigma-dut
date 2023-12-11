@@ -1,18 +1,93 @@
-From 03520d52799054caf94a3a464d98cab553138d91 Mon Sep 17 00:00:00 2001
+From 08b9955581b06dcc8457d02715a4647f52745eb9 Mon Sep 17 00:00:00 2001
 From: Arunpandi Kannan <quic_arunpand@quicinc.com>
-Date: Thu, 2 Nov 2023 22:29:46 +0530
-Subject: [PATCH] sigma_dut: DPP pkex 5G change and AP interface enable change
+Date: Mon, 11 Dec 2023 10:51:20 +0530
+Subject: [PATCH] sigma_dut: Sigma changes to enable DPP testing
 
 Add support to enable 5G channels for pkex method and changes
-for enabling AP VAP for all dpp tests
+for enabling AP VAP for all dpp tests.
+
+Enable support to reset hostapd after a DPP test is done.
 
 Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
 ---
+ ap.c  | 19 +++++++++++++------
  dpp.c | 53 ++++++++++++++++++++++++++++++++++++-----------------
- 1 file changed, 36 insertions(+), 17 deletions(-)
+ 2 files changed, 49 insertions(+), 23 deletions(-)
 
+diff --git a/ap.c b/ap.c
+index 1c83974..b8ca733 100644
+--- a/ap.c
++++ b/ap.c
+@@ -1389,7 +1389,7 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+ 				ath_radio(dut, val);
+ 			} else if (dut->use_hostapd_pid_file) {
+ 				kill_hostapd_process_pid(dut);
+-			} else if (kill_process(dut, "(hostapd)", 1,
++			} else if (kill_process(dut, "(hostapd)", 0,
+ 						SIGTERM) == 0 ||
+ 				   system("killall hostapd") == 0) {
+ 				sigma_dut_print(dut, DUT_MSG_INFO,
+@@ -5193,7 +5193,6 @@ static int owrt_ap_post_config_commit(struct sigma_dut *dut,
+ 	return 1;
+ }
+ 
+-
+ static int cmd_owrt_ap_config_commit(struct sigma_dut *dut,
+ 				     struct sigma_conn *conn,
+ 				     struct sigma_cmd *cmd)
+@@ -6196,7 +6195,7 @@ static int ath_ap_append_hostapd_conf(struct sigma_dut *dut)
+ {
+ 	FILE *f;
+ 
+-	if (kill_process(dut, "(hostapd)", 1, SIGTERM) == 0 ||
++	if (kill_process(dut, "(hostapd)", 0, SIGTERM) == 0 ||
+ 	    system("killall hostapd") == 0) {
+ 		int i;
+ 
+@@ -9060,7 +9059,6 @@ enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
+ 					   struct sigma_conn *conn,
+ 					   struct sigma_cmd *cmd)
+ {
+-	/* const char *name = get_param(cmd, "NAME"); */
+ 	FILE *f;
+ 	const char *ifname;
+ 	char buf[500];
+@@ -9161,6 +9159,15 @@ write_conf:
+ 		offset = dut->ap_chwidth_offset;
+ 	}
+ 
++	if (drv == DRIVER_MAC80211) {
++		if(cmd) {
++			const char *name = get_param(cmd, "NAME");
++			if (name && !strcmp(name, "QCOM-DUT") && mode >= AP_inval) {
++				return 1;
++			}
++		}
++	}
++
+ 	concat_sigma_tmpdir(dut, "/sigma_dut-ap.conf", ap_conf_path,
+ 			    sizeof(ap_conf_path));
+ 	f = fopen(ap_conf_path, "w");
+@@ -10412,7 +10419,7 @@ skip_vht_parameters_set:
+ 	if (system("slay hostapd") == 0)
+ #else /* __QNXNTO__ */
+ 	if (!dut->use_hostapd_pid_file &&
+-	    (kill_process(dut, "(hostapd)", 1, SIGTERM) == 0 ||
++	    (kill_process(dut, "(hostapd)", 0, SIGTERM) == 0 ||
+ 	     system("killall hostapd") == 0))
+ #endif /* __QNXNTO__ */
+ 	{
+@@ -11788,7 +11795,7 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+ 
+ 	if (dut->use_hostapd_pid_file) {
+ 		kill_hostapd_process_pid(dut);
+-	} else if (kill_process(dut, "(hostapd)", 1, SIGTERM) == 0 ||
++	} else if (kill_process(dut, "(hostapd)", 0, SIGTERM) == 0 ||
+ 		   system("killall hostapd") == 0) {
+ 		int i;
+ 		/* Wait some time to allow hostapd to complete cleanup before
 diff --git a/dpp.c b/dpp.c
-index 3ae2bbf..96ebe3b 100644
+index d33c887..3f1bf06 100644
 --- a/dpp.c
 +++ b/dpp.c
 @@ -261,8 +261,6 @@ static int dpp_hostapd_run(struct sigma_dut *dut, bool chirp_chan)
@@ -71,7 +146,7 @@ index 3ae2bbf..96ebe3b 100644
  	if (pass_len) {
  		snprintf(buf2, sizeof(buf2), "SET wpa_passphrase %s",
  			 pass);
-@@ -1910,14 +1922,18 @@ static enum sigma_cmd_result dpp_automatic_dpp(struct sigma_dut *dut,
+@@ -1915,14 +1927,18 @@ static enum sigma_cmd_result dpp_automatic_dpp(struct sigma_dut *dut,
  
  	pkex_identifier[0] = '\0';
  	if (is_pkex_bs(bs)) {
@@ -92,7 +167,7 @@ index 3ae2bbf..96ebe3b 100644
  
  			if (get_driver_type(dut) == DRIVER_OPENWRT) {
  				snprintf(buf, sizeof(buf),
-@@ -1925,8 +1941,8 @@ static enum sigma_cmd_result dpp_automatic_dpp(struct sigma_dut *dut,
+@@ -1930,8 +1946,8 @@ static enum sigma_cmd_result dpp_automatic_dpp(struct sigma_dut *dut,
  					 dut->hostapd_ifname, dut->ap_channel);
  				run_system(dut, buf);
  			}
@@ -103,7 +178,7 @@ index 3ae2bbf..96ebe3b 100644
  			    wpa_command(ifname, "DISABLE") < 0 ||
  			    wpa_command(ifname, "ENABLE") < 0) {
  				send_resp(dut, conn, SIGMA_ERROR,
-@@ -2701,8 +2717,11 @@ static enum sigma_cmd_result dpp_automatic_dpp(struct sigma_dut *dut,
+@@ -2706,8 +2722,11 @@ static enum sigma_cmd_result dpp_automatic_dpp(struct sigma_dut *dut,
  			freq = channel_to_freq(dut, dut->ap_channel);
  
  		if (is_pkex_bs(bs)) {
