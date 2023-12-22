@@ -28,11 +28,9 @@ Signed-off-by: Manish Dharanenthiran <quic_mdharane@quicinc.com>
  sigma_dut.h |  2 ++
  2 files changed, 18 insertions(+), 61 deletions(-)
 
-diff --git a/ap.c b/ap.c
-index cfef2b5..6e81822 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -1127,6 +1127,11 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -1127,6 +1127,11 @@ static enum sigma_cmd_result cmd_ap_set_
  							"errorCode,Unsupported WIDTH");
  					return STATUS_SENT;
  				}
@@ -44,7 +42,7 @@ index cfef2b5..6e81822 100644
  				if (wlan_tag > 1)
  					dut->ap_chwidth_1 = chwidth;
  				else
-@@ -1184,58 +1189,10 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -1184,58 +1189,10 @@ static enum sigma_cmd_result cmd_ap_set_
  		if ((strcasecmp(val, "5G") == 0) && (!dut->ap_interface_5g)) {
  			iface_check = 1;
  			dut->ap_interface_5g = 1;
@@ -103,7 +101,7 @@ index cfef2b5..6e81822 100644
  		} else if ((strcasecmp(val, "24G") == 0) && (!dut->ap_interface_2g)) {
  			iface_check = 1;
  			dut->ap_interface_2g = 1;
-@@ -1274,11 +1231,6 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -1274,11 +1231,6 @@ static enum sigma_cmd_result cmd_ap_set_
  		if (!dut->dual_ap_ifname) {
  			dut->ap_is_mld = 1;
  			dut->num_links++;
@@ -115,7 +113,7 @@ index cfef2b5..6e81822 100644
  
  			if (dut->ap_mode)
  				dut->ap_mode_1 = dut->ap_mode;
-@@ -1795,7 +1747,6 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -1795,7 +1747,6 @@ static enum sigma_cmd_result cmd_ap_set_
  			dut->ap_tx_stbc = VALUE_DISABLED;
  	}
  
@@ -123,7 +121,7 @@ index cfef2b5..6e81822 100644
  	val = get_param(cmd, "WIDTH");
  	if (val) {
  		if (strcasecmp(val, "20") == 0)
-@@ -1818,12 +1769,10 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -1818,12 +1769,10 @@ static enum sigma_cmd_result cmd_ap_set_
  				  "errorCode,Unsupported WIDTH");
  			return STATUS_SENT;
  		}
@@ -139,7 +137,7 @@ index cfef2b5..6e81822 100644
  	}
  	/* TODO: WIDTH_SCAN */
  
-@@ -9521,7 +9470,7 @@ write_conf:
+@@ -9471,7 +9420,7 @@ write_conf:
  			sigma_dut_print(dut, DUT_MSG_INFO,
  					"Failed to copy %s to %s", f1, f2);
  		mode = dut->ap_mode_1;
@@ -148,7 +146,7 @@ index cfef2b5..6e81822 100644
  		dtim = dut->dtim;
  		chan = dut->ap_tag_channel[0];
  		offset = dut->ap_chwidth_offset_1;
-@@ -9535,13 +9484,19 @@ write_conf:
+@@ -9485,13 +9434,19 @@ write_conf:
  			sigma_dut_print(dut, DUT_MSG_ERROR,
  					"Error changing groupid");
  #endif /* ANDROID */
@@ -169,19 +167,14 @@ index cfef2b5..6e81822 100644
  	}
  
  	if (drv == DRIVER_MAC80211) {
-diff --git a/sigma_dut.h b/sigma_dut.h
-index e122ecc..54eda3d 100644
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -1221,6 +1221,8 @@ struct sigma_dut {
- 	int cohost_iface;
- 	int ap_cohosted_bss;
- 	enum value_not_set_enabled_disabled ap_btmsupt;
+@@ -1237,6 +1237,8 @@ struct sigma_dut {
+ 	struct btm_ap btm[NUM_NEIGHBORS];
+ 	int btm_links[NUM_NEIGHBORS];
+ 	int btm_ml_link;
 +#define MAX_MLD_SUPPORTED 2
 +	enum ap_chwidth ap_link_chwidth[MAX_MLD_SUPPORTED];
  };
  
  
--- 
-2.17.1
-
