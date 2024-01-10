@@ -14,8 +14,8 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -2502,6 +2502,27 @@ static enum sigma_cmd_result cmd_ap_set_
- 		dut->eht_txmcs = atoi(val);
+@@ -2708,6 +2708,27 @@ static enum sigma_cmd_result cmd_ap_set_
+ 		dut->ap_mu_txBF = 1;
  	}
  
 +	val = get_param(cmd, "PunctChannel");
@@ -42,17 +42,17 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
  	return SUCCESS_SEND_STATUS;
  }
  
-@@ -10396,6 +10417,9 @@ skip_vht_parameters_set:
- 		}
- 	}
+@@ -10760,6 +10781,9 @@ skip_vht_parameters_set:
+ 	if (dtim)
+ 		fprintf(f, "dtim_period=%d\n", dtim);
  
 +	if (dut->ru_punct_bitmap)
-+		fprintf (f, "ru_punct_bitmap=0x%X", dut->ru_punct_bitmap);
++		fprintf (f, "ru_punct_bitmap=%d", dut->ru_punct_bitmap);
 +
  	fclose(f);
  
  	if (dut->ap_is_dual && conf_counter == 0) {
-@@ -11602,6 +11626,7 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -11971,6 +11995,7 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->eht_txmcs = 0;
  	dut->ap_ehtmcs_map = 0;
  	dut->run_set_param = 0;
@@ -62,11 +62,11 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
  		dut->ap_he_dlofdma = VALUE_DISABLED;
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -1187,6 +1187,7 @@ struct sigma_dut {
+@@ -1197,6 +1197,7 @@ struct sigma_dut {
  	int i2rlmr_iftmr;
  	int i2rlmrpolicy;
  	int rnm_mfp;
 +	u16 ru_punct_bitmap;
  	struct device_pairing_info dev_info;
  	struct peer_pairing_info peer_info;
- };
+ 
