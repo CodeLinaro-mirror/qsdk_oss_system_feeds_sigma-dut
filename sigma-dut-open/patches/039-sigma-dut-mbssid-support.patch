@@ -26,7 +26,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -744,6 +744,36 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -864,6 +864,36 @@ static enum sigma_cmd_result cmd_ap_set_
  	if (val)
  		dut->program = sigma_program_to_enum(val);
  
@@ -63,7 +63,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	val = get_param(cmd, "WLAN_TAG");
  	if (val) {
  		wlan_tag = atoi(val);
-@@ -2062,6 +2092,27 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -2182,6 +2212,27 @@ static enum sigma_cmd_result cmd_ap_set_
  		}
  	}
  
@@ -91,7 +91,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	val = get_param(cmd, "TWT_RespSupport");
  	if (val) {
  		if (strcasecmp(val, "enable") == 0) {
-@@ -2401,6 +2452,56 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -2521,6 +2572,56 @@ static enum sigma_cmd_result cmd_ap_set_
  		return 1;
  	}
  
@@ -148,7 +148,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	val = get_param(cmd, "KEYMGNT");
  	if (!val)
  		val = get_param(cmd,"KeyMgmtType");
-@@ -9466,6 +9567,91 @@ skip_key_mgmt:
+@@ -9604,6 +9705,90 @@ skip_vht_parameters_set:
  		fprintf(f, "oce=%d\n",
  			dut->dev_role == DEVROLE_STA_CFON ? 2 : 1);
  	}
@@ -224,8 +224,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
 +				fprintf(f, "wpa_pairwise=CCMP\n");
 +				fprintf(f, "ieee80211w=2\n");
 +				fprintf(f, "sae_password=%s\n", dut->mbss.conf[i].psk);
-+				if (check_band(dut, BAND_6G, conf_counter))
-+					fprintf(f, "sae_pwe=1\n");
++				fprintf(f, "sae_pwe=1\n");
 +			}
 +
 +			if (dut->mbss.conf[i].key_mgmt == AP_WPA2_PSK) {
@@ -240,7 +239,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	fclose(f);
  
  	if (dut->ap_is_dual && conf_counter == 0) {
-@@ -9762,8 +9948,16 @@ skip_key_mgmt:
+@@ -9900,8 +10085,16 @@ skip_vht_parameters_set:
  		}
  	}
  
@@ -258,7 +257,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  
  	if (dut->bridge && dut->ap_is_dual) {
  		if (run_system_wrapper(dut, "ifconfig %s up", dut->bridge)
-@@ -10623,6 +10817,8 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -10762,6 +10955,8 @@ static enum sigma_cmd_result cmd_ap_rese
  		}
  		if (get_openwrt_driver_type() == OPENWRT_DRIVER_ATHEROS)
  			dut->ap_dfs_mode = AP_DFS_MODE_ENABLED;
@@ -267,7 +266,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	}
  
  
-@@ -12191,6 +12387,28 @@ static enum sigma_cmd_result cmd_ap_get_
+@@ -12330,6 +12525,28 @@ static enum sigma_cmd_result cmd_ap_get_
  
  	get_if_name(dut, ifname, sizeof(ifname), wlan_tag);
  
@@ -316,7 +315,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  };
  
  #ifdef CONFIG_TRAFFIC_AGENT
-@@ -414,6 +416,43 @@ enum if_band {
+@@ -480,6 +482,43 @@ enum if_band {
  	BAND_6G
  };
  
@@ -360,7 +359,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  struct sigma_dut {
  	const char *main_ifname;
  	char *main_ifname_2g;
-@@ -472,7 +511,7 @@ struct sigma_dut {
+@@ -538,7 +577,7 @@ struct sigma_dut {
  
  	struct wfa_cs_p2p_group *groups;
  
@@ -369,7 +368,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	int infra_network_id;
  
  	enum p2p_mode {
-@@ -510,12 +549,12 @@ struct sigma_dut {
+@@ -576,12 +615,12 @@ struct sigma_dut {
  	unsigned int akm_values;
  
  	/* AP configuration */
@@ -384,7 +383,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	enum ap_mode {
  		AP_11a,
  		AP_11g,
-@@ -569,26 +608,7 @@ struct sigma_dut {
+@@ -635,26 +674,7 @@ struct sigma_dut {
  	enum value_not_set_enabled_disabled ap_dyn_bw_sig;
  	int ap_sgi80;
  	int ap_p2p_mgmt;
@@ -412,7 +411,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	enum ap_tag_key_mgmt {
  		AP2_OPEN,
  		AP2_OSEN,
-@@ -680,7 +700,7 @@ struct sigma_dut {
+@@ -746,7 +766,7 @@ struct sigma_dut {
  	int ap_qos_map_set;
  	int ap_bss_load;
  	char ap_osu_server_uri[10][256];
@@ -421,7 +420,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	int ap_osu_method[10];
  	int ap_osu_icon_tag;
  	int ap_venue_url;
-@@ -1065,6 +1085,8 @@ struct sigma_dut {
+@@ -1141,6 +1161,8 @@ struct sigma_dut {
  	int dscp_use_iptables;
  	int autoconnect_default;
  	int dhcp_client_running;
