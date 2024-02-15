@@ -137,41 +137,49 @@ Signed-off-by: Manish Dharanenthiran <quic_mdharane@quicinc.com>
  	}
  	/* TODO: WIDTH_SCAN */
  
-@@ -9471,7 +9420,7 @@ write_conf:
+@@ -9476,7 +9425,11 @@ write_conf:
  			sigma_dut_print(dut, DUT_MSG_INFO,
  					"Failed to copy %s to %s", f1, f2);
  		mode = dut->ap_mode_1;
 -		chwidth = dut->ap_chwidth_1;
-+		chwidth = dut->ap_link_chwidth[conf_counter];
++		if (dut->ap_link_chwidth[conf_counter] != -1)
++			chwidth = dut->ap_link_chwidth[conf_counter];
++		else
++			chwidth = dut->ap_chwidth_1;
++
  		dtim = dut->dtim;
  		chan = dut->ap_tag_channel[0];
  		offset = dut->ap_chwidth_offset_1;
-@@ -9485,13 +9434,19 @@ write_conf:
- 			sigma_dut_print(dut, DUT_MSG_ERROR,
- 					"Error changing groupid");
- #endif /* ANDROID */
-+		sigma_dut_print(dut, DUT_MSG_ERROR,
-+				"%d is_dual:%d chwid:%d chan:%d\n", __LINE__,
-+				dut->ap_is_dual, chwidth, chan);
+@@ -9493,7 +9446,15 @@ write_conf:
  	} else {
  		ap_conf_path_1[0] = '\0';
  		mode = dut->ap_mode;
 -		chwidth = dut->ap_chwidth;
-+		chwidth = dut->ap_link_chwidth[0];
++		/* ap_link_chwidth will be set in MLO/SLO case where WIDTH
++		 * param is specified, use the default param if the WIDTH is
++		 * not specified in test case
++		 */
++		if (dut->ap_link_chwidth[0] != -1)
++			chwidth = dut->ap_link_chwidth[0];
++		else
++			chwidth = dut->ap_chwidth;
++
  		dtim = dut->dtim_1;
  		chan = dut->ap_channel;
  		offset = dut->ap_chwidth_offset;
-+		sigma_dut_print(dut, DUT_MSG_ERROR,
-+				"%d is_dual:%d chwid:%d chan:%d\n", __LINE__,
-+				dut->ap_is_dual, chwidth, chan);
- 	}
- 
- 	if (drv == DRIVER_MAC80211) {
+@@ -11790,6 +11751,7 @@ static enum sigma_cmd_result cmd_ap_rese
+ 	dut->ap_su_txBF = 1;
+ 	dut->ap_channel = -1;
+ 	dut->ap_chwidth = AP_AUTO;
++	memset(dut->ap_link_chwidth, -1, sizeof(dut->ap_link_chwidth));
+ 	dut->ap_ampdu_exp = 0;
+ 	dut->ap_max_mpdu_len = 0;
+ 	dut->ap_band_6g = 0;
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
 @@ -1237,6 +1237,8 @@ struct sigma_dut {
+ 	int nebor_cnt;
  	struct btm_ap btm[NUM_NEIGHBORS];
- 	int btm_links[NUM_NEIGHBORS];
  	int btm_ml_link;
 +#define MAX_MLD_SUPPORTED 2
 +	enum ap_chwidth ap_link_chwidth[MAX_MLD_SUPPORTED];
