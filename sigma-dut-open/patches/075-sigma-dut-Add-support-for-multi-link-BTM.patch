@@ -259,7 +259,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  	}
  
  	val = get_param(cmd, "PMFFrameType");
-@@ -16198,15 +16286,18 @@ static int mac80211_update_mbo_pref_ap_l
+@@ -16198,15 +16286,17 @@ static int mac80211_update_mbo_pref_ap_l
  static int mac80211_set_nebor(struct sigma_dut *dut, const char *ifname,
  			      struct sigma_cmd *cmd)
  {
@@ -275,12 +275,11 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 +	int bssid_cnt = 0;
 +	char *token, *subtoken;
 +	char parser[200];
-+	int ap_ne_pref = -1;
 +	int neighbor_cnt = 0;
  
  	if (list_offset >= MBO_MAX_PREF_BSSIDS) {
  		sigma_dut_print(dut, DUT_MSG_ERROR,
-@@ -16215,26 +16306,132 @@ static int mac80211_set_nebor(struct sig
+@@ -16215,26 +16305,133 @@ static int mac80211_set_nebor(struct sig
  	}
  
  	val = get_param(cmd, "Nebor_Op_Class");
@@ -417,7 +416,8 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 +	} else {
 +		mbo_add_nebor_entry(dut, dut->btm[neighbor_cnt].nebor_bssid[0],
 +				dut->btm[neighbor_cnt].nebor_op_class[0],
-+				dut->btm[neighbor_cnt].nebor_op_ch[0], ap_ne_pref);
++				dut->btm[neighbor_cnt].nebor_op_ch[0],
++				dut->btm[neighbor_cnt].ap_ne_pref);
 +		if (mac80211_update_mbo_pref_ap_list(dut))
 +			return -1;
 +	}
