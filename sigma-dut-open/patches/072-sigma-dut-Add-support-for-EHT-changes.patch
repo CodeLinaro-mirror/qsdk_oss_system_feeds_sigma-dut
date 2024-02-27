@@ -182,8 +182,8 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 +
  }
  
- static void fwtest_set_he_params_link_id(struct sigma_dut *dut, const char *ifname, int link_id)
-@@ -8754,6 +8824,9 @@ static void fwtest_set_he_params_link_id
+ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+@@ -8687,6 +8757,9 @@ static void fwtest_set_eht_params(struct
  		fwtest_linkid_cmd_wrapper(dut, "-t 1 -m 0x0 -v 0 0x1D 0", ifname, link_id);
  	}
  
@@ -193,7 +193,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  	if (dut->ap_he_mimo == MIMO_UL) {
  		uint8_t he_param = 0x7F; /* Bit 7 is reserved, Bit 6 for UL MIMO */
  		/* Update HE Params for UL MIMO */
-@@ -8767,6 +8840,9 @@ static void fwtest_set_he_params_link_id
+@@ -8700,6 +8773,9 @@ static void fwtest_set_eht_params(struct
  				   "ath11k-fwtest -t 1 -i %s -l %d -m 0x00 -v 0 32770 %d",
  				   ifname, link_id, he_param);
  	}
@@ -203,7 +203,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  }
  
  #define IEEE80211_VHT_CAP_TXSTBC                               ((u32) (1 << 7))
-@@ -9074,7 +9150,7 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -9007,7 +9083,7 @@ enum sigma_cmd_result cmd_ap_config_comm
  #endif /* ANDROID */
  	enum ap_chwidth chwidth;
  	enum sec_ch_offset offset;
@@ -212,7 +212,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  	unsigned char main_bssid[6];
  	char ifname2[50];
  	bool mld_sae_set = false;
-@@ -9138,6 +9214,7 @@ write_conf:
+@@ -9071,6 +9147,7 @@ write_conf:
  					"Failed to copy %s to %s", f1, f2);
  		mode = dut->ap_mode_1;
  		chwidth = dut->ap_chwidth_1;
@@ -220,7 +220,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  		chan = dut->ap_tag_channel[0];
  		offset = dut->ap_chwidth_offset_1;
  #ifdef ANDROID
-@@ -9154,6 +9231,7 @@ write_conf:
+@@ -9087,6 +9164,7 @@ write_conf:
  		ap_conf_path_1[0] = '\0';
  		mode = dut->ap_mode;
  		chwidth = dut->ap_chwidth;
@@ -228,7 +228,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  		chan = dut->ap_channel;
  		offset = dut->ap_chwidth_offset;
  	}
-@@ -10393,6 +10471,9 @@ skip_vht_parameters_set:
+@@ -10325,6 +10403,9 @@ skip_vht_parameters_set:
  		}
  	}
  
@@ -238,7 +238,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  	fclose(f);
  
  	if (dut->ap_is_dual && conf_counter == 0) {
-@@ -10774,7 +10855,6 @@ hapd_started:
+@@ -10704,7 +10785,6 @@ hapd_started:
  		}
  		sigma_dut_print(dut, DUT_MSG_INFO, "Started bridge");
  	}
@@ -246,7 +246,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  	dut->hostapd_running = 1;
  	return 1;
  }
-@@ -11340,6 +11420,10 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -11270,6 +11350,10 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->eap_fragment = 0;
  	dut->wps_forced_version = 0;
  
@@ -257,7 +257,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  	if (dut->program == PROGRAM_HT || dut->program == PROGRAM_VHT ||
  	    dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT) {
  		dut->ap_wme = AP_WME_ON;
-@@ -11667,7 +11751,6 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -11597,7 +11681,6 @@ static enum sigma_cmd_result cmd_ap_rese
  		dut->ap_assoc_delay = 0;
  	}
  
@@ -265,7 +265,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  	dut->ap_oper_chn = 0;
  
  	dut->ap_pmksa = 0;
-@@ -11703,6 +11786,8 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -11633,6 +11716,8 @@ static enum sigma_cmd_result cmd_ap_rese
  		dut->ap_group_mgmt_cipher = AP_BIP_GMAC_256;
  		dut->ap_pmf = AP_PMF_OPTIONAL;
  		dut->ap_beacon_prot = 1;
@@ -274,7 +274,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  	}
  
  	dut->dpp_conf_id = -1;
-@@ -16103,13 +16188,15 @@ static enum sigma_cmd_result mac80211_he
+@@ -16028,13 +16113,15 @@ static enum sigma_cmd_result mac80211_he
  
  
  static enum sigma_cmd_result mac80211_he_gi(struct sigma_dut *dut,
@@ -291,7 +291,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  
  	if (dut->program == PROGRAM_EHT)
  		snprintf(program, sizeof(program), "eht");
-@@ -16118,8 +16205,37 @@ static enum sigma_cmd_result mac80211_he
+@@ -16043,8 +16130,37 @@ static enum sigma_cmd_result mac80211_he
  	else
  		return STATUS_SENT_ERROR;
  
@@ -329,7 +329,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  		free(dut->ar_ltf);
  		dut->ar_ltf = NULL;
  
-@@ -16129,25 +16245,152 @@ static enum sigma_cmd_result mac80211_he
+@@ -16054,25 +16170,152 @@ static enum sigma_cmd_result mac80211_he
  		if (val) {
  			ret = run_system_wrapper(
  				dut,
@@ -486,7 +486,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  
  static void mac80211_set_ackpolicy_0(struct sigma_dut *dut, const char *ifname,
  				     unsigned char *mac_addr)
-@@ -16199,6 +16442,10 @@ static enum sigma_cmd_result mac80211_ap
+@@ -16124,6 +16367,12 @@ static enum sigma_cmd_result mac80211_ap
  	int he_ackpolicymac = 0;
  	int ap_he_ackpolicy;
  	int link_id = 0;
@@ -494,10 +494,12 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 +	char buf[100];
 +	int val_bw = -1;
 +	const char *value_bw;
++	char link_param[10];
++	bool link_set = false;
  
  	ifname = get_main_ifname(dut);
  
-@@ -16277,7 +16524,7 @@ static enum sigma_cmd_result mac80211_ap
+@@ -16202,7 +16451,7 @@ static enum sigma_cmd_result mac80211_ap
  
  	val = get_param(cmd, "GI");
  	if (val || dut->ar_ltf) {
@@ -506,7 +508,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  		if (res != SUCCESS_SEND_STATUS)
  			return res;
  	}
-@@ -16344,6 +16591,231 @@ static enum sigma_cmd_result mac80211_ap
+@@ -16269,6 +16518,236 @@ static enum sigma_cmd_result mac80211_ap
  		}
  	}
  
@@ -558,115 +560,120 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 +		}
 +	}
 +
++	if (dut->program == PROGRAM_EHT) {
++		snprintf(link_param, sizeof(link_param), "-l %d", link_id);
++		link_set = true;
++	}
++
 +	val = get_param(cmd, "STA_WMMPE_ECWmin_BK");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s wmm_param ac=bk cwmin=%d", ifname, param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=bk cwmin=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_ECWmin_BE");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s wmm_param ac=be cwmin=%d", ifname, param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=be cwmin=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_ECWmin_VI");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s wmm_param ac=vi cwmin=%d", ifname, param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=vi cwmin=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_ECWmin_VO");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s wmm_param ac=vo cwmin=%d", ifname, param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=vo cwmin=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_AIFSN_BK");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s wmm_param ac=bk aifs=%d", ifname, param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=bk aifs=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_AIFSN_BE");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s wmm_param ac=be aifs=%d", ifname, param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=be aifs=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_AIFSN_VI");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s wmm_param ac=vi aifs=%d", ifname, param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=vi aifs=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_AIFSN_VO");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s wmm_param ac=vo aifs=%d", ifname, param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=vo aifs=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_ECWmax_BK");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s wmm_param ac=bk cwmax=%d", ifname, param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=bk cwmax=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_ECWmax_BE");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s wmm_param ac=be cwmax=%d", ifname, param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=be cwmax=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_ECWmax_VI");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s wmm_param ac=vi cwmax=%d", ifname, param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=vi cwmax=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_ECWmax_VO");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s wmm_param ac=vo cwmax=%d", ifname, param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=vo cwmax=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_TXOP_BK");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s wmm_param ac=bk txop=%d", ifname, param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=bk txop=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_TXOP_BE");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s wmm_param ac=be txop=%d", ifname, param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=be txop=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "	STA_WMMPE_TXOP_VI");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s wmm_param ac=vi txop=%d", ifname, param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=vi txop=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_TXOP_VO");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s wmm_param ac=vo txop=%d", ifname, param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=vo txop=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
