@@ -22,11 +22,9 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  ap.c | 21 ++++++++++++++++++---
  1 file changed, 18 insertions(+), 3 deletions(-)
 
-diff --git a/ap.c b/ap.c
-index 8ef5040..a58d1a6 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -8794,6 +8794,11 @@ static void fwtest_set_he_params(struct sigma_dut *dut, const char *ifname)
+@@ -8794,6 +8794,11 @@ static void fwtest_set_he_params(struct
  
  		/* UL trigger duration */
  		fwtest_cmd_wrapper(dut, "-m 0x48 -v 0 63 1000", ifname);
@@ -38,7 +36,7 @@ index 8ef5040..a58d1a6 100644
  	}
  
  	/* sp_guard_interval_in_us WAR */
-@@ -8894,6 +8899,12 @@ static void fwtest_set_he_params(struct sigma_dut *dut, const char *ifname)
+@@ -8894,6 +8899,12 @@ static void fwtest_set_he_params(struct
  		/* Enable MU MIMO */
  		run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x47 -v 0 641 1", ifname);
  	}
@@ -51,7 +49,16 @@ index 8ef5040..a58d1a6 100644
  }
  
  static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
-@@ -8916,9 +8927,6 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+@@ -8904,8 +8915,6 @@ static void fwtest_set_eht_params(struct
+ 	 */
+ 	int pdev_id = 1;
+ 
+-	/* disbale sending basic triggers */
+-	fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 42 0", ifname, link_id);
+ 	/* he_dynamic_muedca 0 */
+ 	run_system_wrapper(dut,
+ 			   "ath11k-fwtest -t 2 -i %s -l %d -m 0x00 -p %d 0xBF 0x00",
+@@ -8916,9 +8925,6 @@ static void fwtest_set_eht_params(struct
  			   "ath11k-fwtest -t 2 -i %s -l %d -m 0x00 -p %d 0xA2 0x02",
  			   ifname, link_id, pdev_id);
  
@@ -61,11 +68,15 @@ index 8ef5040..a58d1a6 100644
  	if (dut->ap_he_ulofdma == VALUE_ENABLED) {
  		/* Disable DL OFDMA */
  		if (dut->ap_he_dlofdma != VALUE_ENABLED) {
-@@ -8968,6 +8976,13 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+@@ -8968,6 +8974,17 @@ static void fwtest_set_eht_params(struct
  		fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 579 0", ifname, link_id);
  		/* boolean for each link (primary / secondary) where scheduling is allowed */
  		fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 580 1 1", ifname, link_id);
 +
++		/* Increase the min TX time limit for MU MIMO to
++		 * disable MU MIMO scheduling.
++		 */
++		fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 11 1000000", ifname, link_id);
 +		/* Increase the max TX time limit for DL OFDMA
 +		 * to enable OFDMA scheduling.
 +		 */
@@ -75,6 +86,3 @@ index 8ef5040..a58d1a6 100644
  	}
  
  	if (dut->ap_txBF) {
--- 
-2.17.1
-
