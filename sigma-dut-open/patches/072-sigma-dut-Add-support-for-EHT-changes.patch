@@ -329,7 +329,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  		free(dut->ar_ltf);
  		dut->ar_ltf = NULL;
  
-@@ -16054,25 +16170,152 @@ static enum sigma_cmd_result mac80211_he
+@@ -16054,25 +16170,312 @@ static enum sigma_cmd_result mac80211_he
  		if (val) {
  			ret = run_system_wrapper(
  				dut,
@@ -361,118 +361,145 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  	return SUCCESS_SEND_STATUS;
  }
  
-+static enum sigma_cmd_result mac80211_eht_rualloctones(struct sigma_dut *dut,
-+							struct sigma_conn *conn,
-+							const char *ifname,
-+							int val_bw,
-+							const char *val)
++static enum sigma_cmd_result mac80211_eht_rualloc_fwtest(struct sigma_dut *dut,
++						struct sigma_conn *conn,
++						const char *ifname,
++						int val_bw,
++						int value, int linkid)
 +{
-+	char *token, *result;
-+	int value;
-+	char *saveptr;
 +	enum sigma_cmd_result ret = SUCCESS_SEND_STATUS;
 +
-+	token = strdup(val);
-+	if (!token)
-+		return -1;
-+	/*This part is used to parse the first set of values in MRUAllocTones*/
-+	result = strtok_r(token, ":", &saveptr);
-+	if (!result) {
-+		free(token);
-+		send_resp(dut, conn, SIGMA_ERROR,
-+			  "errorCode,RUAllocTones not specified");
-+		return STATUS_SENT_ERROR;
-+	}
-+	value = atoi(result);
-+
-+	if (value == 106) {
-+		if (val_bw == 1) {
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 106 1 106 2 106 3 106", ifname);
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 106 1 106 2 106 3 106", ifname);
-+		} else if (val_bw == 2 || val_bw == 3) {
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 106 2 106 4 106 6 106", ifname);
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 106 2 106 4 106 6 106", ifname);
-+		} else if (val_bw == 0) {
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 106 1 106", ifname);
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 106 1 106", ifname);
++	if (value == EHT_RU_ALLOC_106) {
++		if (val_bw == AP_40) {
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 106 1 106 2 106 3 106",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 106 1 106 2 106 3 106",
++						  ifname, linkid);
++		} else if (val_bw == AP_80 || val_bw == AP_160) {
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 106 2 106 4 106 6 106",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 106 2 106 4 106 6 106",
++						  ifname, linkid);
++		} else if (val_bw == AP_20) {
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 106 1 106",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 106 1 106",
++						  ifname, linkid);
 +		} else {
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 106 1 106", ifname);
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 106 1 106", ifname);
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 44 0 106 1 106", ifname);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 106 1 106",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 106 1 106",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 44 0 106 1 106",
++						  ifname, linkid);
 +		}
-+	} else if (value == 242) {
-+		if (val_bw == 2) {
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 242 1 242 2 242 3 242", ifname);
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 242 1 242 2 242 3 242", ifname);
++	} else if (value == EHT_RU_ALLOC_242) {
++		if (val_bw == AP_80) {
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 242 1 242 2 242 3 242",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 242 1 242 2 242 3 242",
++						  ifname, linkid);
 +
 +		} else {
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 242 1 242 2 242 3 242", ifname);
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 242 1 242 2 242 3 242", ifname);
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 44 0 242 1 242 2 242 3 242", ifname);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 242 1 242 2 242 3 242",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 242 1 242 2 242 3 242",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 44 0 242 1 242 2 242 3 242",
++						  ifname, linkid);
 +		}
-+	} else if (value == 26) {
-+		if (val_bw == 0) {
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 26 2 26 5 26 7 26", ifname);
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 26 2 26 5 26 7 26", ifname);
-+		} else if (val_bw == 1) {
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 26 5 26 9 26 14 26", ifname);
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 26 5 26 9 26 14 26", ifname);
++	} else if (value == EHT_RU_ALLOC_26) {
++		if (val_bw == AP_20) {
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 26 2 26 5 26 7 26",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 26 2 26 5 26 7 26",
++						  ifname, linkid);
++		} else if (val_bw == AP_40) {
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 26 5 26 9 26 14 26",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 26 5 26 9 26 14 26",
++						  ifname, linkid);
 +		} else {
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 26 1 26 2 26 3 26", ifname);
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 26 1 26 2 26 3 26", ifname);
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 44 0 26 1 26 2 26 3 26", ifname);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 26 1 26 2 26 3 26",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 26 1 26 2 26 3 26",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 44 0 26 1 26 2 26 3 26",
++						  ifname, linkid);
 +		}
-+	} else if (value == 52) {
-+		if (val_bw == 0) {
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 52 1 52 2 52 3 52", ifname);
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 52 1 52 2 52 3 52", ifname);
-+		} else if (val_bw == 1) {
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 52 2 52 4 52 6 52", ifname);
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 52 2 52 4 52 6 52", ifname);
++	} else if (value == EHT_RU_ALLOC_52) {
++		if (val_bw == AP_20) {
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 52 1 52 2 52 3 52",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 52 1 52 2 52 3 52",
++						  ifname, linkid);
++		} else if (val_bw == AP_40) {
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 52 2 52 4 52 6 52",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 52 2 52 4 52 6 52",
++						  ifname, linkid);
 +		} else {
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 52 1 52 2 52 3 52", ifname);
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 52 1 52 2 52 3 52", ifname);
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 44 0 52 1 52 2 52 3 52", ifname);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 52 1 52 2 52 3 52",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 52 1 52 2 52 3 52",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 44 0 52 1 52 2 52 3 52",
++						  ifname, linkid);
 +		}
-+	} else if (value == 484) {
-+		if (val_bw == 2) {
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 484 1 484", ifname);
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 484 1 484", ifname);
-+		} else if (val_bw == 3) {
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 484 1 484 2 484 3 484", ifname);
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 484 1 484 2 484 3 484", ifname);
++	} else if (value == EHT_RU_ALLOC_484) {
++		if (val_bw == AP_80) {
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 484 1 484", ifname,
++						  linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 484 1 484", ifname,
++						  linkid);
++		} else if (val_bw == AP_160) {
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 484 1 484 2 484 3 484",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 484 1 484 2 484 3 484",
++						  ifname, linkid);
 +		} else {
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 484 1 484", ifname);
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 484 1 484", ifname);
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 44 0 484 1 484", ifname);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 484 1 484", ifname,
++						  linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 484 1 484", ifname,
++						  linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 44 0 484 1 484", ifname,
++						  linkid);
 +		}
-+	} else if (value == 996) {
-+		if (val_bw == 2) {
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 996", ifname);
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 996", ifname);
-+		} else if (val_bw == 3) {
++	} else if (value == EHT_RU_ALLOC_996) {
++		if (val_bw == AP_80) {
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 996", ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 996", ifname, linkid);
++		} else if (val_bw >= AP_160) {
 +			if (dut->ap_chwidth == AP_320) {
-+				fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 996 1 996 2 996 3 996",
-+						   ifname);
-+				fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 996 1 996 2 996 3 996",
-+						   ifname);
++				fwtest_linkid_cmd_wrapper(dut,
++							  "-m 0x4b -v 0 40 0 996 1 996 2 996 3 996",
++							  ifname, linkid);
++				fwtest_linkid_cmd_wrapper(dut,
++							  "-m 0x4b -v 0 41 0 996 1 996 2 996 3 996",
++							  ifname, linkid);
 +			} else {
-+				fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 996 1 996", ifname);
-+				fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 996 1 996", ifname);
++				fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 996 1 996",
++							  ifname, linkid);
++				fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 996 1 996",
++							  ifname, linkid);
 +			}
 +		} else {
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 996", ifname);
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 996", ifname);
-+			fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 44 0 996", ifname);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 996", ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 996", ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 44 0 996", ifname, linkid);
 +		}
-+	} else if (value == 2) {
-+		if (val_bw == 3) {
++	} else if (value == EHT_RU_ALLOC_2) {
++		if (val_bw == AP_160) {
 +			if (dut->ap_chwidth == AP_320) {
-+				fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 1992 1 1992", ifname);
-+				fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 1992 1 1992", ifname);
++				fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 1992 1 1992",
++							  ifname, linkid);
++				fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 1992 1 1992",
++							  ifname, linkid);
 +			} else {
-+				fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 996", ifname);
-+				fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 996", ifname);
++				fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 996", ifname,
++							  linkid);
++				fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 996", ifname,
++							  linkid);
 +			}
 +		}
 +	} else {
@@ -480,13 +507,146 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 +			  "errorCode,Unsupported RUAllocTones");
 +		ret = STATUS_SENT_ERROR;
 +	}
++
++	return ret;
++}
++
++static enum sigma_cmd_result mac80211_eht_mrualloc_fwtest(struct sigma_dut *dut,
++						struct sigma_conn *conn,
++						const char *ifname,
++						int val_bw,
++						int value, int linkid)
++{
++	enum sigma_cmd_result ret = SUCCESS_SEND_STATUS;
++
++	if (value == EHT_MRU_ALLOC_484) {
++		fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 726 0 242", ifname, linkid);
++		fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 726 0 242", ifname, linkid);
++	} else if (value == EHT_MRU_ALLOC_996) {
++		fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 1480 0 484", ifname, linkid);
++		fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 1480 0 484", ifname, linkid);
++	} else if (value == EHT_MRU_ALLOC_3) {
++		fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 3472 0 484", ifname, linkid);
++		fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 3472 0 484", ifname, linkid);
++	} else if (value == EHT_MRU_ALLOC_2) {
++		fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 2476 0 484", ifname, linkid);
++		fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 2476 0 484", ifname, linkid);
++	} else if (value == EHT_MRU_ALLOC_2988) {
++		fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 2988 0 996", ifname, linkid);
++		fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 2988 0 996", ifname, linkid);
++	} else if (value == EHT_MRU_ALLOC_52) {
++		if (val_bw == AP_20) {
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 78 2 52", ifname,
++						  linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 78 2 52", ifname,
++						  linkid);
++		} else if (val_bw == AP_40) {
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 78 1 106 2 106 3 106",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 78 1 106 2 106 3 106",
++						  ifname, linkid);
++		} else {
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 78 1 106 2 106 3 106",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 78 1 106 2 106 3 106",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 44 0 78 1 106 2 106 3 106",
++						  ifname, linkid);
++		}
++	} else if (value == EHT_MRU_ALLOC_106) {
++		if (val_bw == AP_20) {
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 132 1 106", ifname,
++						  linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 132 1 106", ifname,
++						  linkid);
++		} else if (val_bw == AP_40) {
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 132 1 106 2 106 3 106",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 132 1 106 2 106 3 106",
++						  ifname, linkid);
++		} else if (val_bw == AP_80) {
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 132 1 106 1 242 1 484",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 132 1 106 1 242 1 484",
++						  ifname, linkid);
++		} else {
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 40 0 132 1 106 1 242 1 484",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 41 0 132 1 106 1 242 1 484",
++						  ifname, linkid);
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 44 0 132 1 106 1 242 1 484",
++						  ifname, linkid);
++		}
++	} else {
++		send_resp(dut, conn, SIGMA_ERROR,
++			  "errorCode,Unsupported RUAllocTones");
++		ret = STATUS_SENT_ERROR;
++	}
++
++	return ret;
++}
++
++static enum sigma_cmd_result mac80211_eht_ru_mru_alloctones(struct sigma_dut *dut,
++							struct sigma_conn *conn,
++							const char *ifname,
++							int val_bw,
++							const char *val, int linkid)
++{
++	char *token, *result;
++	int value = 0, i, alloc = -1;
++	char *saveptr;
++	enum sigma_cmd_result ret = SUCCESS_SEND_STATUS;
++	char delimiter[] = ":+";
++	char *mru[2] = {NULL, NULL};
++
++	token = strdup(val);
++	if (!token)
++		return -1;
++
++	if (strncmp(token, "2x996", strlen(token)) == 0) {
++		value = 2;
++		alloc = 0;
++		goto fwtest;
++	} else {
++		result = strtok_r(token, delimiter, &saveptr);
++		while (result != NULL) {
++			for (i = 0; result && i < 2; i++) {
++				mru[i] = result;
++				result = strtok_r(NULL, delimiter, &saveptr);
++			}
++		}
++	}
++
++	if (mru[0] != NULL && mru[1] != NULL) {
++		if (strncmp(mru[0], mru[1], strlen(mru[1])) == 0) {
++			value = atoi(mru[0]);
++			alloc = 0;
++			goto fwtest;
++		} else {
++			value = atoi(mru[0]);
++			alloc = 1;
++			goto fwtest;
++		}
++	} else {
++		send_resp(dut, conn, SIGMA_ERROR,
++				"errorCode,Unsupported RUAllocTones");
++		ret = STATUS_SENT_ERROR;
++		free(token);
++		return ret;
++	}
++fwtest:
++	if (alloc == 0)
++		ret = mac80211_eht_rualloc_fwtest(dut, conn, ifname, val_bw, value, linkid);
++	else if (alloc == 1)
++		ret = mac80211_eht_mrualloc_fwtest(dut, conn, ifname, val_bw, value, linkid);
++
 +	free(token);
 +	return ret;
 +}
  
  static void mac80211_set_ackpolicy_0(struct sigma_dut *dut, const char *ifname,
  				     unsigned char *mac_addr)
-@@ -16124,6 +16367,12 @@ static enum sigma_cmd_result mac80211_ap
+@@ -16124,6 +16527,12 @@ static enum sigma_cmd_result mac80211_ap
  	int he_ackpolicymac = 0;
  	int ap_he_ackpolicy;
  	int link_id = 0;
@@ -499,7 +659,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  
  	ifname = get_main_ifname(dut);
  
-@@ -16202,7 +16451,7 @@ static enum sigma_cmd_result mac80211_ap
+@@ -16202,7 +16611,7 @@ static enum sigma_cmd_result mac80211_ap
  
  	val = get_param(cmd, "GI");
  	if (val || dut->ar_ltf) {
@@ -508,7 +668,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  		if (res != SUCCESS_SEND_STATUS)
  			return res;
  	}
-@@ -16269,6 +16518,236 @@ static enum sigma_cmd_result mac80211_ap
+@@ -16269,6 +16678,236 @@ static enum sigma_cmd_result mac80211_ap
  		}
  	}
  
@@ -692,7 +852,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 +		else
 +			val_bw = -1;
 +
-+		res = mac80211_eht_rualloctones(dut, conn, ifname, val_bw, val);
++		res = mac80211_eht_ru_mru_alloctones(dut, conn, ifname, val_bw, val, link_id);
 +		if (res != SUCCESS_SEND_STATUS)
 +			return res;
 +	}
@@ -737,7 +897,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 +			else
 +				val_bw = -1;
 +		}
-+		res = mac80211_eht_rualloctones(dut, conn, ifname, val_bw, val);
++		res = mac80211_eht_ru_mru_alloctones(dut, conn, ifname, val_bw, val, link_id);
 +		if (res != SUCCESS_SEND_STATUS)
 +			return res;
 +	}
@@ -747,7 +907,34 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -902,6 +902,8 @@ struct sigma_dut {
+@@ -505,6 +505,26 @@ enum ap_key_mgmt {
+ 	AP_OSEN,
+ };
+ 
++enum eht_ru_alloc {
++	EHT_RU_ALLOC_2 = 2,
++	EHT_RU_ALLOC_26 = 26,
++	EHT_RU_ALLOC_52 = 52,
++	EHT_RU_ALLOC_106 = 106,
++	EHT_RU_ALLOC_242 = 242,
++	EHT_RU_ALLOC_484 = 484,
++	EHT_RU_ALLOC_996 = 996,
++};
++
++enum eht_mru_alloc {
++	EHT_MRU_ALLOC_2 = 2,
++	EHT_MRU_ALLOC_3 = 3,
++	EHT_MRU_ALLOC_52 = 52,
++	EHT_MRU_ALLOC_106 = 106,
++	EHT_MRU_ALLOC_484 = 484,
++	EHT_MRU_ALLOC_996 = 996,
++	EHT_MRU_ALLOC_2988 = 2988,
++};
++
+ /* Update this macro for supporting multiple mbss vaps */
+ #define MAX_NON_TX_VAP_COUNT	2
+ #define MAX_PSK_LEN		20
+@@ -902,6 +922,8 @@ struct sigma_dut {
  	enum value_not_set_enabled_disabled he_sounding;
  	enum value_not_set_enabled_disabled he_set_sta_1x1;
  	enum value_not_set_enabled_disabled ap_mbssid_mu;
@@ -756,7 +943,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  
  	enum ppdu {
  		PPDU_NOT_SET,
-@@ -1189,6 +1191,10 @@ struct sigma_dut {
+@@ -1189,6 +1211,10 @@ struct sigma_dut {
  	int rnm_mfp;
  	struct device_pairing_info dev_info;
  	struct peer_pairing_info peer_info;
