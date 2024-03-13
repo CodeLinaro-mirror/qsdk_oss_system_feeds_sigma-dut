@@ -20,15 +20,17 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  
  
  static int fwtest_cmd_wrapper(struct sigma_dut *dut, const char *arg,
-@@ -813,6 +814,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -991,7 +992,9 @@ static enum sigma_cmd_result cmd_ap_set_
+ 	if (val) {
  		if (atoi(val) >= 5935 && atoi(val) <= 7115) {
  			is_6g = 1;
++			dut->cfreq = atoi(val);
  			dut->ap_band_6g = 1;
 +			dut->ap_mbo = 1;
  		} else {
  			dut->ap_band_6g = 0;
  		}
-@@ -10751,6 +10753,23 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -10969,6 +10972,23 @@ static enum sigma_cmd_result cmd_ap_rese
  			dut->ap_dfs_mode = AP_DFS_MODE_ENABLED;
  
  		memset(&dut->mbss, 0, sizeof(struct mbss_support));
@@ -52,7 +54,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  	}
  
  
-@@ -12195,7 +12214,8 @@ enum sigma_cmd_result cmd_ap_send_frame(
+@@ -12417,7 +12437,8 @@ enum sigma_cmd_result cmd_ap_send_frame(
  			return ap_send_frame_vht(dut, conn, cmd);
  		if (strcasecmp(val, "LOC") == 0)
  			return ap_send_frame_loc(dut, conn, cmd);
@@ -62,7 +64,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  			return ap_send_frame_mbo(dut, conn, cmd);
  		if (strcasecmp(val, "60GHz") == 0)
  			return ap_send_frame_60g(dut, conn, cmd);
-@@ -14758,7 +14778,9 @@ static int mac80211_update_mbo_pref_ap_l
+@@ -14985,7 +15006,9 @@ static int mac80211_update_mbo_pref_ap_l
  
  	/* Now add the self AP Address */
  	if (dut->mbo_self_ap_tuple.ap_ne_class == -1) {
@@ -73,3 +75,13 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  			ap_ne_class = 81;
  		else
  			ap_ne_class = 115;
+--- a/sigma_dut.h
++++ b/sigma_dut.h
+@@ -529,6 +529,7 @@ struct sigma_dut {
+ 	char *p2p_ifname_buf;
+ 	int use_5g;
+ 	int ap_band_6g;
++	int cfreq;
+ 	int sta_2g_started;
+ 	int sta_5g_started;
+ 
