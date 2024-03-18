@@ -24,7 +24,7 @@ Signed-off-by: Sidhanta Sahu <quic_sidhanta@quicinc.com>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -8505,6 +8505,20 @@ static int check_channel(struct sigma_du
+@@ -8559,6 +8559,20 @@ static int check_channel(struct sigma_du
  	return -1;
  }
  
@@ -45,7 +45,7 @@ Signed-off-by: Sidhanta Sahu <quic_sidhanta@quicinc.com>
  
  static int get_oper_center_freq_6g(int chwidth, int channel)
  {
-@@ -8519,6 +8533,8 @@ static int get_oper_center_freq_6g(int c
+@@ -8573,6 +8587,8 @@ static int get_oper_center_freq_6g(int c
  		return (channel & 0xFF1) + 6;
  	case 160:
  		return (channel & 0xFE1) + 14;
@@ -54,7 +54,7 @@ Signed-off-by: Sidhanta Sahu <quic_sidhanta@quicinc.com>
  	default:
  		return -1;
  	}
-@@ -8544,6 +8560,9 @@ static int get_6g_ch_op_class(int channe
+@@ -8598,6 +8614,9 @@ static int get_6g_ch_op_class(int channe
  	case AP_160:
  		op_class = 134;
  		break;
@@ -64,7 +64,7 @@ Signed-off-by: Sidhanta Sahu <quic_sidhanta@quicinc.com>
  	default:
  		/* default to 80MHz, 80P80 or 160 not required for test currently */
  		op_class = 133;
-@@ -9320,6 +9339,55 @@ static int add_hapd_ctrl_iface(struct si
+@@ -9374,6 +9393,55 @@ static int add_hapd_ctrl_iface(struct si
  	return 0;
  }
  
@@ -120,7 +120,7 @@ Signed-off-by: Sidhanta Sahu <quic_sidhanta@quicinc.com>
  enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
  					   struct sigma_conn *conn,
  					   struct sigma_cmd *cmd)
-@@ -10374,31 +10442,31 @@ skip_key_mgmt:
+@@ -10428,31 +10496,31 @@ skip_key_mgmt:
  
  		switch (chwidth) {
  		case AP_20:
@@ -157,7 +157,7 @@ Signed-off-by: Sidhanta Sahu <quic_sidhanta@quicinc.com>
  			vht_oper_centr_freq_idx =
  				get_oper_centr_freq_seq_idx(dut, 80,
  							    chan, conf_counter);
-@@ -10407,27 +10475,7 @@ skip_key_mgmt:
+@@ -10461,27 +10529,7 @@ skip_key_mgmt:
  		if (!check_band(dut, BAND_6G, conf_counter)) {
  			fprintf(f, "vht_oper_centr_freq_seg0_idx=%d\n",
  				vht_oper_centr_freq_idx);
@@ -186,7 +186,7 @@ Signed-off-by: Sidhanta Sahu <quic_sidhanta@quicinc.com>
  		}
  
  		find_ap_ampdu_exp_and_max_mpdu_len(dut);
-@@ -10468,6 +10516,40 @@ skip_key_mgmt:
+@@ -10522,6 +10570,45 @@ skip_key_mgmt:
  	}
  skip_vht_parameters_set:
  
@@ -207,8 +207,13 @@ Signed-off-by: Sidhanta Sahu <quic_sidhanta@quicinc.com>
 +		fprintf(f, "he_oper_chwidth=%d\n", dut->ap_oper_chan_chwidth);
 +		fprintf(f, "he_oper_centr_freq_seg0_idx=%d\n", seg_indx);
 +
-+		seg_indx = get_center_freq_seg_index(dut, chwidth, chan,
-+						     conf_counter);
++		if (((dut->ap_link_chwidth[0] == AP_320) || (dut->ap_link_chwidth[1] == AP_320)) &&
++		    (check_band(dut, BAND_6G, conf_counter))) {
++			seg_indx = freq_to_channel(dut->cfreq);
++		} else {
++			seg_indx = get_center_freq_seg_index(dut, chwidth, chan,
++						     	     conf_counter);
++		}
 +
 +		if (check_band(dut, BAND_6G, conf_counter)) {
 +			fprintf(f, "op_class=%d\n",
@@ -227,7 +232,7 @@ Signed-off-by: Sidhanta Sahu <quic_sidhanta@quicinc.com>
  	if (dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT) {
  		fprintf(f, "he_su_beamformer=%d\n", dut->ap_txBF);
  		fprintf(f, "he_mu_beamformer=%d\n", dut->ap_mu_txBF);
-@@ -10492,6 +10574,9 @@ skip_vht_parameters_set:
+@@ -10546,6 +10633,9 @@ skip_vht_parameters_set:
  			fprintf(f, "eht_su_beamformer=%d\n", dut->ap_txBF);
  			fprintf(f, "eht_mu_beamformer=%d\n", dut->ap_mu_txBF);
  			fprintf(f, "eht_mu_beamformer=%d\n", dut->ap_su_txBF);
@@ -237,7 +242,7 @@ Signed-off-by: Sidhanta Sahu <quic_sidhanta@quicinc.com>
  		}
  	}
  
-@@ -12030,6 +12115,9 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -12084,6 +12174,9 @@ static enum sigma_cmd_result cmd_ap_rese
  	}
  
  	if (dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT) {
@@ -249,7 +254,7 @@ Signed-off-by: Sidhanta Sahu <quic_sidhanta@quicinc.com>
  			dut->ap_amsdu = VALUE_DISABLED;
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -805,14 +805,27 @@ struct sigma_dut {
+@@ -806,14 +806,27 @@ struct sigma_dut {
  	int ap_allow_vht_wep;
  	int ap_allow_vht_tkip;
  
@@ -282,3 +287,14 @@ Signed-off-by: Sidhanta Sahu <quic_sidhanta@quicinc.com>
  	enum ap_regulatory_mode {
  		AP_80211D_MODE_DISABLED,
  		AP_80211D_MODE_ENABLED,
+--- a/utils.c
++++ b/utils.c
+@@ -335,6 +335,8 @@ unsigned int freq_to_channel(unsigned in
+ 		return 14;
+ 	if (freq >= 5180 && freq <= 5825)
+ 		return (freq - 5000) / 5;
++	if (freq >= 5925 && freq <= 7125)
++		return (freq - 5950) / 5;
+ 	if (freq >= 58320 && freq <= 64800)
+ 		return (freq - 58320) / 2160;
+ 	return 0;
