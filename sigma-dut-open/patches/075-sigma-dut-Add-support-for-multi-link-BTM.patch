@@ -48,7 +48,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -11728,6 +11728,12 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -11785,6 +11785,12 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->cohost_iface = 0;
  	dut->ap_cohosted_bss = VALUE_NOT_SET;
  	dut->ap_btmsupt = VALUE_NOT_SET;
@@ -61,7 +61,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  
  	if (dut->program == PROGRAM_HT || dut->program == PROGRAM_VHT ||
  	    dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT) {
-@@ -13247,8 +13253,10 @@ static int mac80211_ap_send_frame_btm_re
+@@ -13304,8 +13310,23 @@ static int mac80211_ap_send_frame_btm_re
  	const char *val;
  	int i, cand_list = 0, bss_term = 0, self_ap_ne_pref = 0;
  	char nrbuf[dut->mbo_pref_ap_cnt + 1][100];
@@ -70,10 +70,23 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  	char bss_term_str[20] = {0};
 +	int count = 0;
 +	char nr[MAX_MLD_LINKS][100];
++	bool link_set = false;
++	char link_param[10];
++	int link_id = 0;
++
++	val = get_param(cmd, "Interface");
++	if (val) {
++		if (strcasecmp(val, "24G") == 0)
++			link_id = dut->band_to_link[0];
++		else if (strcasecmp(val, "5G") == 0)
++			link_id = dut->band_to_link[1];
++		else if (strcasecmp(val, "6G") == 0)
++			link_id = dut->band_to_link[2];
++	}
  
  	val = get_param(cmd, "Dest_MAC");
  	if (!val || parse_mac_address(dut, val, mac_addr) < 0) {
-@@ -13269,57 +13277,135 @@ static int mac80211_ap_send_frame_btm_re
+@@ -13326,57 +13347,140 @@ static int mac80211_ap_send_frame_btm_re
  		return -1;
  	}
  
@@ -102,8 +115,11 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 -				dut->mbo_pref_aps[i].ap_ne_op_ch, 0,
 -				dut->mbo_pref_aps[i].ap_ne_pref);
 -		}
--	}
--
++	if (dut->program == PROGRAM_EHT) {
++		snprintf(link_param, sizeof(link_param), "-l %d", link_id);
++		link_set = true;
+ 	}
+ 
 -	for (i = 0; (i < dut->mbo_pref_ap_cnt + 1); i++)
 -		strlcat(nr_cmd_buf, nrbuf[i], sizeof(nr_cmd_buf));
 -
@@ -192,9 +208,9 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 -	if (run_hostapd_cli(dut, buf) != 0)
 -		return -1;
 +		snprintf(buf, sizeof(buf),
-+			"-i %s bss_tm_req %02x:%02x:%02x:%02x:%02x:%02x pref=%d disassoc_imminent=%d disassoc_timer=%d %s %s mbo=0:%d:1",
-+			ifname, mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3],
-+			mac_addr[4], mac_addr[5], cand_list,
++			"-i %s %s bss_tm_req %02x:%02x:%02x:%02x:%02x:%02x pref=%d disassoc_imminent=%d disassoc_timer=%d %s %s mbo=0:%d:1",
++			ifname, link_set ? link_param : "", mac_addr[0], mac_addr[1], mac_addr[2],
++			mac_addr[3], mac_addr[4], mac_addr[5], cand_list,
 +			dut->ap_btmreq_disassoc_imnt, disassoc_timer,
 +			bss_term ? bss_term_str : " ",
 +			cand_list ? nr_cmd_buf : " ", dut->ap_assoc_delay);
@@ -250,7 +266,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  
  	if (dut->ap_btmreq_term_bit) {
  		if (dut->ap_btmreq_bss_term_tsf >= 3)
-@@ -13516,6 +13602,8 @@ enum sigma_cmd_result cmd_ap_send_frame(
+@@ -13573,6 +13677,8 @@ enum sigma_cmd_result cmd_ap_send_frame(
  			return ap_send_frame_mbo(dut, conn, cmd);
  		if (strcasecmp(val, "60GHz") == 0)
  			return ap_send_frame_60g(dut, conn, cmd);
@@ -259,7 +275,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  	}
  
  	val = get_param(cmd, "PMFFrameType");
-@@ -16198,15 +16286,17 @@ static int mac80211_update_mbo_pref_ap_l
+@@ -16255,15 +16361,20 @@ static int mac80211_update_mbo_pref_ap_l
  static int mac80211_set_nebor(struct sigma_dut *dut, const char *ifname,
  			      struct sigma_cmd *cmd)
  {
@@ -276,10 +292,13 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 +	char *token, *subtoken;
 +	char parser[200];
 +	int neighbor_cnt = 0;
++	uint8_t self_mac[ETH_ALEN];
++
++	get_hwaddr(ifname, self_mac);
  
  	if (list_offset >= MBO_MAX_PREF_BSSIDS) {
  		sigma_dut_print(dut, DUT_MSG_ERROR,
-@@ -16215,26 +16305,133 @@ static int mac80211_set_nebor(struct sig
+@@ -16272,26 +16383,136 @@ static int mac80211_set_nebor(struct sig
  	}
  
  	val = get_param(cmd, "Nebor_Op_Class");
@@ -372,6 +391,9 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 +					  "Max link support exceeded");
 +				return -1;
 +			}
++			if (memcmp(dut->btm[neighbor_cnt].nebor_bssid[bssid_cnt],
++				   self_mac, ETH_ALEN) == 0)
++				dut->btm[neighbor_cnt].ap_ne_pref = 0;
 +			bssid_cnt++;
 +		}
 +	}
@@ -453,7 +475,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  #ifdef NL80211_SUPPORT
  #define SOCK_BUF_SIZE (32 * 1024)
  struct nl80211_ctx {
-@@ -1208,6 +1221,9 @@ struct sigma_dut {
+@@ -1229,6 +1242,9 @@ struct sigma_dut {
  	int cohost_iface;
  	int ap_cohosted_bss;
  	enum value_not_set_enabled_disabled ap_btmsupt;
