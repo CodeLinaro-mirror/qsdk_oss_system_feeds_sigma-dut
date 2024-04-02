@@ -95,7 +95,7 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
  	return SUCCESS_SEND_STATUS;
  }
  
-@@ -10690,6 +10764,9 @@ skip_vht_parameters_set:
+@@ -10693,6 +10767,9 @@ skip_vht_parameters_set:
  	if (dtim)
  		fprintf(f, "dtim_period=%d\n", dtim);
  
@@ -105,7 +105,7 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
  	fclose(f);
  
  	if (dut->ap_is_dual && conf_counter == 0) {
-@@ -11899,6 +11976,7 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -11906,6 +11983,7 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->eht_txmcs = 0;
  	dut->ap_ehtmcs_map = 0;
  	dut->run_set_param = 0;
@@ -113,7 +113,7 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
  
  	if (dut->device_type == AP_testbed) {
  		dut->ap_he_dlofdma = VALUE_DISABLED;
-@@ -16694,7 +16772,7 @@ static enum sigma_cmd_result mac80211_ap
+@@ -16865,7 +16943,7 @@ static enum sigma_cmd_result mac80211_ap
  	int ap_he_ackpolicy;
  	int link_id = 0;
  	int param;
@@ -122,7 +122,7 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
  	int val_bw = -1;
  	const char *value_bw;
  	char link_param[10];
-@@ -16897,6 +16975,110 @@ static enum sigma_cmd_result mac80211_ap
+@@ -17071,6 +17149,110 @@ static enum sigma_cmd_result mac80211_ap
  		link_set = true;
  	}
  
@@ -218,7 +218,7 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
 +			center_freq = channel_to_freq(dut, center_freq_idx);
 +
 +			res = snprintf(buf, sizeof(buf),
-+					" -i %s %s chan_switch 10 %d sec_channel_offset=%d center_freq1=%d bandwidth=%d ru_punct_bitmap=%x blocktx %s",
++					" -i %s %s chan_switch 10 %d sec_channel_offset=%d center_freq1=%d bandwidth=%d ru_punct_bitmap=%d blocktx %s",
 +				ifname, link_set ? link_param : "", chan,
 +				sec_ch_offset, center_freq, chwidth, dut->ru_punct_bitmap, "eht");
 +
@@ -235,7 +235,7 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
  		param = atoi(val);
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -1198,6 +1198,7 @@ struct sigma_dut {
+@@ -1218,6 +1218,7 @@ struct sigma_dut {
  	int i2rlmr_iftmr;
  	int i2rlmrpolicy;
  	int rnm_mfp;
