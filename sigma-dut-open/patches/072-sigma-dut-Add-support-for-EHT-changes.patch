@@ -39,11 +39,9 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  sigma_dut.h |  26 ++
  2 files changed, 696 insertions(+), 21 deletions(-)
 
-diff --git a/ap.c b/ap.c
-index fd81328..559ff2e 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -980,6 +980,9 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -980,6 +980,9 @@ static enum sigma_cmd_result cmd_ap_set_
  	char buf[128];
  	int is_6g = 0;
  	enum ap_chwidth chwidth;
@@ -53,7 +51,7 @@ index fd81328..559ff2e 100644
  
  	/* Allow program to be overridden if specified in the ap_set_wireless
  	 * to support some 60 GHz test scripts where the program may be 60 GHz
-@@ -1036,7 +1039,8 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -1036,7 +1039,8 @@ static enum sigma_cmd_result cmd_ap_set_
  
  	val = get_param(cmd, "Interface");
  	if (val) {
@@ -63,7 +61,7 @@ index fd81328..559ff2e 100644
  			dut->ap_interface_5g = 1;
  			if (dut->ap_interface_2g) {
  				dut->ap_chwidth_1 = dut->ap_chwidth;
-@@ -1054,9 +1058,18 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -1054,9 +1058,18 @@ static enum sigma_cmd_result cmd_ap_set_
  				else if (strcasecmp(val, "320") == 0)
  					dut->ap_chwidth = AP_320;
  				}
@@ -83,7 +81,7 @@ index fd81328..559ff2e 100644
  			if (dut->ap_interface_2g || dut->ap_interface_5g) {
  				dut->ap_chwidth_1 = dut->ap_chwidth;
  				val = get_param(cmd, "WIDTH");
-@@ -1073,9 +1086,24 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -1073,9 +1086,24 @@ static enum sigma_cmd_result cmd_ap_set_
  				else if (strcasecmp(val, "320") == 0)
  					dut->ap_chwidth = AP_320;
  				}
@@ -109,7 +107,7 @@ index fd81328..559ff2e 100644
  	}
  
  	val = get_param(cmd, "ChnlFreq");
-@@ -1090,13 +1118,17 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -1090,13 +1118,17 @@ static enum sigma_cmd_result cmd_ap_set_
  	if (dut->program == PROGRAM_EHT) {
  		dut->ap_pmf = AP_PMF_OPTIONAL;
  		dut->ap_beacon_prot = 1;
@@ -130,7 +128,7 @@ index fd81328..559ff2e 100644
  		if (!dut->dual_ap_ifname) {
  			dut->ap_is_mld = 1;
  			dut->num_links++;
-@@ -2503,6 +2535,38 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -2503,6 +2535,38 @@ static enum sigma_cmd_result cmd_ap_set_
  		dut->eht_txmcs = atoi(val);
  	}
  
@@ -169,7 +167,7 @@ index fd81328..559ff2e 100644
  	return SUCCESS_SEND_STATUS;
  }
  
-@@ -8564,6 +8628,9 @@ static void fwtest_set_he_params(struct sigma_dut *dut, const char *ifname)
+@@ -8564,6 +8628,9 @@ static void fwtest_set_he_params(struct
  		fwtest_cmd_wrapper(dut, "-t 1 -m 0x0 -v 0 0x1D 0", ifname);
  	}
  
@@ -179,7 +177,7 @@ index fd81328..559ff2e 100644
  	if (dut->ap_he_mimo == MIMO_UL) {
  		uint8_t he_param = 0x7F; /* Bit 7 is reserved, Bit 6 for UL MIMO */
  		/* Update HE Params for UL MIMO */
-@@ -8594,6 +8661,9 @@ static void fwtest_set_he_params(struct sigma_dut *dut, const char *ifname)
+@@ -8594,6 +8661,9 @@ static void fwtest_set_he_params(struct
  		run_system_wrapper(dut,
  				   "ath11k-fwtest -i %s -m 0x47 -v 2 166 1",
  				   ifname);
@@ -189,7 +187,7 @@ index fd81328..559ff2e 100644
  }
  
  static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
-@@ -8691,6 +8761,9 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+@@ -8691,6 +8761,9 @@ static void fwtest_set_eht_params(struct
  		fwtest_linkid_cmd_wrapper(dut, "-t 1 -m 0x0 -v 0 0x1D 0", ifname, link_id);
  	}
  
@@ -199,7 +197,7 @@ index fd81328..559ff2e 100644
  	if (dut->ap_he_mimo == MIMO_UL) {
  		uint8_t he_param = 0x7F; /* Bit 7 is reserved, Bit 6 for UL MIMO */
  		/* Update HE Params for UL MIMO */
-@@ -8704,6 +8777,9 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+@@ -8704,6 +8777,9 @@ static void fwtest_set_eht_params(struct
  				   "ath11k-fwtest -t 1 -i %s -l %d -m 0x00 -v 0 32770 %d",
  				   ifname, link_id, he_param);
  	}
@@ -209,7 +207,7 @@ index fd81328..559ff2e 100644
  }
  
  #define IEEE80211_VHT_CAP_TXSTBC                               ((u32) (1 << 7))
-@@ -9011,7 +9087,7 @@ enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
+@@ -9011,7 +9087,7 @@ enum sigma_cmd_result cmd_ap_config_comm
  #endif /* ANDROID */
  	enum ap_chwidth chwidth;
  	enum sec_ch_offset offset;
@@ -266,7 +264,7 @@ index fd81328..559ff2e 100644
  	dut->hostapd_running = 1;
  	return 1;
  }
-@@ -11274,6 +11358,10 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+@@ -11274,6 +11358,10 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->eap_fragment = 0;
  	dut->wps_forced_version = 0;
  
@@ -277,7 +275,7 @@ index fd81328..559ff2e 100644
  	if (dut->program == PROGRAM_HT || dut->program == PROGRAM_VHT ||
  	    dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT) {
  		dut->ap_wme = AP_WME_ON;
-@@ -11601,7 +11689,6 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+@@ -11601,7 +11689,6 @@ static enum sigma_cmd_result cmd_ap_rese
  		dut->ap_assoc_delay = 0;
  	}
  
@@ -285,7 +283,7 @@ index fd81328..559ff2e 100644
  	dut->ap_oper_chn = 0;
  
  	dut->ap_pmksa = 0;
-@@ -11637,6 +11724,8 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+@@ -11637,6 +11724,8 @@ static enum sigma_cmd_result cmd_ap_rese
  		dut->ap_group_mgmt_cipher = AP_BIP_GMAC_256;
  		dut->ap_pmf = AP_PMF_OPTIONAL;
  		dut->ap_beacon_prot = 1;
@@ -294,7 +292,7 @@ index fd81328..559ff2e 100644
  	}
  
  	dut->dpp_conf_id = -1;
-@@ -15895,16 +15984,21 @@ static void mac80211_set_trigger_type_4(struct sigma_dut *dut, const char *ifnam
+@@ -15895,16 +15984,21 @@ static void mac80211_set_trigger_type_4(
  }
  
  static int mac80211_set_trigger_type(struct sigma_dut *dut, const char *ifname,
@@ -309,7 +307,7 @@ index fd81328..559ff2e 100644
 +		if (dut->program == PROGRAM_EHT &&
 +		    (!trig_var || (strcasecmp(trig_var, "EHT") == 0))) {
 +			if ((dut->device_type == AP_dut) && (dut->ap_mode == AP_11be)
-+			    && (dut->ap_he_mimo == MIMO_UL))
++			    && (dut->ap_he_mimo == MIMO_UL || dut->ap_he_ulofdma == VALUE_ENABLED))
 +				break;
  			mac80211_set_trigger_type_0_eht(dut, ifname, link_id);
 -		else
@@ -320,7 +318,7 @@ index fd81328..559ff2e 100644
  		break;
  	case 1:
  		mac80211_set_trigger_type_1(dut, ifname);
-@@ -16032,13 +16126,15 @@ static enum sigma_cmd_result mac80211_he_ltf(struct sigma_dut *dut,
+@@ -16032,13 +16126,15 @@ static enum sigma_cmd_result mac80211_he
  
  
  static enum sigma_cmd_result mac80211_he_gi(struct sigma_dut *dut,
@@ -337,7 +335,7 @@ index fd81328..559ff2e 100644
  
  	if (dut->program == PROGRAM_EHT)
  		snprintf(program, sizeof(program), "eht");
-@@ -16047,8 +16143,37 @@ static enum sigma_cmd_result mac80211_he_gi(struct sigma_dut *dut,
+@@ -16047,8 +16143,37 @@ static enum sigma_cmd_result mac80211_he
  	else
  		return STATUS_SENT_ERROR;
  
@@ -375,7 +373,7 @@ index fd81328..559ff2e 100644
  		free(dut->ar_ltf);
  		dut->ar_ltf = NULL;
  
-@@ -16058,25 +16183,312 @@ static enum sigma_cmd_result mac80211_he_gi(struct sigma_dut *dut,
+@@ -16058,25 +16183,312 @@ static enum sigma_cmd_result mac80211_he
  		if (val) {
  			ret = run_system_wrapper(
  				dut,
@@ -692,7 +690,7 @@ index fd81328..559ff2e 100644
  
  static void mac80211_set_ackpolicy_0(struct sigma_dut *dut, const char *ifname,
  				     unsigned char *mac_addr)
-@@ -16128,6 +16540,12 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+@@ -16128,6 +16540,12 @@ static enum sigma_cmd_result mac80211_ap
  	int he_ackpolicymac = 0;
  	int ap_he_ackpolicy;
  	int link_id = 0;
@@ -705,7 +703,7 @@ index fd81328..559ff2e 100644
  
  	ifname = get_main_ifname(dut);
  
-@@ -16186,7 +16604,8 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+@@ -16186,7 +16604,8 @@ static enum sigma_cmd_result mac80211_ap
  		dut->ap_btmreq_bss_term_tsf = atoi(val);
  
  	val = get_param(cmd, "TriggerType");
@@ -715,7 +713,7 @@ index fd81328..559ff2e 100644
  		send_resp(dut, conn, SIGMA_ERROR,
  			  "errorCode,TriggerType not supported");
  		return STATUS_SENT_ERROR;
-@@ -16209,7 +16628,7 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+@@ -16209,7 +16628,7 @@ static enum sigma_cmd_result mac80211_ap
  
  	val = get_param(cmd, "GI");
  	if (val || dut->ar_ltf) {
@@ -724,7 +722,7 @@ index fd81328..559ff2e 100644
  		if (res != SUCCESS_SEND_STATUS)
  			return res;
  	}
-@@ -16276,6 +16695,236 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+@@ -16276,6 +16695,236 @@ static enum sigma_cmd_result mac80211_ap
  		}
  	}
  
@@ -895,15 +893,15 @@ index fd81328..559ff2e 100644
 +
 +	val = get_param(cmd, "MRUAllocTones");
 +	if (val) {
-+		if (dut->ap_chwidth == AP_20)
++		if (dut->ap_link_chwidth[link_id] == AP_20)
 +			val_bw = 0;
-+		else if (dut->ap_chwidth == AP_40)
++		else if (dut->ap_link_chwidth[link_id] == AP_40)
 +			val_bw = 1;
-+		else if (dut->ap_chwidth == AP_80)
++		else if (dut->ap_link_chwidth[link_id] == AP_80)
 +			val_bw = 2;
-+		else if (dut->ap_chwidth == AP_160)
++		else if (dut->ap_link_chwidth[link_id] == AP_160)
 +			val_bw = 3;
-+		else if (dut->ap_chwidth == AP_320)
++		else if (dut->ap_link_chwidth[link_id] == AP_320)
 +			val_bw = 4;
 +		else
 +			val_bw = -1;
@@ -940,15 +938,15 @@ index fd81328..559ff2e 100644
 +		if (value_bw) {
 +			val_bw = atoi(value_bw);
 +		} else {
-+			if (dut->ap_chwidth == AP_20)
++			if (dut->ap_link_chwidth[link_id] == AP_20)
 +				val_bw = 0;
-+			else if (dut->ap_chwidth == AP_40)
++			else if (dut->ap_link_chwidth[link_id] == AP_40)
 +				val_bw = 1;
-+			else if (dut->ap_chwidth == AP_80)
++			else if (dut->ap_link_chwidth[link_id] == AP_80)
 +				val_bw = 2;
-+			else if (dut->ap_chwidth == AP_160)
++			else if (dut->ap_link_chwidth[link_id] == AP_160)
 +				val_bw = 3;
-+			else if (dut->ap_chwidth == AP_320)
++			else if (dut->ap_link_chwidth[link_id] == AP_320)
 +				val_bw = 4;
 +			else
 +				val_bw = -1;
@@ -961,8 +959,6 @@ index fd81328..559ff2e 100644
  	return SUCCESS_SEND_STATUS;
  }
  
-diff --git a/sigma_dut.h b/sigma_dut.h
-index bc28916..6bc2ddb 100644
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
 @@ -505,6 +505,26 @@ enum ap_key_mgmt {
@@ -1012,6 +1008,3 @@ index bc28916..6bc2ddb 100644
  };
  
  
--- 
-2.34.1
-
