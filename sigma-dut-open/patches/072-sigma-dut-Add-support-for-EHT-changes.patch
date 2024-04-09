@@ -292,33 +292,7 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  	}
  
  	dut->dpp_conf_id = -1;
-@@ -15895,16 +15984,21 @@ static void mac80211_set_trigger_type_4(
- }
- 
- static int mac80211_set_trigger_type(struct sigma_dut *dut, const char *ifname,
--				      const char *val, int link_id)
-+				      const char *val, int link_id, const char *trig_var)
- {
- 	int trigtype = atoi(val);
- 
- 	switch (trigtype) {
- 	case 0:
--		if (dut->program == PROGRAM_EHT)
-+		if (dut->program == PROGRAM_EHT &&
-+		    (!trig_var || (strcasecmp(trig_var, "EHT") == 0))) {
-+			if ((dut->device_type == AP_dut) && (dut->ap_mode == AP_11be)
-+			    && (dut->ap_he_mimo == MIMO_UL || dut->ap_he_ulofdma == VALUE_ENABLED))
-+				break;
- 			mac80211_set_trigger_type_0_eht(dut, ifname, link_id);
--		else
--			mac80211_set_trigger_type_0(dut, ifname);
-+			break;
-+		}
-+		mac80211_set_trigger_type_0(dut, ifname);
- 		break;
- 	case 1:
- 		mac80211_set_trigger_type_1(dut, ifname);
-@@ -16032,13 +16126,15 @@ static enum sigma_cmd_result mac80211_he
+@@ -16020,13 +16109,15 @@ static enum sigma_cmd_result mac80211_he
  
  
  static enum sigma_cmd_result mac80211_he_gi(struct sigma_dut *dut,
@@ -335,7 +309,7 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  
  	if (dut->program == PROGRAM_EHT)
  		snprintf(program, sizeof(program), "eht");
-@@ -16047,8 +16143,37 @@ static enum sigma_cmd_result mac80211_he
+@@ -16035,8 +16126,37 @@ static enum sigma_cmd_result mac80211_he
  	else
  		return STATUS_SENT_ERROR;
  
@@ -373,7 +347,7 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  		free(dut->ar_ltf);
  		dut->ar_ltf = NULL;
  
-@@ -16058,25 +16183,312 @@ static enum sigma_cmd_result mac80211_he
+@@ -16046,25 +16166,312 @@ static enum sigma_cmd_result mac80211_he
  		if (val) {
  			ret = run_system_wrapper(
  				dut,
@@ -690,7 +664,7 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  
  static void mac80211_set_ackpolicy_0(struct sigma_dut *dut, const char *ifname,
  				     unsigned char *mac_addr)
-@@ -16128,6 +16540,12 @@ static enum sigma_cmd_result mac80211_ap
+@@ -16116,6 +16523,12 @@ static enum sigma_cmd_result mac80211_ap
  	int he_ackpolicymac = 0;
  	int ap_he_ackpolicy;
  	int link_id = 0;
@@ -703,17 +677,7 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  
  	ifname = get_main_ifname(dut);
  
-@@ -16186,7 +16604,8 @@ static enum sigma_cmd_result mac80211_ap
- 		dut->ap_btmreq_bss_term_tsf = atoi(val);
- 
- 	val = get_param(cmd, "TriggerType");
--	if (val && mac80211_set_trigger_type(dut, ifname, val, link_id) < 0) {
-+	if (val && mac80211_set_trigger_type(dut, ifname, val, link_id,
-+					     get_param(cmd, "Trigger_Variant")) < 0) {
- 		send_resp(dut, conn, SIGMA_ERROR,
- 			  "errorCode,TriggerType not supported");
- 		return STATUS_SENT_ERROR;
-@@ -16209,7 +16628,7 @@ static enum sigma_cmd_result mac80211_ap
+@@ -16197,7 +16610,7 @@ static enum sigma_cmd_result mac80211_ap
  
  	val = get_param(cmd, "GI");
  	if (val || dut->ar_ltf) {
@@ -722,7 +686,7 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  		if (res != SUCCESS_SEND_STATUS)
  			return res;
  	}
-@@ -16276,6 +16695,236 @@ static enum sigma_cmd_result mac80211_ap
+@@ -16264,6 +16677,236 @@ static enum sigma_cmd_result mac80211_ap
  		}
  	}
  
