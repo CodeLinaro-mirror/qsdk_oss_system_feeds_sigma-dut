@@ -19,7 +19,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -8940,6 +8940,11 @@ static void fwtest_set_he_params(struct
+@@ -8994,6 +8994,11 @@ static void fwtest_set_he_params(struct
  	if (dut->eht_txemlomn == VALUE_DISABLED)
  		fwtest_cmd_wrapper(dut, "-m 0xD -v 0 7 1", ifname);
  
@@ -31,3 +31,22 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  }
  
  static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+@@ -9110,6 +9115,18 @@ static void fwtest_set_eht_params(struct
+ 
+ 	if (dut->eht_txemlomn == VALUE_DISABLED)
+ 		fwtest_linkid_cmd_wrapper(dut, "-m 0xD -v 0 7 1", ifname, link_id);
++
++	if (dut->ap_mu_txBF) {
++		if (dut->ap_mbssid == VALUE_DISABLED) {
++			/* disable partial sounding sequence */
++			fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 112 0", ifname, link_id);
++		}
++
++		if (dut->ru_punct_bitmap) {
++			/*enable puncturing for MU cases*/
++			fwtest_linkid_cmd_wrapper(dut, "-m 0xA -v 0 85 1", ifname, link_id);
++		}
++	}
+ }
+ 
+ #define IEEE80211_VHT_CAP_TXSTBC                               ((u32) (1 << 7))
