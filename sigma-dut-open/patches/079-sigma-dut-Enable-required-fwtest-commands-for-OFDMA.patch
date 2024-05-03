@@ -24,7 +24,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -8794,6 +8794,11 @@ static void fwtest_set_he_params(struct
+@@ -8851,6 +8851,11 @@ static void fwtest_set_he_params(struct
  
  		/* UL trigger duration */
  		fwtest_cmd_wrapper(dut, "-m 0x48 -v 0 63 1000", ifname);
@@ -36,7 +36,17 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  	}
  
  	/* sp_guard_interval_in_us WAR */
-@@ -8894,6 +8899,12 @@ static void fwtest_set_he_params(struct
+@@ -8890,6 +8895,9 @@ static void fwtest_set_he_params(struct
+ 		fwtest_cmd_wrapper(dut, "-m 0x47 -v 0 427 0", ifname);
+ 		/* Enable to sort RU allocation */
+ 		fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 2 1", ifname);
++		/*Enable MU-BAR for DL OFDMA*/
++		fwtest_cmd_wrapper(dut, "-m 0x47 -v 0 670 1", ifname);
++
+ 	}
+ 
+ 	if (dut->ap_txBF) {
+@@ -8951,6 +8959,12 @@ static void fwtest_set_he_params(struct
  		/* Enable MU MIMO */
  		run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x47 -v 0 641 1", ifname);
  	}
@@ -49,16 +59,16 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  }
  
  static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
-@@ -8904,8 +8915,6 @@ static void fwtest_set_eht_params(struct
- 	 */
- 	int pdev_id = 1;
+@@ -8964,8 +8978,6 @@ static void fwtest_set_eht_params(struct
+ 	/* enable preferred AC */
+ 	fwtest_linkid_cmd_wrapper(dut, "-m 0x48 -v 0 186 1", ifname, link_id);
  
 -	/* disbale sending basic triggers */
 -	fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 42 0", ifname, link_id);
  	/* he_dynamic_muedca 0 */
  	run_system_wrapper(dut,
  			   "ath11k-fwtest -t 2 -i %s -l %d -m 0x00 -p %d 0xBF 0x00",
-@@ -8916,9 +8925,6 @@ static void fwtest_set_eht_params(struct
+@@ -8976,9 +8988,6 @@ static void fwtest_set_eht_params(struct
  			   "ath11k-fwtest -t 2 -i %s -l %d -m 0x00 -p %d 0xA2 0x02",
  			   ifname, link_id, pdev_id);
  
@@ -68,7 +78,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  	if (dut->ap_he_ulofdma == VALUE_ENABLED) {
  		/* Disable DL OFDMA */
  		if (dut->ap_he_dlofdma != VALUE_ENABLED) {
-@@ -8968,6 +8974,17 @@ static void fwtest_set_eht_params(struct
+@@ -9028,6 +9037,17 @@ static void fwtest_set_eht_params(struct
  		fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 579 0", ifname, link_id);
  		/* boolean for each link (primary / secondary) where scheduling is allowed */
  		fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 580 1 1", ifname, link_id);
