@@ -95,7 +95,7 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
  	return SUCCESS_SEND_STATUS;
  }
  
-@@ -10693,6 +10767,9 @@ skip_vht_parameters_set:
+@@ -10694,6 +10768,9 @@ skip_vht_parameters_set:
  	if (dtim)
  		fprintf(f, "dtim_period=%d\n", dtim);
  
@@ -105,7 +105,7 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
  	fclose(f);
  
  	if (dut->ap_is_dual && conf_counter == 0) {
-@@ -11906,6 +11983,7 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -11916,6 +11993,7 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->eht_txmcs = 0;
  	dut->ap_ehtmcs_map = 0;
  	dut->run_set_param = 0;
@@ -113,7 +113,7 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
  
  	if (dut->device_type == AP_testbed) {
  		dut->ap_he_dlofdma = VALUE_DISABLED;
-@@ -16865,7 +16943,7 @@ static enum sigma_cmd_result mac80211_ap
+@@ -16860,7 +16938,7 @@ static enum sigma_cmd_result mac80211_ap
  	int ap_he_ackpolicy;
  	int link_id = 0;
  	int param;
@@ -122,7 +122,7 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
  	int val_bw = -1;
  	const char *value_bw;
  	char link_param[10];
-@@ -17071,6 +17149,110 @@ static enum sigma_cmd_result mac80211_ap
+@@ -17078,6 +17156,110 @@ static enum sigma_cmd_result mac80211_ap
  		link_set = true;
  	}
  
@@ -144,7 +144,7 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
 +
 +			punctchannel_val = strtok_r(punct_channel, " ", &saveptr);
 +
-+			if (dut->ap_link_chwidth[0] == AP_80) {
++			if (dut->ap_link_chwidth[link_id] == AP_80) {
 +				int punct_80[] = {33, 37, 41, 45};
 +
 +				chwidth = 80;
@@ -156,7 +156,7 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
 +					}
 +					punctchannel_val = strtok_r(NULL, " ", &saveptr);
 +				}
-+			} else if (dut->ap_link_chwidth[0] == AP_160) {
++			} else if (dut->ap_link_chwidth[link_id] == AP_160) {
 +				int punct_160[] = {33, 37, 41, 45, 49, 53, 57, 61};
 +
 +				chwidth = 160;
