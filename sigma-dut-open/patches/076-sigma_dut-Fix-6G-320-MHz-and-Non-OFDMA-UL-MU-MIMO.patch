@@ -64,7 +64,7 @@ Signed-off-by: Sidhanta Sahu <quic_sidhanta@quicinc.com>
  	default:
  		/* default to 80MHz, 80P80 or 160 not required for test currently */
  		op_class = 133;
-@@ -9374,6 +9393,55 @@ static int add_hapd_ctrl_iface(struct si
+@@ -9377,6 +9396,55 @@ static int add_hapd_ctrl_iface(struct si
  	return 0;
  }
  
@@ -120,7 +120,7 @@ Signed-off-by: Sidhanta Sahu <quic_sidhanta@quicinc.com>
  enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
  					   struct sigma_conn *conn,
  					   struct sigma_cmd *cmd)
-@@ -10428,31 +10496,31 @@ skip_key_mgmt:
+@@ -10432,31 +10500,31 @@ skip_key_mgmt:
  
  		switch (chwidth) {
  		case AP_20:
@@ -157,7 +157,7 @@ Signed-off-by: Sidhanta Sahu <quic_sidhanta@quicinc.com>
  			vht_oper_centr_freq_idx =
  				get_oper_centr_freq_seq_idx(dut, 80,
  							    chan, conf_counter);
-@@ -10461,27 +10529,7 @@ skip_key_mgmt:
+@@ -10465,28 +10533,7 @@ skip_key_mgmt:
  		if (!check_band(dut, BAND_6G, conf_counter)) {
  			fprintf(f, "vht_oper_centr_freq_seg0_idx=%d\n",
  				vht_oper_centr_freq_idx);
@@ -171,9 +171,10 @@ Signed-off-by: Sidhanta Sahu <quic_sidhanta@quicinc.com>
 -				fprintf(f, "op_class=%d\n",
 -					get_6g_ch_op_class(chan, chwidth));
 -
--				if (dut->ap_6g_unsol_prb_resp)
+-				if (dut->ap_6g_unsol_prb_resp) {
 -					fprintf(f, "unsol_bcast_probe_resp_interval=20\n");
--				else
+-					fprintf(f, "force_disable_in_band_discovery=0\n");
+-				} else
 -					fprintf(f, "fils_discovery_max_interval=20\n");
 -			}
 -		}
@@ -186,7 +187,7 @@ Signed-off-by: Sidhanta Sahu <quic_sidhanta@quicinc.com>
  		}
  
  		find_ap_ampdu_exp_and_max_mpdu_len(dut);
-@@ -10522,6 +10570,45 @@ skip_key_mgmt:
+@@ -10527,6 +10574,46 @@ skip_key_mgmt:
  	}
  skip_vht_parameters_set:
  
@@ -219,9 +220,10 @@ Signed-off-by: Sidhanta Sahu <quic_sidhanta@quicinc.com>
 +			fprintf(f, "op_class=%d\n",
 +				get_6g_ch_op_class(chan, chwidth));
 +
-+			if (dut->ap_6g_unsol_prb_resp)
++			if (dut->ap_6g_unsol_prb_resp) {
 +				fprintf(f, "unsol_bcast_probe_resp_interval=20\n");
-+			else
++				fprintf(f, "force_disable_in_band_discovery=0\n");
++			} else
 +				fprintf(f, "fils_discovery_max_interval=20\n");
 +		}
 +
@@ -232,7 +234,7 @@ Signed-off-by: Sidhanta Sahu <quic_sidhanta@quicinc.com>
  	if (dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT) {
  		fprintf(f, "he_su_beamformer=%d\n", dut->ap_txBF);
  		fprintf(f, "he_mu_beamformer=%d\n", dut->ap_mu_txBF);
-@@ -10546,6 +10633,9 @@ skip_vht_parameters_set:
+@@ -10551,6 +10638,9 @@ skip_vht_parameters_set:
  			fprintf(f, "eht_su_beamformer=%d\n", dut->ap_txBF);
  			fprintf(f, "eht_mu_beamformer=%d\n", dut->ap_mu_txBF);
  			fprintf(f, "eht_mu_beamformer=%d\n", dut->ap_su_txBF);
@@ -242,7 +244,7 @@ Signed-off-by: Sidhanta Sahu <quic_sidhanta@quicinc.com>
  		}
  	}
  
-@@ -12084,6 +12174,9 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -12102,6 +12192,9 @@ static enum sigma_cmd_result cmd_ap_rese
  	}
  
  	if (dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT) {
@@ -254,7 +256,7 @@ Signed-off-by: Sidhanta Sahu <quic_sidhanta@quicinc.com>
  			dut->ap_amsdu = VALUE_DISABLED;
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -806,14 +806,27 @@ struct sigma_dut {
+@@ -826,14 +826,27 @@ struct sigma_dut {
  	int ap_allow_vht_wep;
  	int ap_allow_vht_tkip;
  
@@ -289,7 +291,7 @@ Signed-off-by: Sidhanta Sahu <quic_sidhanta@quicinc.com>
  		AP_80211D_MODE_ENABLED,
 --- a/utils.c
 +++ b/utils.c
-@@ -335,6 +335,8 @@ unsigned int freq_to_channel(unsigned in
+@@ -337,6 +337,8 @@ unsigned int freq_to_channel(unsigned in
  		return 14;
  	if (freq >= 5180 && freq <= 5825)
  		return (freq - 5000) / 5;
