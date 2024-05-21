@@ -14,7 +14,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -818,6 +818,14 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -997,6 +997,14 @@ static enum sigma_cmd_result cmd_ap_set_
  		}
  	}
  
@@ -29,21 +29,22 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  	/* Overwrite the AP channel with DFS channel if configured */
  	val = get_param(cmd, "dfs_chan");
  	if (val) {
-@@ -9320,8 +9328,11 @@ skip_key_mgmt:
+@@ -9542,8 +9550,12 @@ skip_key_mgmt:
  			if (check_band(dut, BAND_6G, conf_counter)) {
  				fprintf(f, "op_class=%d\n",
  					get_6g_ch_op_class(chan));
 -				/* Enable fils discovery by default */
 -				fprintf(f, "fils_discovery_max_interval=20\n");
 +
-+				if (dut->ap_6g_unsol_prb_resp)
++				if (dut->ap_6g_unsol_prb_resp) {
 +					fprintf(f, "unsol_bcast_probe_resp_interval=20\n");
-+				else
++					fprintf(f, "force_disable_in_band_discovery=0\n");
++				} else
 +					fprintf(f, "fils_discovery_max_interval=20\n");
  			}
  		}
- 		 if (dut->ap_he_mimo == MIMO_DL) {
-@@ -10416,6 +10427,7 @@ static enum sigma_cmd_result cmd_ap_rese
+ 
+@@ -10635,6 +10647,7 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->ap_ampdu_exp = 0;
  	dut->ap_max_mpdu_len = 0;
  	dut->ap_band_6g = 0;
@@ -51,7 +52,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  
  	dut->ap_band = BAND_UNKNOWN;
  	dut->ap_band_1 = BAND_UNKNOWN;
-@@ -15031,6 +15043,32 @@ static int mac80211_he_ltf_mapping(struc
+@@ -15258,6 +15271,37 @@ static int mac80211_he_ltf_mapping(struc
  	return -1;
  }
  
@@ -73,6 +74,11 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
 +	run_hostapd_cli(dut, buf);
 +	snprintf(buf, sizeof(buf), "-i %s set unsol_bcast_probe_resp_interval %d", ifname, prb_resp_tu);
 +	run_hostapd_cli(dut, buf);
++	/* Now that Sigma is overriding Out of Box configuration, avoid force disabling
++	 * fils/prb_resp_tu.
++	 */
++	snprintf(buf, sizeof(buf), "-i %s set force_disable_in_band_discovery 0", ifname);
++	run_hostapd_cli(dut, buf);
 +
 +	snprintf(buf, sizeof(buf), "-i %s disable", ifname);
 +	run_hostapd_cli(dut, buf);
@@ -84,7 +90,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  
  static enum sigma_cmd_result mac80211_he_ltf(struct sigma_dut *dut,
  					     struct sigma_conn *conn,
-@@ -15243,6 +15281,19 @@ static enum sigma_cmd_result mac80211_ap
+@@ -15473,6 +15517,19 @@ static enum sigma_cmd_result mac80211_ap
  		}
  	}
  
@@ -106,8 +112,8 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -1073,6 +1073,7 @@ struct sigma_dut {
- 	int dscp_use_iptables;
+@@ -1163,6 +1163,7 @@ struct sigma_dut {
+ 	int dhcp_client_running;
  	struct mbss_support mbss;
  	int hapd_global_ctrl;
 +	int ap_6g_unsol_prb_resp;

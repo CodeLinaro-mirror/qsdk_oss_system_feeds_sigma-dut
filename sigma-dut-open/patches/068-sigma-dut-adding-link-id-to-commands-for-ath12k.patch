@@ -304,7 +304,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  	ifname = get_hostapd_ifname(dut);
  
  	if (conf_counter == 1 && dut->ap_mode_1 != AP_inval)
-@@ -10165,6 +10326,9 @@ skip_vht_parameters_set:
+@@ -10166,6 +10327,9 @@ skip_vht_parameters_set:
  	if (dut->ap_is_dual && conf_counter == 0) {
  		conf_counter++;
  		goto write_conf;
@@ -314,7 +314,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  	}
  
  	if (dut->use_hostapd_pid_file)
-@@ -10515,6 +10679,11 @@ hapd_started:
+@@ -10516,6 +10680,11 @@ hapd_started:
  			snprintf(ifname2, sizeof(ifname2), "%s-%d", ifname, i+1);
  			fwtest_set_he_params(dut, ifname2);
  		}
@@ -326,7 +326,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  	}
  
  	if (dut->bridge && dut->ap_is_dual) {
-@@ -11045,6 +11214,9 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -11046,6 +11215,9 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->ap_mode = AP_inval;
  	dut->ap_mode_1 = AP_inval;
  	dut->ap_is_mld = 0;
@@ -336,7 +336,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  	dut->ap_channel_1 = 0;
  
  	dut->ap_allow_vht_wep = 0;
-@@ -12969,6 +13141,7 @@ static enum sigma_cmd_result cmd_ap_get_
+@@ -12970,6 +13142,7 @@ static enum sigma_cmd_result cmd_ap_get_
  	struct ifreq ifr;
  	int s, wlan_tag = 1;
  	const char *val;
@@ -344,7 +344,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  
  	val = get_param(cmd, "WLAN_TAG");
  	if (val) {
-@@ -12984,6 +13157,18 @@ static enum sigma_cmd_result cmd_ap_get_
+@@ -12985,6 +13158,18 @@ static enum sigma_cmd_result cmd_ap_get_
  		}
  	}
  
@@ -363,7 +363,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  	get_if_name(dut, ifname, sizeof(ifname), wlan_tag);
  
  	val = get_param(cmd, "NonTxBSSIndex");
-@@ -13024,8 +13209,15 @@ static enum sigma_cmd_result cmd_ap_get_
+@@ -13025,8 +13210,15 @@ static enum sigma_cmd_result cmd_ap_get_
  	close(s);
  	memcpy(addr, ifr.ifr_hwaddr.sa_data, 6);
  
@@ -381,7 +381,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  	send_resp(dut, conn, SIGMA_COMPLETE, resp);
  	return 0;
  #elif defined( __QNXNTO__)
-@@ -15313,14 +15505,17 @@ static enum sigma_cmd_result wcn_ap_set_
+@@ -15314,14 +15506,17 @@ static enum sigma_cmd_result wcn_ap_set_
  
  
  static int mac80211_vht_chnum_band(struct sigma_dut *dut, const char *ifname,
@@ -400,7 +400,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  
  	/* Extract the channel info */
  	token = strdup(val);
-@@ -15344,10 +15539,20 @@ static int mac80211_vht_chnum_band(struc
+@@ -15345,10 +15540,20 @@ static int mac80211_vht_chnum_band(struc
  	center_freq = get_5g_channel_freq(center_freq_idx);
  	channel_freq = get_5g_channel_freq(channel);
  
@@ -423,7 +423,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  	if (res < 0 || res >= sizeof(buf) || run_hostapd_cli(dut, buf) != 0) {
  		sigma_dut_print(dut, DUT_MSG_ERROR,
  				"hostapd_cli chan_switch failed");
-@@ -15661,13 +15866,14 @@ static void mac80211_set_trigger_type_4(
+@@ -15662,13 +15867,14 @@ static void mac80211_set_trigger_type_4(
  }
  
  static int mac80211_set_trigger_type(struct sigma_dut *dut, const char *ifname,
@@ -440,7 +440,56 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  		break;
  	case 1:
  		mac80211_set_trigger_type_1(dut, ifname);
-@@ -15800,8 +16006,16 @@ static enum sigma_cmd_result mac80211_he
+@@ -15753,10 +15959,13 @@ static int mac80211_he_ltf_mapping(struc
+ }
+ 
+ static void mac80211_update_unsol_prb_resp(struct sigma_dut *dut,
+-					   const char *ifname)
++					   const char *ifname,
++					   int link_id)
+ {
+ 	char buf[100];
+ 	int prb_resp_tu, fils_tu;
++	char link_param[10];
++	bool add_link_param = false;
+ 
+ 	if (dut->ap_6g_unsol_prb_resp) {
+ 		prb_resp_tu = 20;
+@@ -15766,20 +15975,28 @@ static void mac80211_update_unsol_prb_re
+ 		fils_tu = 20;
+ 	}
+ 
+-	snprintf(buf, sizeof(buf), "-i %s set fils_discovery_max_interval %d", ifname, fils_tu);
++	if (dut->program == PROGRAM_EHT) {
++		snprintf(link_param, sizeof(link_param), "-l %d", link_id);
++		add_link_param = true;
++	}
++
++	snprintf(buf, sizeof(buf), "-i %s %s set fils_discovery_max_interval %d", ifname,
++		 add_link_param ? link_param : "", fils_tu);
+ 	run_hostapd_cli(dut, buf);
+-	snprintf(buf, sizeof(buf), "-i %s set unsol_bcast_probe_resp_interval %d", ifname, prb_resp_tu);
++	snprintf(buf, sizeof(buf), "-i %s %s set unsol_bcast_probe_resp_interval %d", ifname,
++		 add_link_param ? link_param : "", prb_resp_tu);
+ 	run_hostapd_cli(dut, buf);
+ 	/* Now that Sigma is overriding Out of Box configuration, avoid force disabling
+ 	 * fils/prb_resp_tu.
+ 	 */
+-	snprintf(buf, sizeof(buf), "-i %s set force_disable_in_band_discovery 0", ifname);
++	snprintf(buf, sizeof(buf), "-i %s %s set force_disable_in_band_discovery 0", ifname,
++		 add_link_param ? link_param : "");
+ 	run_hostapd_cli(dut, buf);
+ 
+-	snprintf(buf, sizeof(buf), "-i %s disable", ifname);
++	snprintf(buf, sizeof(buf), "-i %s %s disable", ifname, add_link_param ? link_param : "");
+ 	run_hostapd_cli(dut, buf);
+ 
+-	snprintf(buf, sizeof(buf), "-i %s enable", ifname);
++	snprintf(buf, sizeof(buf), "-i %s %s enable", ifname, add_link_param ? link_param : "");
+ 	run_hostapd_cli(dut, buf);
+ 
+ }
+@@ -15806,8 +16023,16 @@ static enum sigma_cmd_result mac80211_he
  {
  	int16_t he_ltf = 0xFF;
  	char *mode = dut->ap_band_6g ? "6" : dut->use_5g ? "5" : "2.4";
@@ -457,7 +506,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  	if (dut->ar_ltf) {
  		he_ltf = mac80211_he_ltf_mapping(dut, dut->ar_ltf);
  		free(dut->ar_ltf);
-@@ -15813,19 +16027,19 @@ static enum sigma_cmd_result mac80211_he
+@@ -15819,19 +16044,19 @@ static enum sigma_cmd_result mac80211_he
  		if (val) {
  			ret = run_system_wrapper(
  				dut,
@@ -483,7 +532,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  	}
  	if (ret < 0)
  		return ERROR_SEND_STATUS;
-@@ -15882,15 +16096,26 @@ static enum sigma_cmd_result mac80211_ap
+@@ -15888,15 +16113,26 @@ static enum sigma_cmd_result mac80211_ap
  	unsigned char mac_addr[ETH_ALEN];
  	int he_ackpolicymac = 0;
  	int ap_he_ackpolicy;
@@ -512,7 +561,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  		return -1;
  
  	mac80211_set_nebor(dut, ifname, cmd);
-@@ -15930,7 +16155,7 @@ static enum sigma_cmd_result mac80211_ap
+@@ -15936,7 +16172,7 @@ static enum sigma_cmd_result mac80211_ap
  		dut->ap_btmreq_bss_term_tsf = atoi(val);
  
  	val = get_param(cmd, "TriggerType");
@@ -521,6 +570,15 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  		send_resp(dut, conn, SIGMA_ERROR,
  			  "errorCode,TriggerType not supported");
  		return STATUS_SENT_ERROR;
+@@ -16007,7 +16243,7 @@ static enum sigma_cmd_result mac80211_ap
+ 			unsol_prb_resp = 0;
+ 		if (unsol_prb_resp != dut->ap_6g_unsol_prb_resp) {
+ 			dut->ap_6g_unsol_prb_resp = unsol_prb_resp;
+-			mac80211_update_unsol_prb_resp(dut, ifname);
++			mac80211_update_unsol_prb_resp(dut, ifname, link_id);
+ 		}
+ 	}
+ 
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
 @@ -1182,6 +1182,9 @@ struct sigma_dut {
