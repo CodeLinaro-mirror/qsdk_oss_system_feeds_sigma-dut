@@ -239,7 +239,7 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  		chan = dut->ap_channel;
  		offset = dut->ap_chwidth_offset;
  	}
-@@ -10329,6 +10408,9 @@ skip_vht_parameters_set:
+@@ -10330,6 +10409,9 @@ skip_vht_parameters_set:
  		}
  	}
  
@@ -249,7 +249,7 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  	fclose(f);
  
  	if (dut->ap_is_dual && conf_counter == 0) {
-@@ -10339,6 +10421,15 @@ skip_vht_parameters_set:
+@@ -10340,6 +10422,15 @@ skip_vht_parameters_set:
  		goto write_conf;
  	}
  
@@ -265,7 +265,7 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  	if (dut->use_hostapd_pid_file)
  		kill_hostapd_process_pid(dut);
  #ifdef __QNXNTO__
-@@ -10695,8 +10786,12 @@ hapd_started:
+@@ -10696,8 +10787,12 @@ hapd_started:
  	} else if (drv == DRIVER_MAC80211 && dut->program == PROGRAM_EHT) {
  		int i;
  
@@ -279,7 +279,7 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  	}
  
  	if (dut->bridge && dut->ap_is_dual) {
-@@ -10708,7 +10803,6 @@ hapd_started:
+@@ -10709,7 +10804,6 @@ hapd_started:
  		}
  		sigma_dut_print(dut, DUT_MSG_INFO, "Started bridge");
  	}
@@ -287,7 +287,7 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  	dut->hostapd_running = 1;
  	return 1;
  }
-@@ -11274,6 +11368,10 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -11275,6 +11369,10 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->eap_fragment = 0;
  	dut->wps_forced_version = 0;
  
@@ -298,7 +298,7 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  	if (dut->program == PROGRAM_HT || dut->program == PROGRAM_VHT ||
  	    dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT) {
  		dut->ap_wme = AP_WME_ON;
-@@ -11601,7 +11699,6 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -11602,7 +11700,6 @@ static enum sigma_cmd_result cmd_ap_rese
  		dut->ap_assoc_delay = 0;
  	}
  
@@ -306,7 +306,7 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  	dut->ap_oper_chn = 0;
  
  	dut->ap_pmksa = 0;
-@@ -11637,6 +11734,8 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -11638,6 +11735,8 @@ static enum sigma_cmd_result cmd_ap_rese
  		dut->ap_group_mgmt_cipher = AP_BIP_GMAC_256;
  		dut->ap_pmf = AP_PMF_OPTIONAL;
  		dut->ap_beacon_prot = 1;
@@ -315,7 +315,7 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  	}
  
  	dut->dpp_conf_id = -1;
-@@ -16021,13 +16120,15 @@ static enum sigma_cmd_result mac80211_he
+@@ -16038,13 +16137,15 @@ static enum sigma_cmd_result mac80211_he
  
  
  static enum sigma_cmd_result mac80211_he_gi(struct sigma_dut *dut,
@@ -332,7 +332,7 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  
  	if (dut->program == PROGRAM_EHT)
  		snprintf(program, sizeof(program), "eht");
-@@ -16036,8 +16137,37 @@ static enum sigma_cmd_result mac80211_he
+@@ -16053,8 +16154,37 @@ static enum sigma_cmd_result mac80211_he
  	else
  		return STATUS_SENT_ERROR;
  
@@ -370,7 +370,7 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  		free(dut->ar_ltf);
  		dut->ar_ltf = NULL;
  
-@@ -16047,25 +16177,312 @@ static enum sigma_cmd_result mac80211_he
+@@ -16064,25 +16194,312 @@ static enum sigma_cmd_result mac80211_he
  		if (val) {
  			ret = run_system_wrapper(
  				dut,
@@ -687,7 +687,7 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  
  static void mac80211_set_ackpolicy_0(struct sigma_dut *dut, const char *ifname,
  				     unsigned char *mac_addr)
-@@ -16117,6 +16534,13 @@ static enum sigma_cmd_result mac80211_ap
+@@ -16134,6 +16551,13 @@ static enum sigma_cmd_result mac80211_ap
  	int he_ackpolicymac = 0;
  	int ap_he_ackpolicy;
  	int link_id = 0;
@@ -701,7 +701,7 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  
  	ifname = get_main_ifname(dut);
  
-@@ -16130,6 +16554,32 @@ static enum sigma_cmd_result mac80211_ap
+@@ -16147,6 +16571,32 @@ static enum sigma_cmd_result mac80211_ap
  			link_id = dut->band_to_link[2];
  	}
  
@@ -734,7 +734,7 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  	val = get_param(cmd, "RTS_FORCE");
  	if (val)
  		mac80211_config_rts_force(dut, ifname, val, link_id);
-@@ -16198,7 +16648,7 @@ static enum sigma_cmd_result mac80211_ap
+@@ -16215,7 +16665,7 @@ static enum sigma_cmd_result mac80211_ap
  
  	val = get_param(cmd, "GI");
  	if (val || dut->ar_ltf) {
@@ -743,28 +743,17 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  		if (res != SUCCESS_SEND_STATUS)
  			return res;
  	}
-@@ -16254,10 +16704,18 @@ static enum sigma_cmd_result mac80211_ap
+@@ -16268,6 +16718,9 @@ static enum sigma_cmd_result mac80211_ap
+ 	}
+ 
+ 	val = get_param(cmd, "PPDUTxType");
++	/* TODO: For EHT, the below two fwtest commands are sent
++	 * without link id, need to fix it
++	 */
  	if (val) {
  		if (strcasecmp(val, "HE-SU") == 0) {
  			/* Change PPDU format type to HE-SU MCS 1 */
--			fwtest_cmd_wrapper(dut, "-m 0x48 -v 0 89 0x401", ifname);
-+			if (dut->program == PROGRAM_EHT)
-+				fwtest_linkid_cmd_wrapper(dut, "-m 0x48 -v 0 89 0x401",
-+							  ifname, link_id);
-+			else
-+				fwtest_cmd_wrapper(dut, "-m 0x48 -v 0 89 0x401", ifname);
- 		} else if (strcasecmp(val, "legacy") == 0) {
- 			/* Change PPDU format type to non-HT */
--			fwtest_cmd_wrapper(dut, "-m 0x48 -v 0 89 3",ifname);
-+			if (dut->program == PROGRAM_EHT)
-+				fwtest_linkid_cmd_wrapper(dut, "-m 0x48 -v 0 89 3",
-+							  ifname, link_id);
-+			else
-+				fwtest_cmd_wrapper(dut, "-m 0x48 -v 0 89 3",ifname);
- 		} else {
- 			send_resp(dut, conn, SIGMA_ERROR,
- 				  "errorCode,Unsupported PPDUTxType");
-@@ -16265,6 +16723,240 @@ static enum sigma_cmd_result mac80211_ap
+@@ -16282,6 +16735,240 @@ static enum sigma_cmd_result mac80211_ap
  		}
  	}
  
