@@ -1,6 +1,6 @@
-From 16725134fb840edf7ddc1d5e75b6c92247ba308d Mon Sep 17 00:00:00 2001
+From a04ad66604c8a9cc6e47709681ad0d86ff49f6f4 Mon Sep 17 00:00:00 2001
 From: Naveen S <quic_naves@quicinc.com>
-Date: Fri, 24 May 2024 10:02:58 +0530
+Date: Tue, 4 Jun 2024 09:22:50 +0530
 Subject: [PATCH] sigma-dut: [WAR] support FT roaming for Multi-link Operation
 
 Extending FT roaming support for MLO with SAE encryption.
@@ -15,14 +15,14 @@ roaming configs.
 Signed-off-by: Karthikeyan Kathirvel <quic_kathirve@quicinc.com>
 Signed-off-by: Naveen S <quic_naves@quicinc.com>
 ---
- ap.c | 89 ++++++++++++++++++++++++++++++++++++++++--------------------
- 1 file changed, 59 insertions(+), 30 deletions(-)
+ ap.c | 93 ++++++++++++++++++++++++++++++++++++++++--------------------
+ 1 file changed, 63 insertions(+), 30 deletions(-)
 
 diff --git a/ap.c b/ap.c
-index 79e0c81..1c80241 100644
+index 71a6578..08a9382 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -9482,6 +9482,7 @@ enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
+@@ -9456,6 +9456,7 @@ enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
  	char ifname2[50];
  	bool mld_sae_set = false;
  	int chwidth_temp;
@@ -30,7 +30,7 @@ index 79e0c81..1c80241 100644
  
  	drv = get_driver_type(dut);
  	mode = dut->ap_mode;
-@@ -10219,7 +10220,7 @@ skip_key_mgmt:
+@@ -10151,7 +10152,7 @@ skip_key_mgmt:
  
  	if (ap_ft_enabled(dut)) {
  		unsigned char own_addr[ETH_ALEN], ap2_addr[ETH_ALEN];
@@ -39,7 +39,7 @@ index 79e0c81..1c80241 100644
  
  		fprintf(f, "mobility_domain=%s\n",
  			atoi(dut->ap_mobility_domain) ? dut->ap_mobility_domain : "0101");
-@@ -10228,13 +10229,21 @@ skip_key_mgmt:
+@@ -10160,13 +10161,21 @@ skip_key_mgmt:
  			memset(own_addr, 0, ETH_ALEN);
  			own_addr[0] = 0x02;
  		}
@@ -62,7 +62,7 @@ index 79e0c81..1c80241 100644
  			fprintf(f,
  				"nas_identifier=%s\n", own_addr_str);
  		else
-@@ -10243,38 +10252,58 @@ skip_key_mgmt:
+@@ -10175,38 +10184,62 @@ skip_key_mgmt:
  				own_addr_str);
  
  		fprintf(f, "r1_key_holder=%s\n", own_addr_str);
@@ -115,15 +115,19 @@ index 79e0c81..1c80241 100644
 +		fprintf(f,
 +			"r1kh=%02x:%02x:%02x:%02x:%02x:%02x %02x:%02x:%02x:%02x:%02x:%02x 000102030405060708090a0b0c0d0e0f\n",
 +			own_addr[0], own_addr[1], own_addr[2],
-+			own_addr[3], own_addr[4] + 1, own_addr[5] + 1,
++			own_addr[3], (conf_counter == 0) ? own_addr[4] + 1 : own_addr[4] - conf_counter,
++			(conf_counter == 0) ? own_addr[5] + 1 : own_addr[5] - conf_counter,
 +			own_addr[0], own_addr[1], own_addr[2],
-+			own_addr[3], own_addr[4] + 1, own_addr[5] + 1);
++			own_addr[3], (conf_counter == 0) ? own_addr[4] + 1 : own_addr[4] - conf_counter,
++			(conf_counter == 0) ? own_addr[5] + 1 : own_addr[5] - conf_counter);
 +		fprintf(f,
 +			"r0kh=%02x:%02x:%02x:%02x:%02x:%02x %02x%02x%02x%02x%02x%02x 000102030405060708090a0b0c0d0e0f\n",
 +			own_addr[0], own_addr[1], own_addr[2],
-+			own_addr[3], own_addr[4] + 1, own_addr[5] + 1,
++			own_addr[3], (conf_counter == 0) ? own_addr[4] + 1 : own_addr[4] - conf_counter,
++			(conf_counter == 0) ? own_addr[5] + 1 : own_addr[5] - conf_counter,
 +			own_addr[0], own_addr[1], own_addr[2],
-+			own_addr[3], own_addr[4] + 1, own_addr[5] + 1);
++			own_addr[3], (conf_counter == 0) ? own_addr[4] + 1 : own_addr[4] - conf_counter,
++			(conf_counter == 0) ? own_addr[5] + 1 : own_addr[5] - conf_counter);
 +
 +		for (j = 0; j < dut->ft_bss_mac_cnt; j++) {
 +			if (dut->program == PROGRAM_MBO || dut->program == PROGRAM_WPA3) {
