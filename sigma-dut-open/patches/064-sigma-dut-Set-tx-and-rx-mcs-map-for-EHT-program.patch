@@ -12,11 +12,9 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  sigma_dut.h |   4 +++
  2 files changed, 108 insertions(+), 5 deletions(-)
 
-diff --git a/ap.c b/ap.c
-index 55affabe7bfb..e5a84c21b503 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -622,6 +622,90 @@ static void set_vht_mcsmap_nss(struct sigma_dut *dut, int nss, int mcs)
+@@ -746,6 +746,90 @@ static void set_vht_mcsmap_nss(struct si
  	}
  }
  
@@ -107,7 +105,7 @@ index 55affabe7bfb..e5a84c21b503 100644
  
  /* Get 2*nss bitmask */
  /* We are trying to pack 2-bit MCS values per NSS in a 16-bit wide field.
-@@ -1248,9 +1332,10 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -1375,9 +1459,10 @@ static enum sigma_cmd_result cmd_ap_set_
  	val = get_param(cmd, "nss_mcs_cap");
  	if (val) {
  		int nss, mcs;
@@ -119,7 +117,7 @@ index 55affabe7bfb..e5a84c21b503 100644
  
  		if (strlen(val) >= sizeof(token))
  			return INVALID_SEND_STATUS;
-@@ -1268,20 +1353,25 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -1395,20 +1480,25 @@ static enum sigma_cmd_result cmd_ap_set_
  				  "errorCode,VHTMCS not specified");
  			return STATUS_SENT;
  		}
@@ -149,7 +147,7 @@ index 55affabe7bfb..e5a84c21b503 100644
  		} else {
  			set_vht_mcsmap_nss(dut, nss, mcs);
  		}
-@@ -2168,6 +2258,10 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -2449,6 +2539,10 @@ static enum sigma_cmd_result cmd_ap_set_
  		}
  	}
  
@@ -160,7 +158,7 @@ index 55affabe7bfb..e5a84c21b503 100644
  	return SUCCESS_SEND_STATUS;
  }
  
-@@ -10980,8 +11074,13 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+@@ -11500,8 +11594,13 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->ap_fixed_rate = 0;
  	dut->he_mmss = 0;
  	dut->he_set_sta_1x1 = VALUE_DISABLED;
@@ -174,21 +172,15 @@ index 55affabe7bfb..e5a84c21b503 100644
  	if (dut->device_type == AP_testbed) {
  		dut->ap_he_dlofdma = VALUE_DISABLED;
  		dut->ap_he_frag = VALUE_DISABLED;
-diff --git a/sigma_dut.h b/sigma_dut.h
-index e2f9fca6a000..31c585d1ce43 100644
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -808,6 +808,10 @@ struct sigma_dut {
+@@ -931,6 +931,9 @@ struct sigma_dut {
  	int he_ul_mcs;
  	int he_mmss;
  	int he_srctrl_allow;
 +	int nss_mcs_set;
 +
-+	int eht_txmcs;
 +	unsigned int ap_ehtmcs_map;
  
  	int ap_ocvc;
- 
--- 
-2.7.4
-
+ 	int ap_cad_unsolicited_proberesp;

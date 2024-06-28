@@ -14,7 +14,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -818,6 +818,14 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1002,6 +1002,14 @@ static enum sigma_cmd_result cmd_ap_set_
  		}
  	}
  
@@ -29,7 +29,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  	/* Overwrite the AP channel with DFS channel if configured */
  	val = get_param(cmd, "dfs_chan");
  	if (val) {
-@@ -9320,8 +9328,11 @@ skip_key_mgmt:
+@@ -9923,8 +9931,11 @@ skip_key_mgmt:
  			if (check_band(dut, BAND_6G, conf_counter)) {
  				fprintf(f, "op_class=%d\n",
  					get_6g_ch_op_class(chan));
@@ -42,8 +42,8 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
 +					fprintf(f, "fils_discovery_max_interval=20\n");
  			}
  		}
- 		 if (dut->ap_he_mimo == MIMO_DL) {
-@@ -10416,6 +10427,7 @@ static enum sigma_cmd_result cmd_ap_rese
+ 
+@@ -11016,6 +11027,7 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->ap_ampdu_exp = 0;
  	dut->ap_max_mpdu_len = 0;
  	dut->ap_band_6g = 0;
@@ -51,7 +51,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  
  	dut->ap_band = BAND_UNKNOWN;
  	dut->ap_band_1 = BAND_UNKNOWN;
-@@ -15031,6 +15043,32 @@ static int mac80211_he_ltf_mapping(struc
+@@ -15911,6 +15923,32 @@ static int mac80211_he_ltf_mapping(struc
  	return -1;
  }
  
@@ -84,7 +84,7 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  
  static enum sigma_cmd_result mac80211_he_ltf(struct sigma_dut *dut,
  					     struct sigma_conn *conn,
-@@ -15243,6 +15281,19 @@ static enum sigma_cmd_result mac80211_ap
+@@ -16126,6 +16164,19 @@ static enum sigma_cmd_result mac80211_ap
  		}
  	}
  
@@ -106,8 +106,8 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
  
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -1073,6 +1073,7 @@ struct sigma_dut {
- 	int dscp_use_iptables;
+@@ -1233,6 +1233,7 @@ struct sigma_dut {
+ 	int dhcp_client_running;
  	struct mbss_support mbss;
  	int hapd_global_ctrl;
 +	int ap_6g_unsol_prb_resp;

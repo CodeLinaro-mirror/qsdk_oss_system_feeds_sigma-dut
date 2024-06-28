@@ -19,7 +19,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -8994,6 +8994,11 @@ static void fwtest_set_he_params(struct
+@@ -9324,6 +9324,11 @@ static void fwtest_set_he_params(struct
  	if (dut->eht_txemlomn == VALUE_DISABLED)
  		fwtest_cmd_wrapper(dut, "-m 0xD -v 0 7 1", ifname);
  
@@ -31,7 +31,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  }
  
  static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
-@@ -9110,6 +9115,18 @@ static void fwtest_set_eht_params(struct
+@@ -9440,6 +9445,18 @@ static void fwtest_set_eht_params(struct
  
  	if (dut->eht_txemlomn == VALUE_DISABLED)
  		fwtest_linkid_cmd_wrapper(dut, "-m 0xD -v 0 7 1", ifname, link_id);

@@ -12,15 +12,23 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -8940,6 +8940,7 @@ write_conf:
+@@ -9318,10 +9318,11 @@ write_conf:
  		fprintf(f, "hw_mode=ad\n");
  		break;
  	case AP_11ax:
+-			if (check_band(dut, BAND_2G, conf_counter))
+-				fprintf(f, "hw_mode=g\n");
+-			else
+-				fprintf(f, "hw_mode=a\n");
 +	case AP_11be:
- 		if (check_band(dut, BAND_2G, conf_counter))
- 			fprintf(f, "hw_mode=g\n");
- 		else
-@@ -8965,9 +8966,10 @@ write_conf:
++		if (check_band(dut, BAND_2G, conf_counter))
++			fprintf(f, "hw_mode=g\n");
++		else
++			fprintf(f, "hw_mode=a\n");
+ 		break;
+ 	default:
+ 		fclose(f);
+@@ -9343,9 +9344,10 @@ write_conf:
  		int len = 0;
  
  		fprintf(f, "ieee80211n=1\n");
@@ -33,7 +41,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  		if (mode == AP_11ng &&
  		    (chwidth == AP_40 ||
  		     (chwidth == AP_AUTO &&
-@@ -9016,7 +9018,8 @@ write_conf:
+@@ -9394,7 +9396,8 @@ write_conf:
  	if ((drv == DRIVER_MAC80211 || drv == DRIVER_QNXNTO ||
  	     drv == DRIVER_LINUX_WCN) &&
  	    (mode == AP_11ac ||
@@ -43,8 +51,8 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  		bool is_5g = false;
  		int ht40plus = 0, ht40minus = 0;
  
-@@ -9026,8 +9029,10 @@ write_conf:
-		if (is_5g)
+@@ -9404,8 +9407,10 @@ write_conf:
+ 		if (is_5g)
  			fprintf(f, "ieee80211ac=1\n"
  				"ieee80211n=1\n");
 -		if (mode == AP_11ax)
@@ -55,7 +63,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  
  		/* configure ht_capab based on channel width */
  		if (chwidth != AP_20 && is_5g) {
-@@ -9045,7 +9050,8 @@ write_conf:
+@@ -9423,7 +9428,8 @@ write_conf:
  	if ((drv == DRIVER_MAC80211 || drv == DRIVER_QNXNTO ||
  	     drv == DRIVER_LINUX_WCN) &&
  	    (mode == AP_11ac || mode == AP_11na ||
@@ -64,8 +72,8 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
 +	      check_band(dut, BAND_5G, conf_counter)))) {
  		if (dut->ap_countrycode[0])
  			fprintf(f, "country_code=%s\n", dut->ap_countrycode);
-		else
-@@ -9449,7 +9455,7 @@ skip_key_mgmt:
+ 		else
+@@ -9834,7 +9840,7 @@ skip_key_mgmt:
  		break;
  	}
  
@@ -74,7 +82,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  	    dut->ap_group_mgmt_cipher != AP_NO_GROUP_MGMT_CIPHER_SET)
  		fprintf(f, "group_mgmt_cipher=%s\n",
  			hostapd_group_mgmt_cipher_name(
-@@ -9777,7 +9783,7 @@ skip_key_mgmt:
+@@ -10155,7 +10161,7 @@ skip_key_mgmt:
  		fprintf(f, "he_rts_threshold=1024\n");
  
  	if ((dut->program == PROGRAM_VHT) ||
@@ -83,7 +91,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  	     !check_band(dut, BAND_2G, conf_counter))) {
  		int vht_oper_centr_freq_idx;
  
-@@ -9845,7 +9851,7 @@ skip_key_mgmt:
+@@ -10223,7 +10229,7 @@ skip_key_mgmt:
  				vht_oper_centr_freq_idx);
  			fprintf(f, "vht_oper_chwidth=%d\n", dut->ap_vht_chwidth);
  		}
@@ -92,7 +100,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  			fprintf(f, "he_oper_chwidth=%d\n", dut->ap_vht_chwidth);
  			fprintf(f, "he_oper_centr_freq_seg0_idx=%d\n",
  				vht_oper_centr_freq_idx);
-@@ -9860,6 +9866,12 @@ skip_key_mgmt:
+@@ -10238,6 +10244,12 @@ skip_key_mgmt:
  			}
  		}
  
@@ -102,10 +110,10 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
 +				vht_oper_centr_freq_idx);
 +		}
 +
-		find_ap_ampdu_exp_and_max_mpdu_len(dut);
-
-		if (append_vht &&
-@@ -9898,7 +9910,7 @@ skip_key_mgmt:
+ 		find_ap_ampdu_exp_and_max_mpdu_len(dut);
+ 
+ 		if (append_vht &&
+@@ -10276,7 +10288,7 @@ skip_key_mgmt:
  	}
  skip_vht_parameters_set:
  
@@ -114,7 +122,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  		fprintf(f, "he_su_beamformer=%d\n", dut->ap_txBF);
  		fprintf(f, "he_mu_beamformer=%d\n", dut->ap_mu_txBF);
  		/* Disable BSS Color config by default */
-@@ -9912,11 +9924,17 @@ skip_vht_parameters_set:
+@@ -10290,11 +10302,17 @@ skip_vht_parameters_set:
  		}
  
  		if (dut->ap_he_rtsthrshld == VALUE_ENABLED)
@@ -135,7 +143,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  	}
  
  	if (dut->ap_key_mgmt == AP_WPA2_OWE && dut->ap_tag_ssid[0][0] &&
-@@ -10022,7 +10040,8 @@ skip_vht_parameters_set:
+@@ -10400,7 +10418,8 @@ skip_vht_parameters_set:
  			dut->dev_role == DEVROLE_STA_CFON ? 2 : 1);
  	}
  
@@ -145,7 +153,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  		uint8_t num_bss, bssid_mask, max_bss_count;
  		uint8_t init_val, base_val;
  		uint8_t max_bssid_ind = 0;
-@@ -15629,8 +15648,8 @@ static int mac80211_set_trigger_type(str
+@@ -16278,8 +16297,8 @@ static int mac80211_set_trigger_type(str
  }
  
  static enum sigma_cmd_result
@@ -156,7 +164,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  {
  	int width, center_freq_idx, center_freq, channel_freq, res;
  	char *mode, buf[256];
-@@ -15641,7 +15660,9 @@ mac80211_he_tx_bandwidth(struct sigma_du
+@@ -16290,7 +16309,9 @@ mac80211_he_tx_bandwidth(struct sigma_du
  		return STATUS_SENT_ERROR;
  	}
  
@@ -167,7 +175,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  		mode = "he";
  	} else if (strcasecmp(type, "VHT") == 0) {
  		mode = "vht";
-@@ -15873,7 +15894,7 @@ static enum sigma_cmd_result mac80211_ap
+@@ -16525,7 +16546,7 @@ static enum sigma_cmd_result mac80211_ap
  
  	val = get_param(cmd, "txBandwidth");
  	if (val) {

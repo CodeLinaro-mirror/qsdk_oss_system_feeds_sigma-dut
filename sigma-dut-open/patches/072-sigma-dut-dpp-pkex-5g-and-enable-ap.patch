@@ -14,11 +14,9 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  dpp.c | 53 ++++++++++++++++++++++++++++++++++++-----------------
  2 files changed, 49 insertions(+), 23 deletions(-)
 
-diff --git a/ap.c b/ap.c
-index 1c83974..b8ca733 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -1389,7 +1389,7 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -1423,7 +1423,7 @@ static enum sigma_cmd_result cmd_ap_set_
  				ath_radio(dut, val);
  			} else if (dut->use_hostapd_pid_file) {
  				kill_hostapd_process_pid(dut);
@@ -27,7 +25,7 @@ index 1c83974..b8ca733 100644
  						SIGTERM) == 0 ||
  				   system("killall hostapd") == 0) {
  				sigma_dut_print(dut, DUT_MSG_INFO,
-@@ -5193,7 +5193,6 @@ static int owrt_ap_post_config_commit(struct sigma_dut *dut,
+@@ -5450,7 +5450,6 @@ static int owrt_ap_post_config_commit(st
  	return 1;
  }
  
@@ -35,7 +33,7 @@ index 1c83974..b8ca733 100644
  static int cmd_owrt_ap_config_commit(struct sigma_dut *dut,
  				     struct sigma_conn *conn,
  				     struct sigma_cmd *cmd)
-@@ -6196,7 +6195,7 @@ static int ath_ap_append_hostapd_conf(struct sigma_dut *dut)
+@@ -6453,7 +6452,7 @@ static int ath_ap_append_hostapd_conf(st
  {
  	FILE *f;
  
@@ -44,7 +42,7 @@ index 1c83974..b8ca733 100644
  	    system("killall hostapd") == 0) {
  		int i;
  
-@@ -9060,7 +9059,6 @@ enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
+@@ -9423,7 +9422,6 @@ enum sigma_cmd_result cmd_ap_config_comm
  					   struct sigma_conn *conn,
  					   struct sigma_cmd *cmd)
  {
@@ -52,7 +50,7 @@ index 1c83974..b8ca733 100644
  	FILE *f;
  	const char *ifname;
  	char buf[500];
-@@ -9161,6 +9159,15 @@ write_conf:
+@@ -9527,6 +9525,15 @@ write_conf:
  		offset = dut->ap_chwidth_offset;
  	}
  
@@ -68,7 +66,7 @@ index 1c83974..b8ca733 100644
  	concat_sigma_tmpdir(dut, "/sigma_dut-ap.conf", ap_conf_path,
  			    sizeof(ap_conf_path));
  	f = fopen(ap_conf_path, "w");
-@@ -10412,7 +10419,7 @@ skip_vht_parameters_set:
+@@ -10793,7 +10800,7 @@ skip_vht_parameters_set:
  	if (system("slay hostapd") == 0)
  #else /* __QNXNTO__ */
  	if (!dut->use_hostapd_pid_file &&
@@ -77,7 +75,7 @@ index 1c83974..b8ca733 100644
  	     system("killall hostapd") == 0))
  #endif /* __QNXNTO__ */
  	{
-@@ -11788,7 +11795,7 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+@@ -12191,7 +12198,7 @@ static enum sigma_cmd_result cmd_ap_rese
  
  	if (dut->use_hostapd_pid_file) {
  		kill_hostapd_process_pid(dut);
@@ -86,11 +84,9 @@ index 1c83974..b8ca733 100644
  		   system("killall hostapd") == 0) {
  		int i;
  		/* Wait some time to allow hostapd to complete cleanup before
-diff --git a/dpp.c b/dpp.c
-index d33c887..3f1bf06 100644
 --- a/dpp.c
 +++ b/dpp.c
-@@ -261,8 +261,6 @@ static int dpp_hostapd_run(struct sigma_dut *dut, bool chirp_chan)
+@@ -568,8 +568,6 @@ static int dpp_hostapd_run(struct sigma_
  	dut->ap_mode = dut->ap_channel <= 14 ? AP_11ng : AP_11na;
  	dut->ap_key_mgmt = AP_OPEN;
  	dut->ap_cipher = AP_PLAIN;
@@ -99,7 +95,7 @@ index d33c887..3f1bf06 100644
  	return cmd_ap_config_commit(dut, NULL, NULL) == 1 ? 0 : -1;
  }
  
-@@ -473,16 +471,26 @@ dpp_get_local_bootstrap(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -780,16 +778,26 @@ dpp_get_local_bootstrap(struct sigma_dut
  
  		/* Default channel list (normal DUT case) */
  		if (sigma_dut_is_ap(dut) && dut->hostapd_running &&
@@ -135,7 +131,7 @@ index d33c887..3f1bf06 100644
  	}
  
  	if (res < 0 || res >= sizeof(buf) ||
-@@ -852,6 +860,10 @@ static int dpp_hostapd_conf_update(struct sigma_dut *dut,
+@@ -1159,6 +1167,10 @@ static int dpp_hostapd_conf_update(struc
  		goto out;
  	}
  
@@ -146,7 +142,7 @@ index d33c887..3f1bf06 100644
  	if (pass_len) {
  		snprintf(buf2, sizeof(buf2), "SET wpa_passphrase %s",
  			 pass);
-@@ -1915,14 +1927,18 @@ static enum sigma_cmd_result dpp_automatic_dpp(struct sigma_dut *dut,
+@@ -2226,14 +2238,18 @@ static enum sigma_cmd_result dpp_automat
  
  	pkex_identifier[0] = '\0';
  	if (is_pkex_bs(bs)) {
@@ -167,7 +163,7 @@ index d33c887..3f1bf06 100644
  
  			if (get_driver_type(dut) == DRIVER_OPENWRT) {
  				snprintf(buf, sizeof(buf),
-@@ -1930,8 +1946,8 @@ static enum sigma_cmd_result dpp_automatic_dpp(struct sigma_dut *dut,
+@@ -2241,8 +2257,8 @@ static enum sigma_cmd_result dpp_automat
  					 dut->hostapd_ifname, dut->ap_channel);
  				run_system(dut, buf);
  			}
@@ -178,7 +174,7 @@ index d33c887..3f1bf06 100644
  			    wpa_command(ifname, "DISABLE") < 0 ||
  			    wpa_command(ifname, "ENABLE") < 0) {
  				send_resp(dut, conn, SIGMA_ERROR,
-@@ -2706,8 +2722,11 @@ static enum sigma_cmd_result dpp_automatic_dpp(struct sigma_dut *dut,
+@@ -3017,8 +3033,11 @@ static enum sigma_cmd_result dpp_automat
  			freq = channel_to_freq(dut, dut->ap_channel);
  
  		if (is_pkex_bs(bs)) {
@@ -192,6 +188,12 @@ index d33c887..3f1bf06 100644
  		}
  
  		delay_qr_resp = get_param(cmd, "DPPDelayQRResponse");
--- 
-2.17.1
-
+@@ -4406,7 +4425,7 @@ int dpp_mdns_start(struct sigma_dut *dut
+ 	const char *bskeyhash = NULL;
+ 	const char *ifname = get_station_ifname(dut);
+ 	char buf[2000];
+-	int opclass, chan;
++	int opclass = 0, chan = 0;
+ #ifdef ANDROID_MDNS
+ 	TXTRecordRef dpp_txt;
+ 	char service_name[100];

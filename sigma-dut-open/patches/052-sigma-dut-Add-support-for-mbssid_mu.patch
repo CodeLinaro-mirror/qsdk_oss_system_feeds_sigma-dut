@@ -11,13 +11,11 @@ Signed-off-by: Hari Chandrakanthan <quic_haric@quicinc.com>
  sigma_dut.h |  1 +
  2 files changed, 35 insertions(+)
 
-diff --git a/ap.c b/ap.c
-index 43ecc5d..cca7417 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -2057,6 +2057,19 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
- 	if (val)
- 		dut->ap_ocvc = atoi(val);
+@@ -2423,6 +2423,19 @@ static enum sigma_cmd_result cmd_ap_set_
+ 			dut->eht_txemlomn = VALUE_ENABLED;
+ 	}
  
 +	val = get_param(cmd, "MBSSID_MU");
 +	if (val) {
@@ -35,7 +33,7 @@ index 43ecc5d..cca7417 100644
  	return SUCCESS_SEND_STATUS;
  }
  
-@@ -8016,6 +8029,13 @@ static void fwtest_set_he_params(struct sigma_dut *dut, const char *ifname)
+@@ -8653,6 +8666,13 @@ static void fwtest_set_he_params(struct
  				   ifname);
  		fwtest_cmd_wrapper(dut, "-t 1 -m 0x0 -v 0 0x1D 0", ifname);
  	}
@@ -48,8 +46,8 @@ index 43ecc5d..cca7417 100644
 +
  }
  
- static int default_muedca_values(struct sigma_dut *dut, FILE *f)
-@@ -10750,6 +10770,7 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+ 
+@@ -11408,6 +11428,7 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->he_mmss = 0;
  	dut->he_set_sta_1x1 = VALUE_DISABLED;
  	dut->he_srctrl_allow = -1;
@@ -57,7 +55,7 @@ index 43ecc5d..cca7417 100644
  	if (dut->device_type == AP_testbed) {
  		dut->ap_he_dlofdma = VALUE_DISABLED;
  		dut->ap_he_frag = VALUE_DISABLED;
-@@ -14916,6 +14937,19 @@ static void mac80211_set_trigger_type_0(struct sigma_dut *dut, const char *ifnam
+@@ -15886,6 +15907,19 @@ static void mac80211_set_trigger_type_0(
  	} else {
  		fwtest_cmd_wrapper(dut, "-m 0x47 -v 0 43 6", ifname);
  	}
@@ -77,18 +75,13 @@ index 43ecc5d..cca7417 100644
  }
  
  static void mac80211_set_mu_brp_commands(struct sigma_dut *dut, const char *ifname)
-diff --git a/sigma_dut.h b/sigma_dut.h
-index a767f9e..314a07d 100644
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -782,6 +782,7 @@ struct sigma_dut {
- 	enum value_not_set_enabled_disabled ap_twtresp;
- 	enum value_not_set_enabled_disabled he_sounding;
- 	enum value_not_set_enabled_disabled he_set_sta_1x1;
+@@ -962,6 +962,7 @@ struct sigma_dut {
+ 	enum value_not_set_enabled_disabled ap_preamblepunct;
+ 	enum value_not_set_enabled_disabled eht_omctrl;
+ 	enum value_not_set_enabled_disabled eht_txemlomn;
 +	enum value_not_set_enabled_disabled ap_mbssid_mu;
  
  	enum ppdu {
  		PPDU_NOT_SET,
--- 
-2.7.4
-

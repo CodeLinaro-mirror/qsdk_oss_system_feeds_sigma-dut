@@ -14,7 +14,7 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -2709,6 +2709,80 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -2822,6 +2822,80 @@ static enum sigma_cmd_result cmd_ap_set_
  		dut->ap_mu_txBF = 1;
  	}
  
@@ -92,10 +92,10 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
 +			free(punct_channel);
 +		}
 +	}
- 	return SUCCESS_SEND_STATUS;
- }
  
-@@ -10694,6 +10768,9 @@ skip_vht_parameters_set:
+ 	val = get_param(cmd, "MBSSID_MU");
+ 	if (val) {
+@@ -11032,6 +11106,9 @@ skip_vht_parameters_set:
  	if (dtim)
  		fprintf(f, "dtim_period=%d\n", dtim);
  
@@ -105,7 +105,7 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
  	fclose(f);
  
  	if (dut->ap_is_dual && conf_counter == 0) {
-@@ -11916,6 +11993,7 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -12254,6 +12331,7 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->eht_txmcs = 0;
  	dut->ap_ehtmcs_map = 0;
  	dut->run_set_param = 0;
@@ -113,7 +113,7 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
  
  	if (dut->device_type == AP_testbed) {
  		dut->ap_he_dlofdma = VALUE_DISABLED;
-@@ -16860,7 +16938,7 @@ static enum sigma_cmd_result mac80211_ap
+@@ -17486,7 +17564,7 @@ static enum sigma_cmd_result mac80211_ap
  	int ap_he_ackpolicy;
  	int link_id = 0;
  	int param;
@@ -122,7 +122,7 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
  	int val_bw = -1;
  	const char *value_bw;
  	char link_param[10];
-@@ -17078,6 +17156,110 @@ static enum sigma_cmd_result mac80211_ap
+@@ -17700,6 +17778,110 @@ static enum sigma_cmd_result mac80211_ap
  		link_set = true;
  	}
  
@@ -235,14 +235,14 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
  		param = atoi(val);
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -1218,6 +1218,7 @@ struct sigma_dut {
+@@ -1284,6 +1284,7 @@ struct sigma_dut {
  	int i2rlmr_iftmr;
  	int i2rlmrpolicy;
  	int rnm_mfp;
 +	u16 ru_punct_bitmap;
  	struct device_pairing_info dev_info;
  	struct peer_pairing_info peer_info;
- 
+ #ifdef ANDROID_MDNS
 --- a/utils.c
 +++ b/utils.c
 @@ -316,6 +316,8 @@ unsigned int channel_to_freq(struct sigm

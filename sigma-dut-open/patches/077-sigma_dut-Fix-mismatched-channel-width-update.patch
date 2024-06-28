@@ -30,7 +30,7 @@ Signed-off-by: Manish Dharanenthiran <quic_mdharane@quicinc.com>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -1127,6 +1127,11 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1129,6 +1129,11 @@ static enum sigma_cmd_result cmd_ap_set_
  							"errorCode,Unsupported WIDTH");
  					return STATUS_SENT;
  				}
@@ -42,7 +42,7 @@ Signed-off-by: Manish Dharanenthiran <quic_mdharane@quicinc.com>
  				if (wlan_tag > 1)
  					dut->ap_chwidth_1 = chwidth;
  				else
-@@ -1184,58 +1189,10 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1186,58 +1191,10 @@ static enum sigma_cmd_result cmd_ap_set_
  		if ((strcasecmp(val, "5G") == 0) && (!dut->ap_interface_5g)) {
  			iface_check = 1;
  			dut->ap_interface_5g = 1;
@@ -98,10 +98,10 @@ Signed-off-by: Manish Dharanenthiran <quic_mdharane@quicinc.com>
 -					dut->dtim = atoi(val);
 -				}
 -			}
- 		} else if ((strcasecmp(val, "24G") == 0) && (!dut->ap_interface_2g)) {
+ 		} else if ((strcasecmp(val, "2G") == 0) && (!dut->ap_interface_2g)) {
  			iface_check = 1;
  			dut->ap_interface_2g = 1;
-@@ -1274,11 +1231,6 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1276,11 +1233,6 @@ static enum sigma_cmd_result cmd_ap_set_
  		if (!dut->dual_ap_ifname) {
  			dut->ap_is_mld = 1;
  			dut->num_links++;
@@ -113,7 +113,7 @@ Signed-off-by: Manish Dharanenthiran <quic_mdharane@quicinc.com>
  
  			if (dut->ap_mode)
  				dut->ap_mode_1 = dut->ap_mode;
-@@ -1795,7 +1747,6 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1798,7 +1750,6 @@ static enum sigma_cmd_result cmd_ap_set_
  			dut->ap_tx_stbc = VALUE_DISABLED;
  	}
  
@@ -121,7 +121,7 @@ Signed-off-by: Manish Dharanenthiran <quic_mdharane@quicinc.com>
  	val = get_param(cmd, "WIDTH");
  	if (val) {
  		if (strcasecmp(val, "20") == 0)
-@@ -1818,12 +1769,10 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1821,12 +1772,10 @@ static enum sigma_cmd_result cmd_ap_set_
  				  "errorCode,Unsupported WIDTH");
  			return STATUS_SENT;
  		}
@@ -137,7 +137,7 @@ Signed-off-by: Manish Dharanenthiran <quic_mdharane@quicinc.com>
  	}
  	/* TODO: WIDTH_SCAN */
  
-@@ -9476,7 +9425,11 @@ write_conf:
+@@ -9900,7 +9849,11 @@ write_conf:
  			sigma_dut_print(dut, DUT_MSG_INFO,
  					"Failed to copy %s to %s", f1, f2);
  		mode = dut->ap_mode_1;
@@ -150,7 +150,7 @@ Signed-off-by: Manish Dharanenthiran <quic_mdharane@quicinc.com>
  		dtim = dut->dtim;
  		chan = dut->ap_tag_channel[0];
  		offset = dut->ap_chwidth_offset_1;
-@@ -9493,7 +9446,15 @@ write_conf:
+@@ -9917,7 +9870,15 @@ write_conf:
  	} else {
  		ap_conf_path_1[0] = '\0';
  		mode = dut->ap_mode;
@@ -167,7 +167,7 @@ Signed-off-by: Manish Dharanenthiran <quic_mdharane@quicinc.com>
  		dtim = dut->dtim_1;
  		chan = dut->ap_channel;
  		offset = dut->ap_chwidth_offset;
-@@ -11790,6 +11751,7 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -12245,6 +12206,7 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->ap_su_txBF = 1;
  	dut->ap_channel = -1;
  	dut->ap_chwidth = AP_AUTO;
@@ -177,7 +177,7 @@ Signed-off-by: Manish Dharanenthiran <quic_mdharane@quicinc.com>
  	dut->ap_band_6g = 0;
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -1237,6 +1237,8 @@ struct sigma_dut {
+@@ -1332,6 +1332,8 @@ struct sigma_dut {
  	int nebor_cnt;
  	struct btm_ap btm[NUM_NEIGHBORS];
  	int btm_ml_link;
