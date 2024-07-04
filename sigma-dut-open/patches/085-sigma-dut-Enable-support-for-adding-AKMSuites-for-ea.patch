@@ -37,7 +37,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -170,6 +170,22 @@ static int ap_ft_enabled(struct sigma_du
+@@ -169,6 +169,22 @@ static int ap_ft_enabled(struct sigma_du
  		  (1 << AKM_FT_FILS_SHA384)));
  }
  
@@ -60,7 +60,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  
  static enum sigma_cmd_result cmd_ap_ca_version(struct sigma_dut *dut,
  					       struct sigma_conn *conn,
-@@ -3021,6 +3037,8 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -2995,6 +3011,8 @@ static enum sigma_cmd_result cmd_ap_set_
  	unsigned int wlan_tag = 1;
  	const char *security;
  	bool pmf_set = false;
@@ -69,7 +69,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  
  	val = get_param(cmd, "WLAN_TAG");
  	if (val) {
-@@ -3032,6 +3050,15 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3006,6 +3024,15 @@ static enum sigma_cmd_result cmd_ap_set_
  		}
  	}
  
@@ -85,7 +85,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  	security = get_param(cmd, "Security");
  
  	if (wlan_tag > 1) {
-@@ -3199,14 +3226,14 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3173,14 +3200,14 @@ static enum sigma_cmd_result cmd_ap_set_
  		if (strcasecmp(val, "WPA2-PSK") == 0 ||
  		    (security && strcasecmp(security, "PSK") == 0 &&
  		     strcasecmp(val, "WPA2") == 0)) {
@@ -102,7 +102,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  				dut->ap_key_mgmt = AP_WPA2_ENT_FT_EAP;
  			else
  				dut->ap_key_mgmt = AP_WPA2_EAP;
-@@ -3492,7 +3519,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3466,7 +3493,7 @@ static enum sigma_cmd_result cmd_ap_set_
  		val = get_param(cmd, "passphrase");
  	if (val) {
  		if (dut->ap_key_mgmt != AP_WPA2_SAE &&
@@ -111,7 +111,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  		    AKM_SAE &&
  		    strlen(val) > 64) {
  			sigma_dut_print(dut, DUT_MSG_ERROR,
-@@ -3520,9 +3547,15 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3494,9 +3521,15 @@ static enum sigma_cmd_result cmd_ap_set_
  		if (strcasecmp(val, "Disabled") == 0) {
  			dut->ap_pmf = AP_PMF_DISABLED;
  		} else if (strcasecmp(val, "Optional") == 0) {
@@ -129,7 +129,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  		} else {
  			send_resp(dut, conn, SIGMA_INVALID,
  				  "errorCode,Unsupported PMF");
-@@ -3562,8 +3595,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3536,8 +3569,7 @@ static enum sigma_cmd_result cmd_ap_set_
  	val = get_param(cmd, "AKMSuiteType");
  	if (val) {
  		const char *in_pos = val;
@@ -139,7 +139,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  		while (*in_pos) {
  			int akm = atoi(in_pos);
  
-@@ -3573,7 +3605,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3547,7 +3579,7 @@ static enum sigma_cmd_result cmd_ap_set_
  				return STATUS_SENT;
  			}
  
@@ -148,7 +148,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  
  			in_pos = strchr(in_pos, ';');
  			if (!in_pos)
-@@ -3582,13 +3614,23 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3556,13 +3588,23 @@ static enum sigma_cmd_result cmd_ap_set_
  				in_pos++;
  		}
  		dut->ap_akm = 1;
@@ -175,7 +175,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  		dut->ap_hs2 = 0;
  		dut->ap_pmf = AP_PMF_DISABLED;
  	}
-@@ -9483,6 +9525,8 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -9457,6 +9499,8 @@ enum sigma_cmd_result cmd_ap_config_comm
  	bool mld_sae_set = false;
  	int chwidth_temp;
  	int j;
@@ -184,7 +184,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  
  	drv = get_driver_type(dut);
  	mode = dut->ap_mode;
-@@ -9550,6 +9594,24 @@ write_conf:
+@@ -9524,6 +9568,24 @@ write_conf:
  		dtim = dut->dtim;
  		chan = dut->ap_tag_channel[0];
  		offset = dut->ap_chwidth_offset_1;
@@ -209,7 +209,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  #ifdef ANDROID
  		if (chmod(f2, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) < 0)
  			sigma_dut_print(dut, DUT_MSG_ERROR,
-@@ -9575,6 +9637,16 @@ write_conf:
+@@ -9549,6 +9611,16 @@ write_conf:
  		dtim = dut->dtim_1;
  		chan = dut->ap_channel;
  		offset = dut->ap_chwidth_offset;
@@ -226,7 +226,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  	}
  
  	if (drv == DRIVER_MAC80211) {
-@@ -9883,7 +9955,7 @@ write_conf:
+@@ -9817,7 +9889,7 @@ write_conf:
  	else
  		fprintf(f, ":%02x:%02x\n", main_bssid[4], main_bssid[5]);
  
@@ -235,7 +235,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  		struct {
  			int akm;
  			const char *str;
-@@ -9911,7 +9983,7 @@ write_conf:
+@@ -9845,7 +9917,7 @@ write_conf:
  
  		fprintf(f, "wpa_key_mgmt=");
  		for (i = 0; i < ARRAY_SIZE(akms); i++) {
@@ -244,7 +244,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  				fprintf(f, "%s%s", first ? "" : " ",
  					akms[i].str);
  				first = 0;
-@@ -9927,15 +9999,15 @@ write_conf:
+@@ -9861,15 +9933,15 @@ write_conf:
  				hostapd_cipher_name(dut->ap_group_cipher));
  		if (write_hostapd_conf_password(
  			    dut, f,
@@ -263,7 +263,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  					  (1 << AKM_FT_EAP) |
  					  (1 << AKM_EAP_SHA256) |
  					  (1 << AKM_SUITE_B) |
-@@ -10007,7 +10079,7 @@ write_conf:
+@@ -9941,7 +10013,7 @@ write_conf:
  			key_mgmt = "WPA-PSK FT-PSK";
  		else
  			key_mgmt = "WPA-PSK";
@@ -272,7 +272,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  		case AP_PMF_DISABLED:
  			fprintf(f, "wpa_key_mgmt=%s%s\n", key_mgmt,
  				dut->ap_add_sha256 ? " WPA-PSK-SHA256" : "");
-@@ -10059,7 +10131,7 @@ write_conf:
+@@ -9993,7 +10065,7 @@ write_conf:
  			fprintf(f, "wpa=3\n");
  		else
  			fprintf(f, "wpa=1\n");
@@ -281,7 +281,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  		case AP_PMF_DISABLED:
  			if (dut->ap_add_sha256)
  				fprintf(f, "wpa_key_mgmt=WPA-EAP WPA-EAP-SHA256\n");
-@@ -10197,13 +10269,13 @@ skip_key_mgmt:
+@@ -10131,13 +10203,13 @@ skip_key_mgmt:
  	if (dut->ap_ocvc == 1 || dut->ap_ocvc == 0)
  		fprintf(f, "ocv=%d\n", dut->ap_ocvc);
  
@@ -297,7 +297,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  		    (AKM_SAE | AKM_WPA_PSK))
  			fprintf(f, "sae_require_mfp=1\n");
  		break;
-@@ -10212,13 +10284,13 @@ skip_key_mgmt:
+@@ -10146,13 +10218,13 @@ skip_key_mgmt:
  		break;
  	}
  
@@ -313,7 +313,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  		unsigned char own_addr[ETH_ALEN], ap2_addr[ETH_ALEN];
  		char own_addr_str[20];
  
-@@ -12025,6 +12097,10 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -11960,6 +12032,10 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->ap_interface_5g = 0;
  	dut->ap_interface_2g = 0;
  	dut->ap_pmf = AP_PMF_DISABLED;
@@ -324,7 +324,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  
  	dut->wsc_fragment = 0;
  	dut->eap_fragment = 0;
-@@ -12059,6 +12135,7 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -11994,6 +12070,7 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->ap_tnc_time_stamp = 0;
  
  	dut->ap_akm_values = 0;
@@ -350,10 +350,10 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  	unsigned int ap_akm_values;
  	int ap_pmksa;
  	int ap_pmksa_caching;
-@@ -1267,6 +1269,11 @@ struct sigma_dut {
- 	int btm_ml_link;
+@@ -1268,6 +1270,11 @@ struct sigma_dut {
  #define MAX_MLD_SUPPORTED 2
  	enum ap_chwidth ap_link_chwidth[MAX_MLD_SUPPORTED];
+ 	int ppe_vp_type;
 +	/*Use ap_akm_link_values for interfcae specific cases*/
 +	int ap_akm_link_values[MAX_MLD_SUPPORTED];
 +
