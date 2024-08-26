@@ -298,7 +298,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  
  	if (list_offset >= MBO_MAX_PREF_BSSIDS) {
  		sigma_dut_print(dut, DUT_MSG_ERROR,
-@@ -16295,26 +16406,137 @@ static int mac80211_set_nebor(struct sig
+@@ -16295,26 +16406,141 @@ static int mac80211_set_nebor(struct sig
  	}
  
  	val = get_param(cmd, "Nebor_Op_Class");
@@ -388,8 +388,12 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 +					  "Max link support exceeded");
 +				return -1;
 +			}
-+			if (memcmp(dut->btm[neighbor_cnt].nebor_bssid[bssid_cnt],
-+				   self_mac, ETH_ALEN) == 0)
++			/* NOTE: Setting neighbor preference to 0 for self mac
++			 * address is needed only for EHT program and for MBO
++			 * program this is not needed */
++			if ((dut->program == PROGRAM_EHT) &&
++			    (memcmp(dut->btm[neighbor_cnt].nebor_bssid[bssid_cnt],
++				    self_mac, ETH_ALEN) == 0))
 +				dut->btm[neighbor_cnt].ap_ne_pref = 0;
 +			bssid_cnt++;
 +		}
