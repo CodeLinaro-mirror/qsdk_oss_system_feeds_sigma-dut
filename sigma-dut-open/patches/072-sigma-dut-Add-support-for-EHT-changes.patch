@@ -817,112 +817,112 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
 +	val = get_param(cmd, "STA_WMMPE_ECWmin_BK");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s %s SET wmm_ac_bk_cwmin %d", ifname, link_set ? link_param : "", param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=bk cwmin=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_ECWmin_BE");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s %s SET wmm_ac_be_cwmin %d", ifname, link_set ? link_param : "", param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=be cwmin=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_ECWmin_VI");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s %s SET wmm_ac_vi_cwmin %d", ifname, link_set ? link_param : "", param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=vi cwmin=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_ECWmin_VO");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s %s SET wmm_ac_vo_cwmin %d", ifname, link_set ? link_param : "", param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=vo cwmin=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_AIFSN_BK");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s %s SET wmm_ac_bk_aifs %d", ifname, link_set ? link_param : "", param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=bk aifs=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_AIFSN_BE");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s %s SET wmm_ac_be_aifs %d", ifname, link_set ? link_param : "", param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=be aifs=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_AIFSN_VI");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s %s SET wmm_ac_vi_aifs %d", ifname, link_set ? link_param : "", param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=vi aifs=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_AIFSN_VO");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s %s SET wmm_ac_vo_aifs %d", ifname, link_set ? link_param : "", param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=vo aifs=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_ECWmax_BK");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s %s SET wmm_ac_bk_cwmax %d", ifname, link_set ? link_param : "", param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=bk cwmax=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_ECWmax_BE");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s %s SET wmm_ac_be_cwmax %d", ifname, link_set ? link_param : "", param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=be cwmax=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_ECWmax_VI");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s %s SET wmm_ac_vi_cwmax %d", ifname, link_set ? link_param : "", param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=vi cwmax=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_ECWmax_VO");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s %s SET wmm_ac_vo_cwmax %d", ifname, link_set ? link_param : "", param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=vo cwmax=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_TXOP_BK");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s %s SET wmm_ac_bk_txop %d", ifname, link_set ? link_param : "", param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=bk txop=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_TXOP_BE");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s %s SET wmm_ac_be_txop %d", ifname, link_set ? link_param : "", param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=be txop=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "	STA_WMMPE_TXOP_VI");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s %s SET wmm_ac_vi_txop %d", ifname, link_set ? link_param : "", param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=vi txop=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
 +	val = get_param(cmd, "STA_WMMPE_TXOP_VO");
 +	if (val) {
 +		param = atoi(val);
-+		snprintf(buf, sizeof(buf), "-i %s %s SET wmm_ac_vo_txop=%d", ifname, link_set ? link_param : "", param);
++		snprintf(buf, sizeof(buf), "-i %s %s wmm_param ac=vo txop=%d", ifname, link_set? link_param: "", param);
 +		run_hostapd_cli(dut, buf);
 +	}
 +
