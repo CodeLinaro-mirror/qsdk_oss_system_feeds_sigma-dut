@@ -48,7 +48,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -11785,6 +11785,12 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -11808,6 +11808,12 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->cohost_iface = 0;
  	dut->ap_cohosted_bss = VALUE_NOT_SET;
  	dut->ap_btmsupt = VALUE_NOT_SET;
@@ -61,7 +61,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  
  	if (dut->program == PROGRAM_HT || dut->program == PROGRAM_VHT ||
  	    dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT) {
-@@ -13304,8 +13310,23 @@ static int mac80211_ap_send_frame_btm_re
+@@ -13327,8 +13333,23 @@ static int mac80211_ap_send_frame_btm_re
  	const char *val;
  	int i, cand_list = 0, bss_term = 0, self_ap_ne_pref = 0;
  	char nrbuf[dut->mbo_pref_ap_cnt + 1][100];
@@ -86,7 +86,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  
  	val = get_param(cmd, "Dest_MAC");
  	if (!val || parse_mac_address(dut, val, mac_addr) < 0) {
-@@ -13326,57 +13347,140 @@ static int mac80211_ap_send_frame_btm_re
+@@ -13349,57 +13370,140 @@ static int mac80211_ap_send_frame_btm_re
  		return -1;
  	}
  
@@ -266,7 +266,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  
  	if (dut->ap_btmreq_term_bit) {
  		if (dut->ap_btmreq_bss_term_tsf >= 3)
-@@ -13573,6 +13677,8 @@ enum sigma_cmd_result cmd_ap_send_frame(
+@@ -13596,6 +13700,8 @@ enum sigma_cmd_result cmd_ap_send_frame(
  			return ap_send_frame_mbo(dut, conn, cmd);
  		if (strcasecmp(val, "60GHz") == 0)
  			return ap_send_frame_60g(dut, conn, cmd);
@@ -275,7 +275,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  	}
  
  	val = get_param(cmd, "PMFFrameType");
-@@ -16255,15 +16361,20 @@ static int mac80211_update_mbo_pref_ap_l
+@@ -16278,15 +16384,20 @@ static int mac80211_update_mbo_pref_ap_l
  static int mac80211_set_nebor(struct sigma_dut *dut, const char *ifname,
  			      struct sigma_cmd *cmd)
  {
@@ -298,7 +298,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  
  	if (list_offset >= MBO_MAX_PREF_BSSIDS) {
  		sigma_dut_print(dut, DUT_MSG_ERROR,
-@@ -16272,26 +16383,136 @@ static int mac80211_set_nebor(struct sig
+@@ -16295,26 +16406,141 @@ static int mac80211_set_nebor(struct sig
  	}
  
  	val = get_param(cmd, "Nebor_Op_Class");
@@ -366,7 +366,6 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  
  	val = get_param(cmd, "Nebor_BSSID");
 -	if (!val || parse_mac_address(dut, val, mac_addr) < 0)
--		return -1;
 +	if (val) {
 +		if (strlen(val) > sizeof(parser)) {
 +			sigma_dut_print(dut, DUT_MSG_ERROR,
@@ -374,9 +373,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 +					strlen(val));
 +			return -1;
 +		}
- 
--	mbo_add_nebor_entry(dut, mac_addr, ap_ne_class, ap_ne_op_ch,
--			    ap_ne_pref);
++
 +		strlcpy(parser, val, sizeof(parser));
 +		token = parser;
 +		bssid_cnt = 0;
@@ -391,21 +388,28 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 +					  "Max link support exceeded");
 +				return -1;
 +			}
-+			if (memcmp(dut->btm[neighbor_cnt].nebor_bssid[bssid_cnt],
-+				   self_mac, ETH_ALEN) == 0)
++			/* NOTE: Setting neighbor preference to 0 for self mac
++			 * address is needed only for EHT program and for MBO
++			 * program this is not needed */
++			if ((dut->program == PROGRAM_EHT) &&
++			    (memcmp(dut->btm[neighbor_cnt].nebor_bssid[bssid_cnt],
++				    self_mac, ETH_ALEN) == 0))
 +				dut->btm[neighbor_cnt].ap_ne_pref = 0;
 +			bssid_cnt++;
 +		}
-+	}
++	} else
+ 		return -1;
  
--	if (mac80211_update_mbo_pref_ap_list(dut))
--		return -1;
+-	mbo_add_nebor_entry(dut, mac_addr, ap_ne_class, ap_ne_op_ch,
+-			    ap_ne_pref);
 +	val = get_param(cmd, "Nebor_MLD_address");
 +	if (val) {
 +		if (parse_mac_address(dut, val, dut->btm[neighbor_cnt].ap_mld_mac) < 0)
 +			return -1;
 +	}
-+
+ 
+-	if (mac80211_update_mbo_pref_ap_list(dut))
+-		return -1;
 +	val = get_param(cmd, "Nebor_MLD_LinkIDs");
 +	if (val) {
 +		if (strlen(val) > sizeof(parser)) {

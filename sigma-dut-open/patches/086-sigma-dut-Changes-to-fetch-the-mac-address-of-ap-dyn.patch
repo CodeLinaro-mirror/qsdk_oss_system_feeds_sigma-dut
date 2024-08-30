@@ -158,7 +158,7 @@ index d35faff..11492f2 100644
 +			band = BAND_6G;
 +		else if (strcasecmp(val, "5G") == 0)
 +			band = BAND_5G;
-+		else if (strcasecmp(val, "2G") == 0)
++		else if (strcasecmp(val, "24G") == 0)
 +			band = BAND_2G;
 +	}
 +#else
