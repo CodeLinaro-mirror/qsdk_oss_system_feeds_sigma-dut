@@ -96,7 +96,7 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
 +				}
  			}
 -		} else
-+		} else if ((strcasecmp(val, "2G") == 0) && (!dut->ap_interface_2g)) {
++		} else if ((strcasecmp(val, "24G") == 0) && (!dut->ap_interface_2g)) {
 +			iface_check = 1;
  			dut->ap_interface_2g = 1;
 +		}
