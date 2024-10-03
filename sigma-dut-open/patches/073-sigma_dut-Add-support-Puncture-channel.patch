@@ -14,7 +14,7 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -2822,6 +2822,80 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -2824,6 +2824,80 @@ static enum sigma_cmd_result cmd_ap_set_
  		dut->ap_mu_txBF = 1;
  	}
  
@@ -95,17 +95,17 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
  
  	val = get_param(cmd, "MBSSID_MU");
  	if (val) {
-@@ -11032,6 +11106,9 @@ skip_vht_parameters_set:
+@@ -11050,6 +11124,9 @@ skip_vht_parameters_set:
  	if (dtim)
  		fprintf(f, "dtim_period=%d\n", dtim);
  
 +	if (dut->ru_punct_bitmap && check_band(dut, BAND_6G, conf_counter))
-+		fprintf (f, "ru_punct_bitmap=%d", dut->ru_punct_bitmap);
++		fprintf (f, "ru_punct_bitmap=%d\n", dut->ru_punct_bitmap);
 +
  	fclose(f);
  
  	if (dut->ap_is_dual && conf_counter == 0) {
-@@ -12254,6 +12331,7 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -12272,6 +12349,7 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->eht_txmcs = 0;
  	dut->ap_ehtmcs_map = 0;
  	dut->run_set_param = 0;
@@ -113,7 +113,7 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
  
  	if (dut->device_type == AP_testbed) {
  		dut->ap_he_dlofdma = VALUE_DISABLED;
-@@ -17486,7 +17564,7 @@ static enum sigma_cmd_result mac80211_ap
+@@ -17504,7 +17582,7 @@ static enum sigma_cmd_result mac80211_ap
  	int ap_he_ackpolicy;
  	int link_id = 0;
  	int param;
@@ -122,7 +122,7 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
  	int val_bw = -1;
  	const char *value_bw;
  	char link_param[10];
-@@ -17700,6 +17778,110 @@ static enum sigma_cmd_result mac80211_ap
+@@ -17791,6 +17869,110 @@ static enum sigma_cmd_result mac80211_ap
  		link_set = true;
  	}
  
