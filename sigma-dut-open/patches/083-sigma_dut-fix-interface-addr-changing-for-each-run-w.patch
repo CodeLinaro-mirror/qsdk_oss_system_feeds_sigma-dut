@@ -22,6 +22,8 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  ap.c | 81 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++---
  1 file changed, 77 insertions(+), 4 deletions(-)
 
+diff --git a/ap.c b/ap.c
+index d2e4c09..5d09a3d 100644
 --- a/ap.c
 +++ b/ap.c
 @@ -112,6 +112,7 @@
@@ -32,7 +34,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  extern char *sigma_wpas_ctrl;
  extern char *sigma_hapd_ctrl;
  extern char *ap_inet_addr;
-@@ -253,6 +254,31 @@ int get_hwaddr(const char *ifname, unsig
+@@ -253,6 +254,31 @@ int get_hwaddr(const char *ifname, unsigned char *hwaddr)
  	return 0;
  }
  
@@ -64,7 +66,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  static void ath_ap_set_group_id(struct sigma_dut *dut, const char *ifname,
  				const char *val)
  {
-@@ -9435,7 +9461,7 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -9435,7 +9461,7 @@ enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
  					   struct sigma_conn *conn,
  					   struct sigma_cmd *cmd)
  {
@@ -73,15 +75,14 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  	const char *ifname;
  	char buf[500];
  	char path[100];
-@@ -9802,6 +9828,55 @@ write_conf:
+@@ -9802,9 +9828,51 @@ write_conf:
  			fclose(f);
  			return -2;
  		}
-+	} else if (dut->program == PROGRAM_EHT || dut->program == PROGRAM_WPA3 || dut->ap_mode == AP_11be) {
-+		/* NOTE: set_hw_addr is applicable to programs that
-+		 * support mld. Incase any future programs use mld,
-+		 * update the conditional statement appropriately */
-+
+-	} else if (get_hwaddr(ifname, main_bssid)) {
+-		fclose(f);
+-		return -2;
++	} else {
 +		/* Create a file to store the permanent mac address
 +		 * to retain the mac address everytime across the
 +		 * app restart/re-run
@@ -126,10 +127,10 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +				return ERROR_SEND_STATUS;
 +			}
 +		}
- 	} else if (get_hwaddr(ifname, main_bssid)) {
- 		fclose(f);
- 		return -2;
-@@ -10914,6 +10989,11 @@ skip_vht_parameters_set:
+ 	}
+ 
+ 	fprintf(f, "bssid=%02x:%02x:%02x:%02x",
+@@ -10909,6 +10977,11 @@ skip_vht_parameters_set:
  			fprintf(f, "bssid=%02x:%02x:%02x:%02x:%02x:%02x\n",
  				bssid[0], bssid[1], bssid[2], bssid[3],
  				bssid[4], bssid[5]);
@@ -141,3 +142,6 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  
  			if (dut->cohosted[dut->cohost_iface].conf[i].key_mgmt == AP_WPA2_SAE) {
  				fprintf(f, "wpa=2\n");
+-- 
+2.34.1
+
