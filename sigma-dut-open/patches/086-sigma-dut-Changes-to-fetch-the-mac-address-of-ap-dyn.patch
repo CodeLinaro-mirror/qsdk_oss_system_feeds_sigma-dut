@@ -207,7 +207,7 @@ index d35faff..11492f2 100644
 @@ -14282,6 +14403,57 @@ enum sigma_cmd_result cmd_dev_ap_get_parameter(struct sigma_dut *dut,
  
  	val = get_param(cmd, "parameter");
- 	if (strcasecmp(val, "FT_BSS_LIST") == 0) {
+ 	if (val && (strcasecmp(val, "FT_BSS_LIST") == 0)) {
 +#ifdef NL80211_SUPPORT
 +		unsigned char addr_2[ETH_ALEN];
 +
