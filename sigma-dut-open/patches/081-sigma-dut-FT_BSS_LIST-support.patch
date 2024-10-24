@@ -120,7 +120,7 @@ Signed-off-by: Karthik M <quic_karm@quicinc.com>
 +	}
 +
 +	val = get_param(cmd, "parameter");
-+	if (strcasecmp(val, "FT_BSS_LIST") == 0) {
++	if (val && (strcasecmp(val, "FT_BSS_LIST") == 0)) {
 +		if (fetch_ap_mac_address(dut, conn, ifname, addr, resp, sizeof(resp)) < 0)
 +			return -1;
 +
