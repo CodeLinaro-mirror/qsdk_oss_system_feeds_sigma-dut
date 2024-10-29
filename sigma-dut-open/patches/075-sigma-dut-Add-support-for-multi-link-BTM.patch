@@ -306,7 +306,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 -		ap_ne_class = atoi(val);
 +	if (val) {
 +		neighbor_cnt = dut->nebor_cnt;
-+		if (neighbor_cnt > NUM_NEIGHBORS) {
++		if (neighbor_cnt >= NUM_NEIGHBORS) {
 +			sigma_dut_print(dut, DUT_MSG_ERROR,
 +				  "Max neighbor support exceeded");
 +			return -1;
