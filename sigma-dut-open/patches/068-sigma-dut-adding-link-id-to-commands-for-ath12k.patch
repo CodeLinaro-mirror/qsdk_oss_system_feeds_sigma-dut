@@ -410,7 +410,7 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
 +		link_set = true;
 +	} else if (dut->program == PROGRAM_HE)
 +		snprintf(mode, sizeof(mode), "he");
-+	else if (dut->program == PROGRAM_VHT)
++	else
 +		snprintf(mode, sizeof(mode), "vht");
 +
  	/* Issue the channel switch command */
