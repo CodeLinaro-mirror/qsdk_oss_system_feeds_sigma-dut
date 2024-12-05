@@ -173,7 +173,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  
  	if (dut->mode == SIGMA_MODE_STATION) {
  		stop_sta_mode(dut);
-@@ -10127,1352 +10116,1411 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -10127,1352 +10116,1413 @@ enum sigma_cmd_result cmd_ap_config_comm
  	if (drv == DRIVER_OPENWRT)
  		return cmd_owrt_ap_config_commit(dut, conn, cmd);
  
@@ -468,6 +468,8 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  				ht40plus = 1;
 -			else if (chan >= 8 && chan <= 11)
 +				ht40minus = 0;
++			} else if (chwidth == AP_40 &&
++                           offset == SEC_CH_40BELOW) {
  				ht40minus = 1;
 -			fprintf(f, "obss_interval=300\n");
 -		}
@@ -2762,7 +2764,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  			do {
  				max_bssid_ind++;
  				num_bss = num_bss >> 1;
-@@ -11484,28 +11532,24 @@ skip_vht_parameters_set:
+@@ -11484,28 +11534,24 @@ skip_vht_parameters_set:
  			base_val = bssid[5] & ~bssid_mask;
  			init_val = bssid[5] & bssid_mask;
  
@@ -2798,7 +2800,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  				if (dut->ap_wme)
  					fprintf(f, "wmm_enabled=1\n");
  
-@@ -11514,20 +11558,20 @@ skip_vht_parameters_set:
+@@ -11514,20 +11560,20 @@ skip_vht_parameters_set:
  
  				fprintf(f, "bssid=%02x:%02x:%02x:%02x:%02x:%02x\n",
  					bssid[0], bssid[1], bssid[2], bssid[3],
@@ -2824,7 +2826,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  					fprintf(f, "wpa=2\n");
  					fprintf(f, "wpa_key_mgmt=SAE-EXT-KEY\n");
  					if (dut->program == PROGRAM_EHT) {
-@@ -11536,268 +11580,166 @@ skip_vht_parameters_set:
+@@ -11536,268 +11582,166 @@ skip_vht_parameters_set:
  					} else
  						fprintf(f, "wpa_pairwise=CCMP\n");
  					fprintf(f, "ieee80211w=2\n");
@@ -3216,7 +3218,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  	}
  
  	if (dut->use_hostapd_pid_file)
-@@ -11908,9 +11850,15 @@ skip_vht_parameters_set:
+@@ -11908,9 +11852,15 @@ skip_vht_parameters_set:
  				return 0;
  			}
  		} else if (dut->ap_is_mld) {
@@ -3235,7 +3237,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		} else {
  			if (add_hapd_ctrl_iface(dut, ifname, "sigma_dut-ap.conf")) {
  				send_resp(dut, conn, SIGMA_ERROR,
-@@ -11926,6 +11874,8 @@ skip_vht_parameters_set:
+@@ -11926,6 +11876,8 @@ skip_vht_parameters_set:
  		 * beaconing, so remove it (if injection was used) before
  		 * starting hostapd.
  		 */
@@ -3244,7 +3246,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		if (if_nametoindex("sigmadut") > 0 &&
  		    system("iw dev sigmadut del") != 0)
  			sigma_dut_print(dut, DUT_MSG_ERROR, "Failed to remove "
-@@ -11939,8 +11889,15 @@ skip_vht_parameters_set:
+@@ -11939,8 +11891,15 @@ skip_vht_parameters_set:
  
  		snprintf(path, sizeof(path), "%shostapd",
  			 file_exists("hostapd") ? "./" : "");
@@ -3261,7 +3263,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  			 dut->hostapd_bin ? dut->hostapd_bin : path,
  			 dut->hostapd_debug_log ? " -dddKt" : "",
  			 (dut->hostapd_debug_log && dut->hostapd_debug_log[0]) ?
-@@ -11951,9 +11908,7 @@ skip_vht_parameters_set:
+@@ -11951,9 +11910,7 @@ skip_vht_parameters_set:
  			 "",
  			 dut->use_hostapd_pid_file ?
  			 " -P " SIGMA_DUT_HOSTAPD_PID_FILE : "",
@@ -3272,7 +3274,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  	}
  
  	sigma_dut_print(dut, DUT_MSG_DEBUG, "hostapd command: %s", buf);
-@@ -12147,17 +12102,17 @@ hapd_started:
+@@ -12147,17 +12104,17 @@ hapd_started:
  	if (drv == DRIVER_MAC80211 && dut->program == PROGRAM_HE) {
  		int i;
  
