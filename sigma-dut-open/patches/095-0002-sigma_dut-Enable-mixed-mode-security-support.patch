@@ -18,7 +18,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -3179,6 +3179,143 @@ static const char * get_sae_pk_key(const
+@@ -3185,6 +3185,143 @@ static const char * get_sae_pk_key(const
  	return NULL;
  }
  
@@ -162,7 +162,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  static enum sigma_cmd_result cmd_ap_set_security(struct sigma_dut *dut,
  						 struct sigma_conn *conn,
  						 struct sigma_cmd *cmd)
-@@ -3188,8 +3325,6 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3194,8 +3331,6 @@ static enum sigma_cmd_result cmd_ap_set_
  	unsigned int wlan_tag = 1;
  	const char *security;
  	bool pmf_set = false;
@@ -171,27 +171,28 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  
  	val = get_param(cmd, "WLAN_TAG");
  	if (val) {
-@@ -3203,12 +3338,14 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3208,13 +3343,15 @@ static enum sigma_cmd_result cmd_ap_set_
+ 	}
  
  	val = get_param(cmd, "Interface");
++	if (val && (dut->program == PROGRAM_EHT || dut->program == PROGRAM_WPA3))
++		dut->link_specific_security = 1;
++
++	val = get_param(cmd, "MLD_ID");
  	if (val)
 -		link_specific = 1;
-+		dut->link_specific_security = 1;
++		dut->multi_mld = 1;
  
 -	if (link_specific)
 -		akm_values = dut->ap_akm_link_values[dut->num_links - 1];
 -	else
 -		akm_values = dut->ap_akm_values;
-+	val = get_param(cmd, "MLD_ID");
-+	if (val)
-+		dut->multi_mld = 1;
-+
 +	if (dut->link_specific_security && !dut->multi_mld)
 +		return ap_set_security_mixed_mode(dut, conn, cmd);
  
  	security = get_param(cmd, "Security");
  
-@@ -3286,7 +3423,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3292,7 +3429,7 @@ static enum sigma_cmd_result cmd_ap_set_
  				val = get_param(cmd, "KeyMgmtType");
  			if (val) {
  				if (strcasecmp(val, "SAE") == 0) {
@@ -200,7 +201,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  						dut->mbss_set[mbssid_set_idx].conf[mbss_conf_idx].key_mgmt = AP_SAE_EXT;
  					else
  						dut->mbss_set[mbssid_set_idx].conf[mbss_conf_idx].key_mgmt = AP_WPA2_SAE;
-@@ -3338,7 +3475,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3344,7 +3481,7 @@ static enum sigma_cmd_result cmd_ap_set_
  			val = get_param(cmd,"KeyMgmtType");
  		if (val) {
  			if (strcasecmp(val, "SAE") == 0) {
@@ -209,7 +210,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  					dut->mbss.conf[non_tx_bss_idx - 1].key_mgmt = AP_SAE_EXT;
  				else
  					dut->mbss.conf[non_tx_bss_idx - 1].key_mgmt = AP_WPA2_SAE;
-@@ -3393,7 +3530,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3399,7 +3536,7 @@ static enum sigma_cmd_result cmd_ap_set_
  			val = get_param(cmd, "KeyMgmtType");
  		if (val) {
  			if (strcasecmp(val, "SAE") == 0) {
@@ -218,7 +219,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  					dut->cohosted[dut->cohost_iface].conf
  						[cohosted_bss_index - 1].key_mgmt = AP_SAE_EXT;
  				} else {
-@@ -3427,14 +3564,14 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3433,14 +3570,14 @@ static enum sigma_cmd_result cmd_ap_set_
  		if (strcasecmp(val, "WPA2-PSK") == 0 ||
  		    (security && strcasecmp(security, "PSK") == 0 &&
  		     strcasecmp(val, "WPA2") == 0)) {
@@ -235,7 +236,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  				dut->ap_key_mgmt = AP_WPA2_ENT_FT_EAP;
  			else
  				dut->ap_key_mgmt = AP_WPA2_EAP;
-@@ -3459,7 +3596,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3465,7 +3602,7 @@ static enum sigma_cmd_result cmd_ap_set_
  		} else if (strcasecmp(val, "WPA2-SAE") == 0 ||
  			   strcasecmp(val, "SAE") == 0) {
  			dut->ap_key_mgmt = AP_WPA2_SAE;
@@ -244,7 +245,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  				dut->ap_cipher = AP_GCMP_256;
  				dut->ap_key_mgmt = AP_SAE_EXT;
  			}
-@@ -3720,7 +3857,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3726,7 +3863,7 @@ static enum sigma_cmd_result cmd_ap_set_
  		val = get_param(cmd, "passphrase");
  	if (val) {
  		if (dut->ap_key_mgmt != AP_WPA2_SAE &&
@@ -253,7 +254,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		    AKM_SAE &&
  		    strlen(val) > 64) {
  			sigma_dut_print(dut, DUT_MSG_ERROR,
-@@ -3748,15 +3885,9 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3754,15 +3891,9 @@ static enum sigma_cmd_result cmd_ap_set_
  		if (strcasecmp(val, "Disabled") == 0) {
  			dut->ap_pmf = AP_PMF_DISABLED;
  		} else if (strcasecmp(val, "Optional") == 0) {
@@ -271,7 +272,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		} else {
  			send_resp(dut, conn, SIGMA_INVALID,
  				  "errorCode,Unsupported PMF");
-@@ -3796,7 +3927,8 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3802,7 +3933,8 @@ static enum sigma_cmd_result cmd_ap_set_
  	val = get_param(cmd, "AKMSuiteType");
  	if (val) {
  		const char *in_pos = val;
@@ -281,7 +282,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		while (*in_pos) {
  			int akm = atoi(in_pos);
  
-@@ -3806,7 +3938,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3812,7 +3944,7 @@ static enum sigma_cmd_result cmd_ap_set_
  				return STATUS_SENT;
  			}
  
@@ -290,7 +291,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  
  			in_pos = strchr(in_pos, ';');
  			if (!in_pos)
-@@ -3815,23 +3947,13 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3821,23 +3953,13 @@ static enum sigma_cmd_result cmd_ap_set_
  				in_pos++;
  		}
  		dut->ap_akm = 1;
