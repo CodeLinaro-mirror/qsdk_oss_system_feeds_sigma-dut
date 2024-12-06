@@ -21,7 +21,26 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -992,15 +992,14 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -984,6 +984,18 @@ static int wcn_set_txbf_periodic_ndp(str
+ }
+ #endif /* NL80211_SUPPORT */
+ 
++/* To obtain the dut's mld link_id based on the band information */
++int get_link_id_by_band(struct sigma_dut *dut, enum if_band band)
++{
++	int link_id;
++
++	for (link_id = 0; link_id < NUM_OF_LINKS; link_id++) {
++		if (check_band(dut, band, link_id))
++			break;
++	}
++
++	return link_id;
++}
+ 
+ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+ 						 struct sigma_conn *conn,
+@@ -992,15 +1004,14 @@ static enum sigma_cmd_result cmd_ap_set_
  	/* const char *name = get_param(cmd, "NAME"); */
  	/* const char *ifname = get_param(cmd, "INTERFACE"); */
  	const char *val;
@@ -39,7 +58,15 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  
  	/* Allow program to be overridden if specified in the ap_set_wireless
  	 * to support some 60 GHz test scripts where the program may be 60 GHz
-@@ -1092,13 +1091,13 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1059,7 +1070,6 @@ static enum sigma_cmd_result cmd_ap_set_
+ 
+ 			val = get_param(cmd, "Channel");
+ 			if(val) {
+-				dut->ap_channel = atoi(val);
+ 				dut->mbss_set[mbssid_set_idx].conf[mbss_conf_idx].channel = atoi(val);
+ 			}
+ 
+@@ -1092,13 +1102,13 @@ static enum sigma_cmd_result cmd_ap_set_
  			if (val) {
  				if (strcasecmp(val, "5G") == 0) {
  					dut->ap_interface_5g = 1;
@@ -56,19 +83,21 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  				}
  			}
  
-@@ -1200,92 +1199,68 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1200,92 +1210,68 @@ static enum sigma_cmd_result cmd_ap_set_
  		}
  
  		val = get_param(cmd, "CHANNEL");
--		if (val) {
++		if (val)
++			dut->mld[link_id].ap_channel = atoi(val);
++
++		val = get_param(cmd, "WIDTH");
+ 		if (val) {
 -			if (dut->ap_is_mld) {
 -				dut->ap_tag_channel[0] = atoi(val);
 -				dut->ap_channel_1 = atoi(val);
 -			} else if (wlan_tag == 1) {
 -				const char *pos;
-+		if (val)
-+			dut->mld[link_id].ap_channel = atoi(val);
- 
+-
 -				dut->ap_channel = atoi(val);
 -				pos = strchr(val, ';');
 -				if (pos) {
@@ -78,8 +107,6 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -			} else {
 -				dut->ap_tag_channel[wlan_tag - 2] = atoi(val);
 -				dut->ap_channel_1 = atoi(val);
-+		val = get_param(cmd, "WIDTH");
-+		if (val) {
 +			if (strcasecmp(val, "20") == 0)
 +				chwidth = AP_20;
 +			else if (strcasecmp(val, "40") == 0)
@@ -197,7 +224,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		if (wlan_tag < 1 || wlan_tag > 3) {
  			/*
  			 * The only valid WLAN Tags as of now as per the latest
-@@ -1294,9 +1269,13 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1294,9 +1280,13 @@ static enum sigma_cmd_result cmd_ap_set_
  			send_resp(dut, conn, SIGMA_INVALID,
  				  "errorCode,Invalid WLAN_TAG");
  			return STATUS_SENT;
@@ -214,7 +241,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  	}
  
  	val = get_param(cmd, "Interface");
-@@ -1314,11 +1293,9 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1314,11 +1304,9 @@ static enum sigma_cmd_result cmd_ap_set_
  		}
  	}
  
@@ -228,7 +255,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  
  	val = get_param(cmd, "ChnlFreq");
  	if (val) {
-@@ -1343,12 +1320,15 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1343,12 +1331,15 @@ static enum sigma_cmd_result cmd_ap_set_
  		if (!dut->dual_ap_ifname) {
  			dut->ap_is_mld = 1;
  			dut->num_links++;
@@ -247,7 +274,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  	val = get_param(cmd, "CountryCode");
  	if (val) {
  		if (strlen(val) > sizeof(dut->ap_countrycode) - 1)
-@@ -1379,7 +1359,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1379,7 +1370,7 @@ static enum sigma_cmd_result cmd_ap_set_
  		if (strlen(val) > sizeof(dut->ap_ssid) - 1)
  			return INVALID_SEND_STATUS;
  
@@ -256,7 +283,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  			/*
  			 * If tag is not specified, it is deemed to be 1.
  			 * Hence tag of 1 is a special case and the values
-@@ -1399,24 +1379,8 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1399,24 +1390,8 @@ static enum sigma_cmd_result cmd_ap_set_
  	}
  
  	val = get_param(cmd, "CHANNEL");
@@ -283,7 +310,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  
  	val = get_param(cmd, "ChnlFreq");
  	if (val) {
-@@ -1441,8 +1405,8 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1441,8 +1416,8 @@ static enum sigma_cmd_result cmd_ap_set_
  	/* Overwrite the AP channel with DFS channel if configured */
  	val = get_param(cmd, "dfs_chan");
  	if (val) {
@@ -294,7 +321,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		else
  			dut->ap_tag_channel[wlan_tag - 2] = atoi(val);
  	}
-@@ -1479,49 +1443,32 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1479,49 +1454,32 @@ static enum sigma_cmd_result cmd_ap_set_
  			return STATUS_SENT;
  		}
  
@@ -359,7 +386,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  	case AP_11g:
  	case AP_11b:
  	case AP_11ng:
-@@ -1536,9 +1483,11 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1536,9 +1494,11 @@ static enum sigma_cmd_result cmd_ap_set_
  	case AP_11be:
  		if (dut->ap_band_6g)
  			dut->use_5g = 1;
@@ -373,7 +400,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  			dut->use_5g = 1;
  		break;
  	case AP_11ad:
-@@ -1549,32 +1498,23 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1549,32 +1509,23 @@ static enum sigma_cmd_result cmd_ap_set_
  	if (dut->ap_is_dual)
  		dut->use_5g = 1;
  
@@ -423,7 +450,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  
  	val = get_param(cmd, "WME");
  	if (val) {
-@@ -1841,7 +1781,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1841,7 +1792,7 @@ static enum sigma_cmd_result cmd_ap_set_
  			get_he_mcs_nssmap((uint8_t *) &mcsnssmap, nss, mcs);
  			dut->he_mcsnssmap = (mcsnssmap << 16) | mcsnssmap;
  			/* To set mcsnssmap for EHT program */
@@ -432,7 +459,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  				set_eht_mcsmap_nss(dut, nss, mcs);
  		} else {
  			set_vht_mcsmap_nss(dut, nss, mcs);
-@@ -1883,9 +1823,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1883,9 +1834,7 @@ static enum sigma_cmd_result cmd_ap_set_
  			return STATUS_SENT;
  		}
  
@@ -443,7 +470,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  	}
  	/* TODO: WIDTH_SCAN */
  
-@@ -1895,7 +1833,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1895,7 +1844,7 @@ static enum sigma_cmd_result cmd_ap_set_
  	dut->ap_tdls_prohibit_chswitch =
  		val && strcasecmp(val, "Enabled") == 0;
  	val = get_param(cmd, "HS2");
@@ -452,7 +479,34 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		dut->ap_hs2 = atoi(val);
  	val = get_param(cmd, "P2P_CROSS_CONNECT");
  	if (val)
-@@ -2972,7 +2910,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -2890,7 +2839,7 @@ static enum sigma_cmd_result cmd_ap_set_
+ 			char *punctchannel_val;
+ 			char *saveptr;
+ 			char *punct_channel = NULL;
+-			int n, i = 0;
++			int n, i = 0, link_id_6g = get_link_id_by_band(dut, BAND_6G);
+ 
+ 			punct_channel = strdup(val);
+ 			if (!punct_channel) {
+@@ -2898,7 +2847,7 @@ static enum sigma_cmd_result cmd_ap_set_
+ 			}
+ 
+ 			punctchannel_val = strtok_r(punct_channel, " ", &saveptr);
+-			if (dut->ap_link_chwidth[0] == AP_80) {
++			if (dut->mld[link_id_6g].ap_chwidth == AP_80) {
+ 				int punct_80[] = {33, 37, 41, 45};
+ 
+ 				while (punctchannel_val != NULL) {
+@@ -2910,7 +2859,7 @@ static enum sigma_cmd_result cmd_ap_set_
+ 					}
+ 					punctchannel_val = strtok_r(NULL, " ", &saveptr);
+ 				}
+-			} else if (dut->ap_link_chwidth[0] == AP_160) {
++			} else if (dut->mld[link_id_6g].ap_chwidth == AP_160) {
+ 				int punct_160[] = {33, 37, 41, 45, 49, 53, 57, 61};
+ 
+ 				while (punctchannel_val != NULL) {
+@@ -2972,7 +2921,7 @@ static enum sigma_cmd_result cmd_ap_set_
  		}
  	}
  
@@ -461,7 +515,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		dut->ap_beacon_prot = 1;
  
  	val = get_param(cmd, "MBSSID_MU");
-@@ -3247,7 +3185,6 @@ static const char * get_sae_pk_key(const
+@@ -3247,7 +3196,6 @@ static const char * get_sae_pk_key(const
  	return NULL;
  }
  
@@ -633,7 +687,15 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  	unsigned int ap_akm_values;
  	int ap_pmksa;
  	int ap_pmksa_caching;
-@@ -1371,6 +1397,9 @@ struct sigma_dut {
+@@ -1361,7 +1387,6 @@ struct sigma_dut {
+ 	struct btm_ap btm[NUM_NEIGHBORS];
+ 	int btm_ml_link;
+ #define MAX_MLD_SUPPORTED 2
+-	enum ap_chwidth ap_link_chwidth[MAX_MLD_SUPPORTED];
+ 	/*Use ap_akm_link_values for interfcae specific cases*/
+ 	int ap_akm_link_values[MAX_MLD_SUPPORTED];
+ 
+@@ -1371,6 +1396,9 @@ struct sigma_dut {
  	int multi_mbssid;
  	int no_of_mbssid_groups;
  	struct mbssid_set mbss_set[MAX_MBSSID_SET];

@@ -14,7 +14,15 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -12692,14 +12692,11 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -12713,7 +12713,6 @@ static enum sigma_cmd_result cmd_ap_rese
+ 	dut->ap_su_txBF = 1;
+ 	dut->ap_channel = -1;
+ 	dut->ap_chwidth = AP_AUTO;
+-	memset(dut->ap_link_chwidth, -1, sizeof(dut->ap_link_chwidth));
+ 	dut->ap_ampdu_exp = 0;
+ 	dut->ap_max_mpdu_len = 0;
+ 	dut->ap_band_6g = 0;
+@@ -12741,14 +12740,11 @@ static enum sigma_cmd_result cmd_ap_rese
  	/* Resetting this interface specific pmf value to -1, as it will
  	 * get changed only for interface specific cases as given by the user
  	 */
@@ -29,7 +37,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  	dut->eht_txemlomn = VALUE_NOT_SET;
  	dut->cohost_iface = 0;
  	dut->ap_cohosted_bss = VALUE_NOT_SET;
-@@ -12727,7 +12724,6 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -12776,7 +12772,6 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->ap_tnc_time_stamp = 0;
  
  	dut->ap_akm_values = 0;
@@ -37,7 +45,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  	free(dut->ap_sae_passwords);
  	dut->ap_sae_passwords = NULL;
  	dut->ap_sae_pk = 0;
-@@ -13178,6 +13174,53 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -13227,6 +13222,53 @@ static enum sigma_cmd_result cmd_ap_rese
  				"60G WPS: configure secure AP with random passphrase");
  	}
  
