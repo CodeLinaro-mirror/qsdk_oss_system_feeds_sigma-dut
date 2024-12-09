@@ -173,7 +173,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  
  	if (dut->mode == SIGMA_MODE_STATION) {
  		stop_sta_mode(dut);
-@@ -10127,1352 +10116,1413 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -10127,1352 +10116,1417 @@ enum sigma_cmd_result cmd_ap_config_comm
  	if (drv == DRIVER_OPENWRT)
  		return cmd_owrt_ap_config_commit(dut, conn, cmd);
  
@@ -1560,19 +1560,23 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +				own_addr[0], own_addr[1], own_addr[2],
 +				own_addr[3], own_addr[4], own_addr[5],
 +				own_addr_str);
-+			/* TODO: Need to update the mac address calculation for partner link */
++			/* TODO: Store the link mac addresses in mld link structures */
 +			fprintf(f,
 +				"r1kh=%02x:%02x:%02x:%02x:%02x:%02x %02x:%02x:%02x:%02x:%02x:%02x 000102030405060708090a0b0c0d0e0f\n",
 +				own_addr[0], own_addr[1], own_addr[2],
-+				own_addr[3], own_addr[4] + 1, own_addr[5] + 1,
++				own_addr[3], (link_id == 0) ? own_addr[4] + 1 : own_addr[4] - link_id,
++				(link_id == 0) ? own_addr[5] + 1 : own_addr[5] - link_id,
 +				own_addr[0], own_addr[1], own_addr[2],
-+				own_addr[3], own_addr[4] + 1, own_addr[5] + 1);
++				own_addr[3], (link_id == 0) ? own_addr[4] + 1 : own_addr[4] - link_id,
++				(link_id == 0) ? own_addr[5] + 1 : own_addr[5] - link_id);
 +			fprintf(f,
 +				"r0kh=%02x:%02x:%02x:%02x:%02x:%02x %02x%02x%02x%02x%02x%02x 000102030405060708090a0b0c0d0e0f\n",
 +				own_addr[0], own_addr[1], own_addr[2],
-+				own_addr[3], own_addr[4] + 1, own_addr[5] + 1,
++				own_addr[3], (link_id == 0) ? own_addr[4] + 1 : own_addr[4] - link_id,
++				(link_id == 0) ? own_addr[5] + 1 : own_addr[5] - link_id,
 +				own_addr[0], own_addr[1], own_addr[2],
-+				own_addr[3], own_addr[4] + 1, own_addr[5] + 1);
++				own_addr[3], (link_id == 0) ? own_addr[4] + 1 : own_addr[4] - link_id,
++				(link_id == 0) ? own_addr[5] + 1 : own_addr[5] - link_id);
 +
 +			for (j = 0; j < dut->ft_bss_mac_cnt; j++) {
 +				if (dut->program == PROGRAM_MBO || dut->program == PROGRAM_WPA3) {
@@ -2764,7 +2768,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  			do {
  				max_bssid_ind++;
  				num_bss = num_bss >> 1;
-@@ -11484,28 +11534,24 @@ skip_vht_parameters_set:
+@@ -11484,28 +11538,24 @@ skip_vht_parameters_set:
  			base_val = bssid[5] & ~bssid_mask;
  			init_val = bssid[5] & bssid_mask;
  
@@ -2800,7 +2804,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  				if (dut->ap_wme)
  					fprintf(f, "wmm_enabled=1\n");
  
-@@ -11514,20 +11560,20 @@ skip_vht_parameters_set:
+@@ -11514,20 +11564,20 @@ skip_vht_parameters_set:
  
  				fprintf(f, "bssid=%02x:%02x:%02x:%02x:%02x:%02x\n",
  					bssid[0], bssid[1], bssid[2], bssid[3],
@@ -2826,7 +2830,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  					fprintf(f, "wpa=2\n");
  					fprintf(f, "wpa_key_mgmt=SAE-EXT-KEY\n");
  					if (dut->program == PROGRAM_EHT) {
-@@ -11536,268 +11582,166 @@ skip_vht_parameters_set:
+@@ -11536,268 +11586,166 @@ skip_vht_parameters_set:
  					} else
  						fprintf(f, "wpa_pairwise=CCMP\n");
  					fprintf(f, "ieee80211w=2\n");
@@ -3218,7 +3222,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  	}
  
  	if (dut->use_hostapd_pid_file)
-@@ -11908,9 +11852,15 @@ skip_vht_parameters_set:
+@@ -11908,9 +11856,15 @@ skip_vht_parameters_set:
  				return 0;
  			}
  		} else if (dut->ap_is_mld) {
@@ -3237,7 +3241,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		} else {
  			if (add_hapd_ctrl_iface(dut, ifname, "sigma_dut-ap.conf")) {
  				send_resp(dut, conn, SIGMA_ERROR,
-@@ -11926,6 +11876,8 @@ skip_vht_parameters_set:
+@@ -11926,6 +11880,8 @@ skip_vht_parameters_set:
  		 * beaconing, so remove it (if injection was used) before
  		 * starting hostapd.
  		 */
@@ -3246,7 +3250,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		if (if_nametoindex("sigmadut") > 0 &&
  		    system("iw dev sigmadut del") != 0)
  			sigma_dut_print(dut, DUT_MSG_ERROR, "Failed to remove "
-@@ -11939,8 +11891,15 @@ skip_vht_parameters_set:
+@@ -11939,8 +11895,15 @@ skip_vht_parameters_set:
  
  		snprintf(path, sizeof(path), "%shostapd",
  			 file_exists("hostapd") ? "./" : "");
@@ -3263,7 +3267,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  			 dut->hostapd_bin ? dut->hostapd_bin : path,
  			 dut->hostapd_debug_log ? " -dddKt" : "",
  			 (dut->hostapd_debug_log && dut->hostapd_debug_log[0]) ?
-@@ -11951,9 +11910,7 @@ skip_vht_parameters_set:
+@@ -11951,9 +11914,7 @@ skip_vht_parameters_set:
  			 "",
  			 dut->use_hostapd_pid_file ?
  			 " -P " SIGMA_DUT_HOSTAPD_PID_FILE : "",
@@ -3274,7 +3278,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  	}
  
  	sigma_dut_print(dut, DUT_MSG_DEBUG, "hostapd command: %s", buf);
-@@ -12147,17 +12104,17 @@ hapd_started:
+@@ -12147,17 +12108,17 @@ hapd_started:
  	if (drv == DRIVER_MAC80211 && dut->program == PROGRAM_HE) {
  		int i;
  
