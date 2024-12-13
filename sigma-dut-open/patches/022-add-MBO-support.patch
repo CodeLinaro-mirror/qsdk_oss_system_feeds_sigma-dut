@@ -1,6 +1,6 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -2475,11 +2475,17 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -2640,11 +2640,17 @@ static enum sigma_cmd_result cmd_ap_set_
  		if (strcasecmp(val, "WPA2-PSK") == 0 ||
  		    (security && strcasecmp(security, "PSK") == 0 &&
  		     strcasecmp(val, "WPA2") == 0)) {
@@ -20,7 +20,7 @@
  			dut->ap_cipher = AP_CCMP;
  		} else if (strcasecmp(val, "SuiteB") == 0) {
  			dut->ap_key_mgmt = AP_SUITEB;
-@@ -8595,6 +8601,8 @@ write_conf:
+@@ -8975,6 +8981,8 @@ write_conf:
  			key_mgmt = "SAE";
  		else if (dut->ap_key_mgmt == AP_WPA2_PSK_SAE)
  			key_mgmt = "WPA-PSK SAE";
@@ -29,7 +29,7 @@
  		else
  			key_mgmt = "WPA-PSK";
  		switch (dut->ap_pmf) {
-@@ -8618,8 +8626,6 @@ write_conf:
+@@ -8998,8 +9006,6 @@ write_conf:
  		}
  		if (dut->ap_key_mgmt == AP_WPA2_PSK_SHA256)
  			fprintf(f, "wpa_key_mgmt=WPA-PSK-SHA256\n");
@@ -38,7 +38,7 @@
  		fprintf(f, "wpa_pairwise=%s\n",
  			hostapd_cipher_name(dut->ap_cipher));
  		if (dut->ap_group_cipher != AP_NO_GROUP_CIPHER_SET)
-@@ -8808,26 +8814,50 @@ skip_key_mgmt:
+@@ -9188,26 +9194,50 @@ skip_key_mgmt:
  
  	if (ap_ft_enabled(dut)) {
  		unsigned char own_addr[ETH_ALEN];
@@ -98,7 +98,7 @@
  	}
  
  	if (dut->rsne_override)
-@@ -9013,6 +9043,25 @@ skip_key_mgmt:
+@@ -9393,6 +9423,25 @@ skip_key_mgmt:
  		}
  	}
  
@@ -124,7 +124,7 @@
  	if (dut->program == PROGRAM_WPS) {
  		/* 60G WPS tests requires wps_state of 2 (configured) */
  		int wps_state = is_60g_sigma_dut(dut) ? 2 : 1;
-@@ -11412,6 +11461,366 @@ static int ath_ap_send_frame_mbo(struct
+@@ -11925,6 +11974,372 @@ static int ath_ap_send_frame_mbo(struct
  	return 1;
  }
  
@@ -292,14 +292,20 @@
 +
 +	str_val = get_param(cmd, "APChanRpt");
 +	if (str_val) {
++		memset(param_val, 0, sizeof(param_val));
 +		pos = strtok_r((char *)str_val, "_", &saveptr);
++		if (pos) {
++			str_val = get_param(cmd, "RegClass");
++			if (str_val)
++				snprintf(param_val, sizeof(param_val), "%02x", atoi(str_val));
++		}
 +		while (pos) {
 +			snprintf(temp, 3, "%02x", atoi(pos));
 +			strlcat(tok, temp, sizeof(tok));
 +			pos = strtok_r(NULL, "_", &saveptr);
 +		}
-+		snprintf(param_val, sizeof(param_val), "%s", tok);
-+		len = (strlen(tok) / 2);
++		strlcat(param_val, tok, sizeof(param_val));
++		len = (strlen(param_val) / 2);
 +		mac80211_bcn_rpt_prepare_buf(buf, sizeof(buf), "APChanRpt", param_val, len);
 +	}
 +
@@ -491,7 +497,7 @@
  
  static int ap_send_frame_vht(struct sigma_dut *dut, struct sigma_conn *conn,
  			     struct sigma_cmd *cmd)
-@@ -11464,6 +11873,8 @@ static int ap_send_frame_mbo(struct sigm
+@@ -11977,6 +12392,8 @@ static int ap_send_frame_mbo(struct sigm
  			     struct sigma_cmd *cmd)
  {
  	switch (get_driver_type(dut)) {
@@ -500,7 +506,7 @@
  	case DRIVER_ATHEROS:
  		return ath_ap_send_frame_mbo(dut, conn, cmd);
  	case DRIVER_OPENWRT:
-@@ -13992,6 +14403,185 @@ static int mac80211_vht_chnum_band(struc
+@@ -14644,6 +15061,185 @@ static int mac80211_vht_chnum_band(struc
  	return 0;
  }
  
@@ -686,7 +692,7 @@
  
  static enum sigma_cmd_result
  mac80211_he_tx_bandwidth(struct sigma_dut *dut, struct sigma_conn *conn,
-@@ -14170,6 +14760,42 @@ static enum sigma_cmd_result mac80211_ap
+@@ -14822,6 +15418,42 @@ static enum sigma_cmd_result mac80211_ap
  	if (val && mac80211_vht_chnum_band(dut, ifname, val) < 0)
  		return -1;
  
