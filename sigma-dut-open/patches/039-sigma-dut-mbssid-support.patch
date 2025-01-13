@@ -79,7 +79,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
 +
 +		num_non_tx_bss = atoi(val);
 +
-+		if (num_non_tx_bss > MAX_NON_TX_VAP_COUNT) {
++		if (num_non_tx_bss > MAX_NON_TX_BSS_COUNT) {
 +			send_resp(dut, conn, SIGMA_ERROR,
 +				  "errorCode,MBSS Vap Count Support Exceeded");
 +			return STATUS_SENT_ERROR;
@@ -341,7 +341,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
 +};
 +
 +/* Update this macro for supporting multiple mbss vaps */
-+#define MAX_NON_TX_VAP_COUNT	2
++#define MAX_NON_TX_BSS_COUNT	2
 +#define MAX_PSK_LEN		20
 +
 +struct mbss_config {
@@ -353,7 +353,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
 +
 +struct mbss_support {
 +	int num_non_tx_bss;
-+	struct mbss_config conf[MAX_NON_TX_VAP_COUNT];
++	struct mbss_config conf[MAX_NON_TX_BSS_COUNT];
 +};
 +
  struct sigma_dut {
