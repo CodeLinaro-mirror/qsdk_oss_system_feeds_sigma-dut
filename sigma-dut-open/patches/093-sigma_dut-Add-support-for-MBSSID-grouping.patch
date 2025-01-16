@@ -437,7 +437,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 +
 +		val = get_param(cmd, "NonTxBSSIndex");
 +		if (val) {
-+			if (atoi(val) < dut->mbss_set[iter].num_non_tx_bss) {
++			if (atoi(val) > dut->mbss_set[mbssid_set_idx].num_non_tx_bss) {
 +				send_resp(dut, conn, SIGMA_ERROR,
 +					  "errorCode,Invalid NonTxBSSIndex");
 +				return STATUS_SENT_ERROR;
@@ -470,6 +470,95 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 +			snprintf(idx, sizeof(idx), "-%d", non_tx_bss_idx);
 +			strlcat(ifname, idx, sizeof(ifname));
 +		}
+ 	}
+ 
+ 	val = get_param(cmd, "CoHostedBSSIndex");
+@@ -18617,30 +18925,74 @@ static enum sigma_cmd_result mac80211_ap
+ 			link_id = dut->band_to_link[2];
+ 	}
+ 
+-	val = get_param(cmd, "NonTxBSSIndex");
++	val = get_param(cmd, "MBSSIDSet");
+ 	if (val) {
+-		int non_tx_bss_idx, ret;
++		int mbssid_set_idx = atoi(val) - 1, ifname_idx = -1, iter, ret;
+ 
+-		if (dut->ap_mbssid != VALUE_ENABLED) {
++		if (dut->multi_mbssid != VALUE_ENABLED) {
+ 			send_resp(dut, conn, SIGMA_ERROR,
+-				  "errorCode,MBSSID Not enabled");
++				  "errorCode,Multi MBSSID Not enabled");
+ 			return STATUS_SENT_ERROR;
+ 		}
+ 
+-		non_tx_bss_idx = atoi(val);
+-
+-		if (non_tx_bss_idx > dut->mbss.num_non_tx_bss) {
++		if (mbssid_set_idx > dut->no_of_mbssid_groups) {
+ 			send_resp(dut, conn, SIGMA_ERROR,
+-				  "errorCode,Invalid NonTxBSSIndex");
++				  "errorCode, invalid MBSSIDSet value");
+ 			return STATUS_SENT_ERROR;
+ 		}
+-		ret = snprintf(ifname2, sizeof(ifname2), "%s-%d", ifname, non_tx_bss_idx);
+-		if(ret < 0) {
+-			send_resp(dut, conn, SIGMA_ERROR,
+-				  "errorCode,Invalid interface name");
+-			return STATUS_SENT_ERROR;
++
++		for (iter = 0; iter <= mbssid_set_idx; iter++) {
++			ifname_idx += 1; /*increment for tx vap */
++
++			if (iter != mbssid_set_idx)
++				ifname_idx += dut->mbss_set[iter].num_non_tx_bss;
++		}
++
++		val = get_param(cmd, "NonTxBSSIndex");
++		if (val) {
++			if (atoi(val) > dut->mbss_set[mbssid_set_idx].num_non_tx_bss) {
++				send_resp(dut, conn, SIGMA_ERROR,
++					  "errorCode,Invalid NonTxBSSIndex");
++				return STATUS_SENT_ERROR;
++			}
++			ifname_idx += atoi(val);
++		}
++
++		if (ifname_idx) {
++			ret = snprintf(ifname2, sizeof(ifname2), "%s-%d", ifname, ifname_idx);
++			if(ret < 0) {
++				send_resp(dut, conn, SIGMA_ERROR,
++					  "errorCode,Invalid interface name");
++				return STATUS_SENT_ERROR;
++			}
++			ifname = ifname2;
++		}
++	} else {
++		val = get_param(cmd, "NonTxBSSIndex");
++		if (val) {
++			int non_tx_bss_idx, ret;
++
++			if (dut->ap_mbssid != VALUE_ENABLED) {
++				send_resp(dut, conn, SIGMA_ERROR,
++					  "errorCode,MBSSID Not enabled");
++				return STATUS_SENT_ERROR;
++			}
++
++			non_tx_bss_idx = atoi(val);
++
++			if (non_tx_bss_idx > dut->mbss.num_non_tx_bss) {
++				send_resp(dut, conn, SIGMA_ERROR,
++					  "errorCode,Invalid NonTxBSSIndex");
++				return STATUS_SENT_ERROR;
++			}
++			ret = snprintf(ifname2, sizeof(ifname2), "%s-%d", ifname, non_tx_bss_idx);
++			if(ret < 0) {
++				send_resp(dut, conn, SIGMA_ERROR,
++					  "errorCode,Invalid interface name");
++				return STATUS_SENT_ERROR;
++			}
++			ifname = ifname2;
+ 		}
+-		ifname = ifname2;
  	}
  
  	val = get_param(cmd, "CoHostedBSSIndex");

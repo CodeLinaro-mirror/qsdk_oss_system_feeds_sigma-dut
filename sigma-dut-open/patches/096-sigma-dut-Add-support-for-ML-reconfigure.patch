@@ -136,22 +136,22 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 +				val = get_param(cmd, "AffiliatedAP_RemovalTimer");
 +				if (val) {
 +					int removal_timer = atoi(val) * 10;
-+					snprintf(buf, sizeof(buf), "-i %s %s link_remove %d", ifname,
++					snprintf(buf, sizeof(buf), "hostapd_cli -i %s %s link_remove %d", ifname,
 +						 link_param, removal_timer);
-+					run_hostapd_cli(dut, buf);
++					run_system(dut, buf);
 +				}
 +			} else if (strcasecmp(val, "Add") == 0) {
 +				snprintf(file, sizeof(file), "sigma_dut-ap_%d.conf", link_id);
 +
 +#ifdef NL80211_SUPPORT
 +				get_wiphy_name(dut, ifname, phy_name);
-+				snprintf(buf, sizeof(buf), "-i %s mld_add_link bss_config=%s:%s/%s",
++				snprintf(buf, sizeof(buf), "hostapd_cli -i %s mld_add_link bss_config=%s:%s/%s",
 +					 ifname, phy_name, dut->sigma_tmpdir, file);
 +#else /* NL80211_SUPPORT */
-+				snprintf(buf, sizeof(buf), "-i %s mld_add_link bss_config=phy0:%s/%s",
++				snprintf(buf, sizeof(buf), "hostapd_cli -i %s mld_add_link bss_config=phy0:%s/%s",
 +					 ifname, dut->sigma_tmpdir, file);
 +#endif /* NL80211_SUPPORT */
-+				run_hostapd_cli(dut, buf);
++				run_system(dut, buf);
 +			}
 +		} else {
 +			send_resp(dut, conn, SIGMA_ERROR,
