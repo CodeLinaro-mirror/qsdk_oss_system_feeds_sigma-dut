@@ -18,7 +18,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -3185,6 +3185,143 @@ static const char * get_sae_pk_key(const
+@@ -3210,6 +3210,145 @@ static const char * get_sae_pk_key(const
  	return NULL;
  }
  
@@ -27,13 +27,14 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +				      struct sigma_cmd *cmd)
 +{
 +	const char *val;
++	unsigned int link_id = dut->security_links - 1;
 +
 +	val = get_param(cmd, "PSK");
 +	if (!val)
 +		val = get_param(cmd, "passphrase");
 +	if (val) {
 +		if (dut->ap_key_mgmt != AP_WPA2_SAE &&
-+		    (dut->mld[dut->num_links - 1].ap_akm_link &
++		    (dut->mld[link_id].ap_akm_link &
 +		     (AKM_WPA_PSK | AKM_SAE)) !=
 +		    AKM_SAE && strlen(val) > 64) {
 +			sigma_dut_print(dut, DUT_MSG_ERROR,
@@ -74,22 +75,22 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +		if (akm_values & (1 << 15))
 +			dut->ap_add_sha384 = 1;
 +
-+		dut->mld[dut->num_links - 1].ap_akm_link = akm_values;
++		dut->mld[link_id].ap_akm_link = akm_values;
 +	}
 +
 +	val = get_param(cmd, "PairwiseCipher");
 +	if (val) {
 +		if (strcasecmp(val, "AES-GCMP-256") == 0)
-+			dut->mld[dut->num_links - 1].ap_cipher_link = AP_GCMP_256;
++			dut->mld[link_id].ap_cipher_link = AP_GCMP_256;
 +		else if (strcasecmp(val, "AES-CCMP-256") == 0)
-+			dut->mld[dut->num_links - 1].ap_cipher_link = AP_CCMP_256;
++			dut->mld[link_id].ap_cipher_link = AP_CCMP_256;
 +		else if (strcasecmp(val, "AES-GCMP-128") == 0)
-+			dut->mld[dut->num_links - 1].ap_cipher_link = AP_GCMP_128;
++			dut->mld[link_id].ap_cipher_link = AP_GCMP_128;
 +		else if (strcasecmp(val, "AES-CCMP-128") == 0)
-+			dut->mld[dut->num_links - 1].ap_cipher_link = AP_CCMP;
++			dut->mld[link_id].ap_cipher_link = AP_CCMP;
 +		else if (strcasecmp(val, "AES-CCMP-128 AES-GCMP-256") == 0 ||
 +			   strcasecmp(val, "AES-GCMP-256 AES-CCMP-128") == 0)
-+			dut->mld[dut->num_links - 1].ap_cipher_link = AP_CCMP_128_GCMP_256;
++			dut->mld[link_id].ap_cipher_link = AP_CCMP_128_GCMP_256;
 +		else {
 +			send_resp(dut, conn, SIGMA_INVALID,
 +				  "errorCode,Unsupported PairwiseCipher");
@@ -100,13 +101,13 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +	val = get_param(cmd, "GroupCipher");
 +	if (val) {
 +		if (strcasecmp(val, "AES-GCMP-256") == 0)
-+			dut->mld[dut->num_links - 1].ap_group_cipher_link = AP_GCMP_256;
++			dut->mld[link_id].ap_group_cipher_link = AP_GCMP_256;
 +		else if (strcasecmp(val, "AES-CCMP-256") == 0)
-+			dut->mld[dut->num_links - 1].ap_group_cipher_link = AP_CCMP_256;
++			dut->mld[link_id].ap_group_cipher_link = AP_CCMP_256;
 +		else if (strcasecmp(val, "AES-GCMP-128") == 0)
-+			dut->mld[dut->num_links - 1].ap_group_cipher_link = AP_GCMP_128;
++			dut->mld[link_id].ap_group_cipher_link = AP_GCMP_128;
 +		else if (strcasecmp(val, "AES-CCMP-128") == 0)
-+			dut->mld[dut->num_links - 1].ap_group_cipher_link = AP_CCMP;
++			dut->mld[link_id].ap_group_cipher_link = AP_CCMP;
 +		else {
 +			send_resp(dut, conn, SIGMA_INVALID,
 +				  "errorCode,Unsupported GroupCipher");
@@ -117,13 +118,13 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +	val = get_param(cmd, "GroupMgntCipher");
 +	if (val) {
 +		if (strcasecmp(val, "BIP-GMAC-256") == 0)
-+			dut->mld[dut->num_links - 1].ap_group_mgmt_cipher_link = AP_BIP_GMAC_256;
++			dut->mld[link_id].ap_group_mgmt_cipher_link = AP_BIP_GMAC_256;
 +		else if (strcasecmp(val, "BIP-CMAC-256") == 0)
-+			dut->mld[dut->num_links - 1].ap_group_mgmt_cipher_link = AP_BIP_CMAC_256;
++			dut->mld[link_id].ap_group_mgmt_cipher_link = AP_BIP_CMAC_256;
 +		else if (strcasecmp(val, "BIP-GMAC-128") == 0)
-+			dut->mld[dut->num_links - 1].ap_group_mgmt_cipher_link = AP_BIP_GMAC_128;
++			dut->mld[link_id].ap_group_mgmt_cipher_link = AP_BIP_GMAC_128;
 +		else if (strcasecmp(val, "BIP-CMAC-128") == 0)
-+			dut->mld[dut->num_links - 1].ap_group_mgmt_cipher_link = AP_BIP_CMAC_128;
++			dut->mld[link_id].ap_group_mgmt_cipher_link = AP_BIP_CMAC_128;
 +		else {
 +			send_resp(dut, conn, SIGMA_INVALID,
 +				  "errorCode,Unsupported GroupMgntCipher");
@@ -134,11 +135,11 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +	val = get_param(cmd, "PMF");
 +	if (val) {
 +		if (strcasecmp(val, "Disabled") == 0)
-+			dut->mld[dut->num_links - 1].ap_pmf_link = AP_PMF_DISABLED;
++			dut->mld[link_id].ap_pmf_link = AP_PMF_DISABLED;
 +		else if (strcasecmp(val, "Optional") == 0)
-+			dut->mld[dut->num_links - 1].ap_pmf_link = AP_PMF_OPTIONAL;
++			dut->mld[link_id].ap_pmf_link = AP_PMF_OPTIONAL;
 +		else if (strcasecmp(val, "Required") == 0)
-+			dut->mld[dut->num_links - 1].ap_pmf_link = AP_PMF_REQUIRED;
++			dut->mld[link_id].ap_pmf_link = AP_PMF_REQUIRED;
 +		else {
 +			send_resp(dut, conn, SIGMA_INVALID,
 +				  "errorCode,Unsupported PMF");
@@ -148,21 +149,22 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +
 +	val = get_param(cmd, "BeaconProtection");
 +	if (val)
-+		dut->mld[dut->num_links - 1].ap_beacon_prot_link = atoi(val);
++		dut->mld[link_id].ap_beacon_prot_link = atoi(val);
 +
 +	val = get_param(cmd, "ECGroupID");
 +	if (val) {
-+		free(dut->mld[dut->num_links - 1].ap_sae_groups_link);
-+		dut->mld[dut->num_links - 1].ap_sae_groups_link = strdup(val);
++		free(dut->mld[link_id].ap_sae_groups_link);
++		dut->mld[link_id].ap_sae_groups_link = strdup(val);
 +	}
 +
++	dut->security_links++;
 +	return 1;
 +}
 +
  static enum sigma_cmd_result cmd_ap_set_security(struct sigma_dut *dut,
  						 struct sigma_conn *conn,
  						 struct sigma_cmd *cmd)
-@@ -3194,8 +3331,6 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3219,8 +3358,6 @@ static enum sigma_cmd_result cmd_ap_set_
  	unsigned int wlan_tag = 1;
  	const char *security;
  	bool pmf_set = false;
@@ -171,7 +173,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  
  	val = get_param(cmd, "WLAN_TAG");
  	if (val) {
-@@ -3208,13 +3343,15 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3233,13 +3370,15 @@ static enum sigma_cmd_result cmd_ap_set_
  	}
  
  	val = get_param(cmd, "Interface");
@@ -192,7 +194,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  
  	security = get_param(cmd, "Security");
  
-@@ -3292,7 +3429,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3317,7 +3456,7 @@ static enum sigma_cmd_result cmd_ap_set_
  				val = get_param(cmd, "KeyMgmtType");
  			if (val) {
  				if (strcasecmp(val, "SAE") == 0) {
@@ -201,7 +203,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  						dut->mbss_set[mbssid_set_idx].conf[mbss_conf_idx].key_mgmt = AP_SAE_EXT;
  					else
  						dut->mbss_set[mbssid_set_idx].conf[mbss_conf_idx].key_mgmt = AP_WPA2_SAE;
-@@ -3344,7 +3481,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3369,7 +3508,7 @@ static enum sigma_cmd_result cmd_ap_set_
  			val = get_param(cmd,"KeyMgmtType");
  		if (val) {
  			if (strcasecmp(val, "SAE") == 0) {
@@ -210,7 +212,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  					dut->mbss.conf[non_tx_bss_idx - 1].key_mgmt = AP_SAE_EXT;
  				else
  					dut->mbss.conf[non_tx_bss_idx - 1].key_mgmt = AP_WPA2_SAE;
-@@ -3399,7 +3536,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3424,7 +3563,7 @@ static enum sigma_cmd_result cmd_ap_set_
  			val = get_param(cmd, "KeyMgmtType");
  		if (val) {
  			if (strcasecmp(val, "SAE") == 0) {
@@ -219,7 +221,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  					dut->cohosted[dut->cohost_iface].conf
  						[cohosted_bss_index - 1].key_mgmt = AP_SAE_EXT;
  				} else {
-@@ -3433,14 +3570,14 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3458,14 +3597,14 @@ static enum sigma_cmd_result cmd_ap_set_
  		if (strcasecmp(val, "WPA2-PSK") == 0 ||
  		    (security && strcasecmp(security, "PSK") == 0 &&
  		     strcasecmp(val, "WPA2") == 0)) {
@@ -236,7 +238,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  				dut->ap_key_mgmt = AP_WPA2_ENT_FT_EAP;
  			else
  				dut->ap_key_mgmt = AP_WPA2_EAP;
-@@ -3465,7 +3602,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3490,7 +3629,7 @@ static enum sigma_cmd_result cmd_ap_set_
  		} else if (strcasecmp(val, "WPA2-SAE") == 0 ||
  			   strcasecmp(val, "SAE") == 0) {
  			dut->ap_key_mgmt = AP_WPA2_SAE;
@@ -245,7 +247,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  				dut->ap_cipher = AP_GCMP_256;
  				dut->ap_key_mgmt = AP_SAE_EXT;
  			}
-@@ -3726,7 +3863,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3751,7 +3890,7 @@ static enum sigma_cmd_result cmd_ap_set_
  		val = get_param(cmd, "passphrase");
  	if (val) {
  		if (dut->ap_key_mgmt != AP_WPA2_SAE &&
@@ -254,7 +256,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		    AKM_SAE &&
  		    strlen(val) > 64) {
  			sigma_dut_print(dut, DUT_MSG_ERROR,
-@@ -3754,15 +3891,9 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3779,15 +3918,9 @@ static enum sigma_cmd_result cmd_ap_set_
  		if (strcasecmp(val, "Disabled") == 0) {
  			dut->ap_pmf = AP_PMF_DISABLED;
  		} else if (strcasecmp(val, "Optional") == 0) {
@@ -272,7 +274,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		} else {
  			send_resp(dut, conn, SIGMA_INVALID,
  				  "errorCode,Unsupported PMF");
-@@ -3802,7 +3933,8 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3827,7 +3960,8 @@ static enum sigma_cmd_result cmd_ap_set_
  	val = get_param(cmd, "AKMSuiteType");
  	if (val) {
  		const char *in_pos = val;
@@ -282,7 +284,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		while (*in_pos) {
  			int akm = atoi(in_pos);
  
-@@ -3812,7 +3944,7 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3837,7 +3971,7 @@ static enum sigma_cmd_result cmd_ap_set_
  				return STATUS_SENT;
  			}
  
@@ -291,7 +293,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  
  			in_pos = strchr(in_pos, ';');
  			if (!in_pos)
-@@ -3821,23 +3953,13 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3846,23 +3980,13 @@ static enum sigma_cmd_result cmd_ap_set_
  				in_pos++;
  		}
  		dut->ap_akm = 1;
@@ -318,3 +320,21 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		dut->ap_hs2 = 0;
  		dut->ap_pmf = AP_PMF_DISABLED;
  	}
+@@ -12638,6 +12762,7 @@ static enum sigma_cmd_result cmd_ap_rese
+ 	dut->ap_mode_1 = AP_inval;
+ 	dut->ap_is_mld = 0;
+ 	dut->num_links = 1;
++	dut->security_links = 1;
+ 	for(i = 0; i < 3; i++)
+ 		dut->band_to_link[i] = -1;
+ 	dut->ap_channel_1 = 0;
+--- a/sigma_dut.h
++++ b/sigma_dut.h
+@@ -1404,6 +1404,7 @@ struct sigma_dut {
+ 	struct mld_ap mld[NUM_OF_LINKS];
+ 	int link_specific_security;
+ 	int multi_mld;
++	unsigned int security_links;
+ };
+ 
+ #ifdef NL80211_SUPPORT
