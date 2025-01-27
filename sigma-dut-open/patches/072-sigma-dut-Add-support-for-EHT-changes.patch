@@ -1017,7 +1017,7 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
 +};
 +
  /* Update this macro for supporting multiple mbss vaps */
- #define MAX_NON_TX_VAP_COUNT	2
+ #define MAX_NON_TX_BSS_COUNT	2
  #define MAX_PSK_LEN		20
 @@ -1266,6 +1286,10 @@ struct sigma_dut {
  #endif /* ANDROID_MDNS */

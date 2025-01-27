@@ -18,7 +18,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -1035,6 +1035,116 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1009,6 +1009,116 @@ static enum sigma_cmd_result cmd_ap_set_
  	if (val)
  		dut->program = sigma_program_to_enum(val);
  
@@ -135,7 +135,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  	val = get_param(cmd, "NonTxBSSIndex");
  	if (val) {
  		int non_tx_bss_idx;
-@@ -1065,19 +1175,6 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -1039,19 +1149,6 @@ static enum sigma_cmd_result cmd_ap_set_
  		return SUCCESS_SEND_STATUS;
  	}
  
@@ -155,7 +155,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  	val = get_param(cmd, "NumCoHostedBSS");
  	if (val) {
  		int num_cohosted_bss;
-@@ -3268,6 +3365,51 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -3242,6 +3339,51 @@ static enum sigma_cmd_result cmd_ap_set_
  		return 1;
  	}
  
@@ -207,7 +207,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  	val = get_param(cmd, "NonTxBSSIndex");
  	if (val) {
  		int non_tx_bss_idx;
-@@ -10249,7 +10391,7 @@ write_conf:
+@@ -10223,7 +10365,7 @@ write_conf:
  		} else {
  			fprintf(f, "interface=%s\n", ifname2);
  		}
@@ -216,7 +216,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  		fprintf(f, "interface=%s\n", ifname);
  	}
  	if (dut->bridge)
-@@ -10259,7 +10401,7 @@ write_conf:
+@@ -10233,7 +10375,7 @@ write_conf:
  
  	if (sigma_hapd_ctrl)
  		fprintf(f, "ctrl_interface=%s\n", sigma_hapd_ctrl);
@@ -225,7 +225,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  		fprintf(f, "ctrl_interface=/var/run/hostapd\n");
  
  	if ((dut->ap_ssid[0] && conf_counter == 0) ||
-@@ -10269,7 +10411,9 @@ write_conf:
+@@ -10243,7 +10385,9 @@ write_conf:
  		fprintf(f, "ssid=%s\n", dut->ap_tag_ssid[0]);
  	else if (dut->ap_ssid[0] && conf_counter == 1)
  		fprintf(f, "ssid=%s\n", dut->ap_ssid);
@@ -236,7 +236,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  		fprintf(f, "ssid=QCA AP OOB\n");
  
  	if (dut->ap_bcnint)
-@@ -11312,6 +11456,118 @@ skip_vht_parameters_set:
+@@ -11237,6 +11381,118 @@ skip_vht_parameters_set:
  	}
  
  	if ((dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT) &&
@@ -355,7 +355,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  	    dut->ap_mbssid == VALUE_ENABLED && !conf_counter) {
  		uint8_t num_bss, bssid_mask, max_bss_count;
  		uint8_t init_val, base_val;
-@@ -11410,7 +11666,9 @@ skip_vht_parameters_set:
+@@ -11335,7 +11591,9 @@ skip_vht_parameters_set:
  				fprintf(f, "wpa_pairwise=CCMP\n");
  				fprintf(f, "wpa_passphrase=%s\n", dut->mbss.conf[i].psk);
  			}
@@ -366,7 +366,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  		}
  	}
  
-@@ -11515,7 +11773,9 @@ skip_vht_parameters_set:
+@@ -11435,7 +11693,9 @@ skip_vht_parameters_set:
  				fprintf(f, "wpa_passphrase=%s\n",
  					dut->cohosted[dut->cohost_iface].conf[i].psk);
  			}
@@ -377,7 +377,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  		}
  	}
  
-@@ -12808,6 +13068,9 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -12728,6 +12988,9 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->nss_mcs_set = 0;
  	dut->he_srctrl_allow = -1;
  	dut->ap_mbssid_mu = VALUE_NOT_SET;
@@ -387,7 +387,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  
  	dut->eht_txmcs = 0;
  	dut->ap_ehtmcs_map = 0;
-@@ -14878,29 +15141,74 @@ static enum sigma_cmd_result cmd_ap_get_
+@@ -14804,29 +15067,74 @@ static enum sigma_cmd_result cmd_ap_get_
  	val = get_param(cmd, "MLD_ID");
  	if (val) {
  		mld_id = atoi(val);
@@ -475,15 +475,16 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  	val = get_param(cmd, "CoHostedBSSIndex");
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -603,6 +603,7 @@ enum eht_mru_alloc {
+@@ -607,6 +607,8 @@ enum cohosted_bands {
+ /* Update this macro for supporting multiple mbss vaps */
+ #define MAX_NON_TX_BSS_COUNT	2
  #define MAX_PSK_LEN		20
- #define AP_2G			0
- #define AP_5G			1
 +#define MAX_MBSSID_SET		8
++#define MAX_COHOSTED_BSS_COUNT	4
  
  struct mbss_config {
  	int non_tx_bss_idx;
-@@ -613,6 +614,18 @@ struct mbss_config {
+@@ -617,6 +619,18 @@ struct mbss_config {
  	char ifname[IFNAMSIZ];
  };
  
@@ -501,20 +502,22 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 +
  struct mbss_support {
  	int num_non_tx_bss;
- 	struct mbss_config conf[MAX_NON_TX_VAP_COUNT];
-@@ -623,6 +636,11 @@ struct cohosted_support {
- 	struct mbss_config conf[MAX_NON_TX_VAP_COUNT];
- };
+ 	struct mbss_config conf[MAX_NON_TX_BSS_COUNT];
+@@ -624,7 +638,12 @@ struct mbss_support {
  
-+struct mbssid_set {
-+	int num_non_tx_bss;
-+	struct multi_mbss_config conf[MAX_NON_TX_VAP_COUNT + 1]; /* +1 for TX */
+ struct cohosted_support {
+ 	int num_co_hosted_bss;
+-	struct mbss_config conf[MAX_NON_TX_BSS_COUNT];
++	struct mbss_config conf[MAX_COHOSTED_BSS_COUNT];
 +};
 +
++struct mbssid_set {
++	int num_non_tx_bss;
++	struct multi_mbss_config conf[MAX_NON_TX_BSS_COUNT + 1]; /* +1 for TX */
+ };
+ 
  struct sigma_dut {
- 	const char *main_ifname;
- 	char *main_ifname_2g;
-@@ -1350,6 +1368,9 @@ struct sigma_dut {
+@@ -1354,6 +1373,9 @@ struct sigma_dut {
  	/*Use ap_pmf_link for interface specific cases*/
  	enum ap_pmf ap_pmf_link[MAX_MLD_SUPPORTED];
  	enum value_not_set_enabled_disabled ap_scs;
