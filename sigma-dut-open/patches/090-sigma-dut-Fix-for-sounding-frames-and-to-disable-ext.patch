@@ -18,7 +18,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -9143,6 +9143,13 @@ static void fwtest_set_eht_params(struct
+@@ -9447,6 +9447,13 @@ static void fwtest_set_eht_params(struct
  		fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 7 1", ifname, link_id);
  		/* override TPC calculations & set TxBF flag to true */
  		fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 47 1", ifname, link_id);
@@ -32,10 +32,30 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  	}
  
  	if (dut->he_sounding == VALUE_ENABLED)
-@@ -11567,6 +11574,32 @@ hapd_started:
+@@ -9489,6 +9496,14 @@ static void fwtest_set_eht_params(struct
+ 			fwtest_linkid_cmd_wrapper(dut, "-m 0xA -v 0 85 1", ifname, link_id);
+ 		}
+ 	}
++
++	if (dut->ap_mu_edca == VALUE_ENABLED && dut->ap_he_ulofdma == VALUE_ENABLED &&
++	    dut->ap_he_ppdu == PPDU_MU && dut->ap_scs == VALUE_ENABLED) {
++		/* the disablement of deterministic basic trigger based upon
++		 * QOS NULLs needs to be ignored
++		 */
++		fwtest_linkid_cmd_wrapper(dut, "-m 0x48 -v 0 926 1", ifname, link_id);
++	}
+ }
+ 
+ #define IEEE80211_VHT_CAP_TXSTBC                               ((u32) (1 << 7))
+@@ -11837,11 +11852,38 @@ hapd_started:
  		}
  	}
  
+-	if (dut->ap_mu_edca == VALUE_ENABLED && dut->ap_he_ulofdma == VALUE_ENABLED &&
+-	    dut->ap_he_ppdu == PPDU_MU && dut->ap_scs == VALUE_ENABLED) {
+-		/* the disablement of deterministic basic trigger based upon
+-		 * QOS NULLs needs to be ignored */
+-		fwtest_cmd_wrapper(dut, "-m 0x48 -v 0 926 1", ifname);
 +	if (drv == DRIVER_MAC80211 && dut->program != PROGRAM_EHT) {
 +		/* NOTE: EHT program excluded as it is handled in fwtest_set_eht_params() */
 +		int i;
@@ -60,8 +80,14 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +			if (dut->ap_he_ulofdma == VALUE_ENABLED || dut->ap_he_dlofdma == VALUE_ENABLED)
 +				fwtest_cmd_wrapper(dut, "-m 0x48 -v 0 838 0", ifname2);
 +		}
-+	}
 +
- 	if (dut->ap_mu_edca == VALUE_ENABLED && dut->ap_he_ulofdma == VALUE_ENABLED &&
- 	    dut->ap_he_ppdu == PPDU_MU && dut->ap_scs == VALUE_ENABLED) {
- 		/* the disablement of deterministic basic trigger based upon
++		if (dut->ap_mu_edca == VALUE_ENABLED && dut->ap_he_ulofdma == VALUE_ENABLED &&
++		    dut->ap_he_ppdu == PPDU_MU && dut->ap_scs == VALUE_ENABLED) {
++			/* the disablement of deterministic basic trigger based upon
++			 * QOS NULLs needs to be ignored
++			 */
++			fwtest_cmd_wrapper(dut, "-m 0x48 -v 0 926 1", ifname);
++		}
+ 	}
+ 
+ 	if (dut->bridge && dut->ap_is_dual) {

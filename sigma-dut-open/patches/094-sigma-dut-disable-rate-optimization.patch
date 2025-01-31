@@ -12,21 +12,19 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  ap.c | 8 ++++++++
  1 file changed, 8 insertions(+)
 
-diff --git a/ap.c b/ap.c
-index 43ca4aa..326820b 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -9192,6 +9192,9 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
- 			fwtest_linkid_cmd_wrapper(dut, "-m 0xA -v 0 85 1", ifname, link_id);
+@@ -9639,6 +9639,9 @@ static void fwtest_set_eht_params(struct
  		}
  	}
-+
+ 
 +	/* Disable Rate optimizations */
 +	fwtest_linkid_cmd_wrapper(dut, "-m 0x48 -v 0 925 0", ifname, link_id);
- }
- 
- #define IEEE80211_VHT_CAP_TXSTBC                               ((u32) (1 << 7))
-@@ -11588,6 +11591,9 @@ hapd_started:
++
+ 	if (dut->ap_mu_edca == VALUE_ENABLED && dut->ap_he_ulofdma == VALUE_ENABLED &&
+ 	    dut->ap_he_ppdu == PPDU_MU && dut->ap_scs == VALUE_ENABLED) {
+ 		/* the disablement of deterministic basic trigger based upon
+@@ -12129,6 +12132,9 @@ hapd_started:
  			fwtest_cmd_wrapper(dut, "-m 0x48 -v 0 838 0", ifname);
  		}
  
@@ -36,15 +34,12 @@ index 43ca4aa..326820b 100644
  		for (i = 0; i < dut->mbss.num_non_tx_bss; i++) {
  			char ifname2[50];
  			snprintf(ifname2, sizeof(ifname2), "%s-%d", ifname, i+1);
-@@ -11597,6 +11603,8 @@ hapd_started:
+@@ -12138,6 +12144,8 @@ hapd_started:
  
  			if (dut->ap_he_ulofdma == VALUE_ENABLED || dut->ap_he_dlofdma == VALUE_ENABLED)
  				fwtest_cmd_wrapper(dut, "-m 0x48 -v 0 838 0", ifname2);
 +
 +			fwtest_cmd_wrapper(dut, "-m 0x48 -v 0 925 0", ifname);
  		}
- 	}
  
--- 
-2.34.1
-
+ 		if (dut->ap_mu_edca == VALUE_ENABLED && dut->ap_he_ulofdma == VALUE_ENABLED &&
