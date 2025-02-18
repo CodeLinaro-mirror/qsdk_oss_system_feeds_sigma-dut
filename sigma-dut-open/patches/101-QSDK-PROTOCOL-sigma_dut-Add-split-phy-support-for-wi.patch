@@ -68,7 +68,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  	if (dut->ap_is_mld)
  		dut->mld[link_id].ap_mode = dut->mld[dut->num_links - 2].ap_mode;
  
-@@ -10219,9 +10224,12 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -10227,9 +10232,12 @@ enum sigma_cmd_result cmd_ap_config_comm
  
  		if (check_band(dut, BAND_2G, link_id))
  			dut->band_to_link[0] = link_id;
@@ -84,24 +84,24 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  			dut->band_to_link[2] = link_id;
  
  		ifname = get_hostapd_ifname(dut);
-@@ -12208,6 +12216,16 @@ hapd_started:
- 				continue;
- 			}
- 			fwtest_set_eht_params(dut, ifname, i);
-+
-+			/* To Do: For split phy cases(5GH + 5GL) cases HT scan doesn't
-+			 * happen parallely, One of the radios(2nd) scan is handled through
-+			 * a timer of 1 second, So that scan happens after 1st radio scan
-+			 * completes. Hence adding a sleep of 1 second here. Once parallel
-+			 * scan for this scenario is enabled in UD, this sleep can be
-+			 * removed
-+			 */
-+			if (dut->band_to_link[3] != -1)
-+				sleep(1);
- 		}
- 	}
+@@ -12016,6 +12024,16 @@ skip_vht_parameters_set:
+ 	/* allow some time for hostapd to start before returning success */
+ 	usleep(500000);
  
-@@ -12862,7 +12880,7 @@ static enum sigma_cmd_result cmd_ap_rese
++	/* To Do: For split phy cases(5GH + 5GL) cases HT scan doesn't
++	 * happen parallely, One of the radios(2nd) scan is handled through
++	 * a timer of 1 second, So that scan happens after 1st radio scan
++	 * completes. Hence adding a sleep of 1 second here. Once parallel
++	 * scan for this scenario is enabled in UD, this sleep can be
++	 * removed
++	 */
++	if (dut->ap_is_mld && (dut->band_to_link[3] != -1))
++		sleep(1);
++
+ 	if (dut->ap_txBF && strncmp(dut->device_driver, "ath12k", 6) == 0) {
+ 		/* Turn off disabling of TxBF feature*/
+ 		run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x47 -v 0 253 65535", ifname);
+@@ -12871,7 +12889,7 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->ap_is_mld = 0;
  	dut->num_links = 1;
  	dut->security_links = 1;
@@ -110,7 +110,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		dut->band_to_link[i] = -1;
  	dut->ap_channel_1 = 0;
  
-@@ -14503,6 +14521,32 @@ static int return_subelem_id(const char
+@@ -14512,6 +14530,32 @@ static int return_subelem_id(const char
  		return -1;
  }
  
@@ -143,7 +143,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  static void mac80211_bcn_rpt_prepare_buf(char *buf, size_t buf_size,
  					 const char *param, char *param_val,
  					 uint8_t len)
-@@ -14540,6 +14584,14 @@ static int mac80211_ap_send_frame_bcn_rp
+@@ -14549,6 +14593,14 @@ static int mac80211_ap_send_frame_bcn_rp
  			link_id = dut->band_to_link[2];
  	}
  
@@ -158,7 +158,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  	if (dut->program == PROGRAM_EHT) {
  		snprintf(link_param, sizeof(link_param), "-l %d", link_id);
  		link_set = true;
-@@ -14688,6 +14740,14 @@ static int mac80211_ap_send_frame_btm_re
+@@ -14697,6 +14749,14 @@ static int mac80211_ap_send_frame_btm_re
  			link_id = dut->band_to_link[2];
  	}
  
@@ -173,7 +173,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  	val = get_param(cmd, "Dest_MAC");
  	if (!val || parse_mac_address(dut, val, mac_addr) < 0) {
  		sigma_dut_print(dut, DUT_MSG_ERROR,
-@@ -15144,7 +15204,9 @@ static int get_interface_handler(struct
+@@ -15153,7 +15213,9 @@ static int get_interface_handler(struct
  	struct nlattr *tb_msg[NL80211_ATTR_MAX + 1];
  	struct nlattr *attrs, *link[NL80211_ATTR_MAX + 1];
  	uint32_t freq;
@@ -183,7 +183,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  
  	nla_parse(tb_msg, NL80211_ATTR_MAX, genlmsg_attrdata(gnlh, 0),
  		  genlmsg_attrlen(gnlh, 0), NULL);
-@@ -15154,7 +15216,8 @@ static int get_interface_handler(struct
+@@ -15163,7 +15225,8 @@ static int get_interface_handler(struct
  		     info->ifname) == 0))))
  		return 0;
  
@@ -193,7 +193,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		memcpy(info->addr, nla_data(tb_msg[NL80211_ATTR_MAC]), ETH_ALEN);
  		return 0;
  	}
-@@ -15163,7 +15226,13 @@ static int get_interface_handler(struct
+@@ -15172,7 +15235,13 @@ static int get_interface_handler(struct
  		nla_parse_nested(link, NL80211_ATTR_MAX, attrs, NULL);
  		if (link[NL80211_ATTR_MLO_LINK_ID]) {
  			freq = nla_get_u32(link[NL80211_ATTR_WIPHY_FREQ]);
@@ -208,7 +208,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  			    link[NL80211_ATTR_MAC]) {
  				memcpy(info->addr,
  				       nla_data(link[NL80211_ATTR_MAC]),
-@@ -15178,15 +15247,17 @@ static int get_interface_handler(struct
+@@ -15187,15 +15256,17 @@ static int get_interface_handler(struct
  
  static int fetch_ap_mac_address_nl(struct sigma_dut *dut,
  				   struct sigma_conn *conn, const char *ifname,
@@ -229,7 +229,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  	arg.addr = addr;
  
  	if (!(msg = nl80211_drv_msg(dut, dut->nl_ctx, if_nametoindex(ifname), flags,
-@@ -15250,21 +15321,20 @@ static enum sigma_cmd_result cmd_ap_get_
+@@ -15259,21 +15330,20 @@ static enum sigma_cmd_result cmd_ap_get_
  	const char *val;
  	int mld_id = 0;
  	int non_tx_bss_idx = 0;
@@ -259,7 +259,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  	val = get_param(cmd, "Interface");
  #ifdef NL80211_SUPPORT
  	/*
-@@ -15276,7 +15346,7 @@ static enum sigma_cmd_result cmd_ap_get_
+@@ -15285,7 +15355,7 @@ static enum sigma_cmd_result cmd_ap_get_
  	 */
  	enum if_band band = BAND_UNKNOWN;
  
@@ -268,7 +268,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		if (strcasecmp(val, "6G") == 0)
  			band = BAND_6G;
  		else if (strcasecmp(val, "5G") == 0)
-@@ -15285,9 +15355,7 @@ static enum sigma_cmd_result cmd_ap_get_
+@@ -15294,9 +15364,7 @@ static enum sigma_cmd_result cmd_ap_get_
  			band = BAND_2G;
  	}
  #else
@@ -279,7 +279,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		if (strcasecmp(val, "6G") == 0)
  			link_id = dut->band_to_link[2];
  		else if (strcasecmp(val, "5G") == 0)
-@@ -15299,8 +15367,6 @@ static enum sigma_cmd_result cmd_ap_get_
+@@ -15308,8 +15376,6 @@ static enum sigma_cmd_result cmd_ap_get_
  	}
  #endif /* NL80211_SUPPORT */
  
@@ -288,7 +288,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  	val = get_param(cmd, "MLD_ID");
  	if (val) {
  		mld_id = atoi(val);
-@@ -15400,8 +15466,15 @@ static enum sigma_cmd_result cmd_ap_get_
+@@ -15409,8 +15475,15 @@ static enum sigma_cmd_result cmd_ap_get_
  	}
  
  #ifdef NL80211_SUPPORT
@@ -306,7 +306,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  
  	if (addr[0] == 0 && addr[1] == 0 && addr[2] == 0 &&
  	    addr[3] == 0 && addr[4] == 0 && addr[5] == 0) {
-@@ -15512,45 +15585,20 @@ enum sigma_cmd_result cmd_dev_ap_get_par
+@@ -15521,45 +15594,20 @@ enum sigma_cmd_result cmd_dev_ap_get_par
  		if (get_driver_type(dut) == DRIVER_MAC80211 &&
  		    (dut->program == PROGRAM_EHT || dut->program == PROGRAM_WPA3) &&
  		    dut->ap_is_dual) {
@@ -360,7 +360,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  				return -1;
  
  			snprintf(resp, sizeof(resp), "FT_BSS_LIST,%02x:%02x:%02x:%02x:%02x:%02x",
-@@ -18707,6 +18755,10 @@ static enum sigma_cmd_result mac80211_he
+@@ -18716,6 +18764,10 @@ static enum sigma_cmd_result mac80211_he
  			mode = "5";
  		else if (link_id == dut->band_to_link[2])
  			mode = "6";
@@ -371,7 +371,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  	} else {
  		mode = dut->ap_band_6g ? "6" : dut->use_5g ? "5" : "2.4";
  	}
-@@ -19275,6 +19327,14 @@ static enum sigma_cmd_result mac80211_ap
+@@ -19284,6 +19336,14 @@ static enum sigma_cmd_result mac80211_ap
  		}
  	}
  
