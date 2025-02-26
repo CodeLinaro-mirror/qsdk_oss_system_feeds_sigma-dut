@@ -25,7 +25,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  				/* Disable UL TID de-register feature for UL MIMO*/
  				fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 330 0", ifname, i);
  				continue;
-@@ -18628,6 +18630,24 @@ static void mac80211_set_trigger_type_0_
+@@ -18624,6 +18626,22 @@ static void mac80211_set_trigger_type_0_
  		/* To set UL trigger duration to 1908 (us) */
  		fwtest_linkid_cmd_wrapper(dut, "-m 0x48 -v 0 63 1908", ifname, link_id);
  	}
@@ -44,8 +44,6 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +		 */
 +		fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 430 0", ifname, link_id);
 +		fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 431 0", ifname, link_id);
-+	} else {
-+		fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 43 6", ifname, link_id);
 +	}
  }
  
