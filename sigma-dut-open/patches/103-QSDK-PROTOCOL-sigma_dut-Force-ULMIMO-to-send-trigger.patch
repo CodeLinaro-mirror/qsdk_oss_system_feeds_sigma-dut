@@ -14,11 +14,18 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  ap.c | 18 ++++++++++++++++++
  1 file changed, 18 insertions(+)
 
-diff --git a/ap.c b/ap.c
-index 627f71b..6153798 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -18621,6 +18621,24 @@ static void mac80211_set_trigger_type_0_eht(struct sigma_dut *dut, const char *i
+@@ -12232,6 +12232,8 @@ hapd_started:
+ 			    && (dut->ap_he_mimo == MIMO_UL)) {
+ 				if (dut->ru_punct_bitmap)
+ 					fwtest_linkid_cmd_wrapper(dut, "-m 10 -v 0 86 1", ifname, i);
++				/* Enable MU MIMO for 2x2 */
++				fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 641 1", ifname, i);
+ 				/* Disable UL TID de-register feature for UL MIMO*/
+ 				fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 330 0", ifname, i);
+ 				continue;
+@@ -18628,6 +18630,24 @@ static void mac80211_set_trigger_type_0_
  		/* To set UL trigger duration to 1908 (us) */
  		fwtest_linkid_cmd_wrapper(dut, "-m 0x48 -v 0 63 1908", ifname, link_id);
  	}
@@ -43,6 +50,3 @@ index 627f71b..6153798 100644
  }
  
  static void mac80211_set_trigger_type_4(struct sigma_dut *dut, const char *ifname)
--- 
-2.34.1
-
