@@ -84,10 +84,10 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
 +					}
 +				}
 +			}
-+			dut->ru_punct_bitmap = punct_index;
-+			if (dut->ru_punct_bitmap) {
-+				sigma_dut_print(dut, DUT_MSG_DEBUG, "ru_punct_bitmap=0x%04x",
-+						dut->ru_punct_bitmap);
++			dut->punct_bitmap = punct_index;
++			if (dut->punct_bitmap) {
++				sigma_dut_print(dut, DUT_MSG_DEBUG, "punct_bitmap=0x%04x",
++						dut->punct_bitmap);
 +			}
 +			free(punct_channel);
 +		}
@@ -99,8 +99,8 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
  	if (dtim)
  		fprintf(f, "dtim_period=%d\n", dtim);
  
-+	if (dut->ru_punct_bitmap && check_band(dut, BAND_6G, conf_counter))
-+		fprintf (f, "ru_punct_bitmap=%d\n", dut->ru_punct_bitmap);
++	if (dut->punct_bitmap && check_band(dut, BAND_6G, conf_counter))
++		fprintf (f, "punct_bitmap=%d\n", dut->punct_bitmap);
 +
  	fclose(f);
  
@@ -109,7 +109,7 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
  	dut->eht_txmcs = 0;
  	dut->ap_ehtmcs_map = 0;
  	dut->run_set_param = 0;
-+	dut->ru_punct_bitmap = 0;
++	dut->punct_bitmap = 0;
  
  	if (dut->device_type == AP_testbed) {
  		dut->ap_he_dlofdma = VALUE_DISABLED;
@@ -197,10 +197,10 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
 +					}
 +				}
 +			}
-+			dut->ru_punct_bitmap = punct_index;
-+			if (dut->ru_punct_bitmap) {
-+				sigma_dut_print(dut, DUT_MSG_DEBUG, "ru_punct_bitmap=0x%04x",
-+						dut->ru_punct_bitmap);
++			dut->punct_bitmap = punct_index;
++			if (dut->punct_bitmap) {
++				sigma_dut_print(dut, DUT_MSG_DEBUG, "punct_bitmap=0x%04x",
++						dut->punct_bitmap);
 +			}
 +
 +			chan = channel_to_freq(dut, dut->ap_channel);
@@ -218,9 +218,9 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
 +			center_freq = channel_to_freq(dut, center_freq_idx);
 +
 +			res = snprintf(buf, sizeof(buf),
-+					" -i %s %s chan_switch 10 %d sec_channel_offset=%d center_freq1=%d bandwidth=%d ru_punct_bitmap=%d blocktx %s",
++					" -i %s %s chan_switch 10 %d sec_channel_offset=%d center_freq1=%d bandwidth=%d punct_bitmap=%d blocktx %s",
 +				ifname, link_set ? link_param : "", chan,
-+				sec_ch_offset, center_freq, chwidth, dut->ru_punct_bitmap, "eht");
++				sec_ch_offset, center_freq, chwidth, dut->punct_bitmap, "eht");
 +
 +			if (res < 0 || res >= sizeof(buf) || run_hostapd_cli(dut, buf) != 0) {
 +				sigma_dut_print(dut, DUT_MSG_ERROR,
@@ -239,7 +239,7 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
  	int i2rlmr_iftmr;
  	int i2rlmrpolicy;
  	int rnm_mfp;
-+	u16 ru_punct_bitmap;
++	u16 punct_bitmap;
  	struct device_pairing_info dev_info;
  	struct peer_pairing_info peer_info;
  #ifdef ANDROID_MDNS

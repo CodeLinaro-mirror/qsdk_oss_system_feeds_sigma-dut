@@ -3169,10 +3169,10 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +		if (dtim)
 +			fprintf(f, "dtim_period=%d\n", dtim);
  
--	if (dut->ru_punct_bitmap && check_band(dut, BAND_6G, conf_counter))
--		fprintf (f, "ru_punct_bitmap=%d\n", dut->ru_punct_bitmap);
-+		if (dut->ru_punct_bitmap && check_band(dut, BAND_6G, link_id))
-+			fprintf(f, "ru_punct_bitmap=%d\n", dut->ru_punct_bitmap);
+-	if (dut->punct_bitmap && check_band(dut, BAND_6G, conf_counter))
+-		fprintf (f, "punct_bitmap=%d\n", dut->punct_bitmap);
++		if (dut->punct_bitmap && check_band(dut, BAND_6G, link_id))
++			fprintf(f, "punct_bitmap=%d\n", dut->punct_bitmap);
  
 -	if (dut->ap_he_ppdu == PPDU_MU &&
 -	    dut->ap_he_dlofdma == VALUE_ENABLED) {
@@ -3296,5 +3296,5 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -			if ((dut->device_type == AP_dut) && (dut->ap_mode == AP_11be)
 +			if ((dut->device_type == AP_dut) && (mode == AP_11be)
  			    && (dut->ap_he_mimo == MIMO_UL)) {
- 				if (dut->ru_punct_bitmap)
+ 				if (dut->punct_bitmap)
  					fwtest_linkid_cmd_wrapper(dut, "-m 10 -v 0 86 1", ifname, i);

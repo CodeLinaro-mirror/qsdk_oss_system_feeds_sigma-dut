@@ -42,7 +42,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 +			fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 112 0", ifname, link_id);
 +		}
 +
-+		if (dut->ru_punct_bitmap) {
++		if (dut->punct_bitmap) {
 +			/*enable puncturing for MU cases*/
 +			fwtest_linkid_cmd_wrapper(dut, "-m 0xA -v 0 85 1", ifname, link_id);
 +		}
