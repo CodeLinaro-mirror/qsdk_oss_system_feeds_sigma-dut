@@ -23,10 +23,10 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
  	if (dut->eht_txemlomn == VALUE_DISABLED)
  		fwtest_cmd_wrapper(dut, "-m 0xD -v 0 7 1", ifname);
  
-+	if ((dut->ap_he_mimo == MIMO_UL || dut->ap_he_mimo == MIMO_DL ||
-+	    dut->ap_mu_txBF == VALUE_ENABLED) && dut->program == PROGRAM_HE) {
-+		/* Enable MU MIMO */
-+		run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x47 -v 0 641 1", ifname);
++	if (dut->ap_he_mimo == MIMO_UL || dut->ap_he_mimo == MIMO_DL ||
++	    dut->ap_mu_txBF == VALUE_ENABLED) {
++		/* Enable MU MIMO for 2x2*/
++		fwtest_cmd_wrapper(dut, "-m 0x47 -v 0 641 1", ifname);
 +	}
  }
  
