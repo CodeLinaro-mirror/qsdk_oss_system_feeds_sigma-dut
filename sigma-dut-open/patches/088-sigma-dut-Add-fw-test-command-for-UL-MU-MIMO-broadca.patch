@@ -29,7 +29,7 @@ index 1bb9f9a..3d028a7 100644
  	if (dut->ap_mbssid_mu == VALUE_ENABLED) {
 @@ -11529,6 +11531,8 @@ hapd_started:
  			    && (dut->ap_he_mimo == MIMO_UL)) {
- 				if (dut->ru_punct_bitmap)
+ 				if (dut->punct_bitmap)
  					fwtest_linkid_cmd_wrapper(dut, "-m 10 -v 0 86 1", ifname, i);
 +				/* Disable UL TID de-register feature for UL MIMO*/
 +				fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 330 0", ifname, i);
