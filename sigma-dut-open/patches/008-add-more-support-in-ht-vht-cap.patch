@@ -14,14 +14,14 @@
 @@ -8333,7 +8337,9 @@ write_conf:
  	     drv == DRIVER_LINUX_WCN) &&
 	    (mode == AP_11ng || mode == AP_11na ||
-	     (mode == AP_11ax && !dut->use_5g))) {
+	     ((mode == AP_11ax || mode == AP_11be) && !dut->use_5g))) {
 -		int ht40plus = 0, ht40minus = 0, tx_stbc = 0;
 +		int ht40plus = 0, ht40minus = 0;
 +		char ht_caps[60];
 +		int len = 0;
  
  		fprintf(f, "ieee80211n=1\n");
-		if (mode == AP_11ax)
+		if (mode == AP_11ax || mode == AP_11be)
 @@ -8360,9 +8366,6 @@ write_conf:
  				ht40minus = 1;
  		}

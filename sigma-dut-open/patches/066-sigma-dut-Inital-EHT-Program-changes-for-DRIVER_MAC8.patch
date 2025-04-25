@@ -12,57 +12,6 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -9318,10 +9318,11 @@ write_conf:
- 		fprintf(f, "hw_mode=ad\n");
- 		break;
- 	case AP_11ax:
--			if (check_band(dut, BAND_2G, conf_counter))
--				fprintf(f, "hw_mode=g\n");
--			else
--				fprintf(f, "hw_mode=a\n");
-+	case AP_11be:
-+		if (check_band(dut, BAND_2G, conf_counter))
-+			fprintf(f, "hw_mode=g\n");
-+		else
-+			fprintf(f, "hw_mode=a\n");
- 		break;
- 	default:
- 		fclose(f);
-@@ -9343,9 +9344,10 @@ write_conf:
- 		int len = 0;
- 
- 		fprintf(f, "ieee80211n=1\n");
--		if (mode == AP_11ax)
-+		if (mode == AP_11ax || mode == AP_11be)
- 			fprintf(f, "ieee80211ax=1\n");
--
-+		if (mode == AP_11be)
-+			fprintf(f, "ieee80211be=1\n");
- 		if (mode == AP_11ng &&
- 		    (chwidth == AP_40 ||
- 		     (chwidth == AP_AUTO &&
-@@ -9394,7 +9396,8 @@ write_conf:
- 	if ((drv == DRIVER_MAC80211 || drv == DRIVER_QNXNTO ||
- 	     drv == DRIVER_LINUX_WCN) &&
- 	    (mode == AP_11ac ||
--	    (mode == AP_11ax && !check_band(dut, BAND_2G, conf_counter)))) {
-+	    ((mode == AP_11ax || mode == AP_11be) &&
-+	     !check_band(dut, BAND_2G, conf_counter)))) {
- 		bool is_5g = false;
- 		int ht40plus = 0, ht40minus = 0;
- 
-@@ -9404,8 +9407,10 @@ write_conf:
- 		if (is_5g)
- 			fprintf(f, "ieee80211ac=1\n"
- 				"ieee80211n=1\n");
--		if (mode == AP_11ax)
-+		if (mode == AP_11ax || mode == AP_11be)
- 			fprintf(f, "ieee80211ax=1\n");
-+		if (mode == AP_11be)
-+			fprintf(f, "ieee80211be=1\n");
- 
- 		/* configure ht_capab based on channel width */
- 		if (chwidth != AP_20 && is_5g) {
 @@ -9423,7 +9428,8 @@ write_conf:
  	if ((drv == DRIVER_MAC80211 || drv == DRIVER_QNXNTO ||
  	     drv == DRIVER_LINUX_WCN) &&
@@ -82,24 +31,6 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  	    dut->ap_group_mgmt_cipher != AP_NO_GROUP_MGMT_CIPHER_SET)
  		fprintf(f, "group_mgmt_cipher=%s\n",
  			hostapd_group_mgmt_cipher_name(
-@@ -10155,7 +10161,7 @@ skip_key_mgmt:
- 		fprintf(f, "he_rts_threshold=1024\n");
- 
- 	if ((dut->program == PROGRAM_VHT) ||
--	    (dut->program == PROGRAM_HE &&
-+	    ((dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT) &&
- 	     !check_band(dut, BAND_2G, conf_counter))) {
- 		int vht_oper_centr_freq_idx;
- 
-@@ -10223,7 +10229,7 @@ skip_key_mgmt:
- 				vht_oper_centr_freq_idx);
- 			fprintf(f, "vht_oper_chwidth=%d\n", dut->ap_vht_chwidth);
- 		}
--		if (mode == AP_11ax) {
-+		if (mode == AP_11ax || mode == AP_11be) {
- 			fprintf(f, "he_oper_chwidth=%d\n", dut->ap_vht_chwidth);
- 			fprintf(f, "he_oper_centr_freq_seg0_idx=%d\n",
- 				vht_oper_centr_freq_idx);
 @@ -10238,6 +10244,12 @@ skip_key_mgmt:
  			}
  		}

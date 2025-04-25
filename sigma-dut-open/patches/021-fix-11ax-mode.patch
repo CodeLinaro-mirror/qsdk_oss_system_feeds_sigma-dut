@@ -18,14 +18,6 @@
  				dut->ap_chwidth_1 = AP_80;
  			dut->ap_is_dual = 1;
  		}
-@@ -8345,6 +8345,7 @@ write_conf:
- 		fprintf(f, "ieee80211n=1\n");
-		if (mode == AP_11ax)
- 			fprintf(f, "ieee80211ax=1\n");
-+
-		if (mode == AP_11ng &&
- 		    (dut->ap_chwidth == AP_40 ||
- 		     (dut->ap_chwidth == AP_AUTO &&
 @@ -8417,7 +8418,7 @@ write_conf:
  	if ((drv == DRIVER_MAC80211 || drv == DRIVER_QNXNTO ||
  	     drv == DRIVER_LINUX_WCN) &&

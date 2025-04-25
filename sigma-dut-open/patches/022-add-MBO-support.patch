@@ -21,9 +21,9 @@
  		} else if (strcasecmp(val, "SuiteB") == 0) {
  			dut->ap_key_mgmt = AP_SUITEB;
 @@ -8975,6 +8981,8 @@ write_conf:
- 			key_mgmt = "SAE";
- 		else if (dut->ap_key_mgmt == AP_WPA2_PSK_SAE)
  			key_mgmt = "WPA-PSK SAE";
+ 		else if (dut->ap_key_mgmt == AP_WPA3_SAE_EXT)
+ 			key_mgmt = "SAE-EXT-KEY";
 +		else if (dut->ap_key_mgmt == AP_WPA2_FT_PSK)
 +			key_mgmt = "WPA-PSK FT-PSK";
  		else

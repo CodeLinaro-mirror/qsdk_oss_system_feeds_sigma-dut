@@ -19,7 +19,7 @@ Signed-off-by: Mohan Kumar G <quic_mkumarg@quicinc.com>
  			if ((dut->device_type == AP_dut) && (dut->ap_mode == AP_11be)
 -			    && (dut->ap_he_mimo == MIMO_UL))
 +			    && (dut->ap_he_mimo == MIMO_UL)) {
-+				if (dut->punct_bitmap)
++				if (dut->ap_punct_bitmap)
 +					fwtest_linkid_cmd_wrapper(dut, "-m 10 -v 0 86 1", ifname, i);
  				continue;
 +			}

@@ -312,10 +312,10 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	char grpid[P2P_GRP_ID_LEN];
 -	char ssid[33];
 +	char ssid[MAX_SSID_LEN];
+ 	char peer_mac[20];
  };
  
- #ifdef CONFIG_TRAFFIC_AGENT
-@@ -480,6 +482,43 @@ enum if_band {
+@@ -480,6 +482,44 @@ enum if_band {
  	BAND_6G
  };
  
@@ -338,6 +338,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
 +	AP_WPA2_PSK_SHA256,
 +	AP_WPA2_ENT_FT_EAP,
 +	AP_OSEN,
++	AP_WPA3_SAE_EXT,
 +};
 +
 +/* Update this macro for supporting multiple mbss vaps */
@@ -383,7 +384,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
  	enum ap_mode {
  		AP_11a,
  		AP_11g,
-@@ -635,26 +674,7 @@ struct sigma_dut {
+@@ -635,27 +674,7 @@ struct sigma_dut {
  	enum value_not_set_enabled_disabled ap_dyn_bw_sig;
  	int ap_sgi80;
  	int ap_p2p_mgmt;
@@ -406,6 +407,7 @@ Signed-off-by: Aloka Dixit <alokad@codeaurora.org>
 -		AP_WPA2_PSK_SHA256,
 -		AP_WPA2_ENT_FT_EAP,
 -		AP_OSEN,
+-		AP_WPA3_SAE_EXT,
 -	} ap_key_mgmt;
 +	enum ap_key_mgmt ap_key_mgmt;
  	enum ap_tag_key_mgmt {

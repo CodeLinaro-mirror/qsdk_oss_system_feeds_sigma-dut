@@ -263,9 +263,9 @@ Signed-off-by: Muna Sinada <quic_msinada@quicinc.com>
  	enum sec_ch_offset offset;
 -	int chan;
 +	int chan, link_id;
+ 	unsigned char addr[6];
  	unsigned char main_bssid[6];
  	char ifname2[50];
- 	bool mld_sae_set = false;
 @@ -9273,12 +9418,16 @@ enum sigma_cmd_result cmd_ap_config_comm
  write_conf:
  	if (conf_counter) {

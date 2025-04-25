@@ -18,7 +18,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +++ b/ap.c
 @@ -12232,6 +12232,8 @@ hapd_started:
  			    && (dut->ap_he_mimo == MIMO_UL)) {
- 				if (dut->ru_punct_bitmap)
+ 				if (dut->ap_punct_bitmap)
  					fwtest_linkid_cmd_wrapper(dut, "-m 10 -v 0 86 1", ifname, i);
 +				/* Enable MU MIMO for 2x2 */
 +				fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 641 1", ifname, i);

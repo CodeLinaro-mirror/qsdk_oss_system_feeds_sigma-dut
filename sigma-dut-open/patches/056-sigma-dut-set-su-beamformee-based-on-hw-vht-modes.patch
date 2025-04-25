@@ -16,11 +16,11 @@ Signed-off-by: Karthikeyan Kathirvel <quic_kathirve@quicinc.com>
 --- a/ap.c
 +++ b/ap.c
 @@ -9551,12 +9551,14 @@ skip_key_mgmt:
- 		     dut->ap_tx_stbc == VALUE_ENABLED || dut->ap_mu_txBF ||
  		     dut->ap_ampdu_exp || dut->ap_max_mpdu_len ||
  		     dut->ap_chwidth == AP_160 ||
--		     dut->ap_chwidth == AP_80_80) &&
-+		     dut->ap_chwidth == AP_80_80 ||
+ 		     dut->ap_chwidth == AP_80_80 ||
+-		     dut->ap_chwidth == AP_320) &&
++		     dut->ap_chwidth == AP_320 ||
 +		     dut->ap_su_txBF) &&
  		     check_band(dut, BAND_5G, conf_counter)) {
 -			fprintf(f, "vht_capab=%s%s%s%s%s%s",
