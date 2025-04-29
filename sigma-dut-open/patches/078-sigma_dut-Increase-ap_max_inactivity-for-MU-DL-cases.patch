@@ -26,8 +26,8 @@ index 57e876c..36fd5e1 100644
 --- a/ap.c
 +++ b/ap.c
 @@ -10825,6 +10825,17 @@ skip_vht_parameters_set:
- 	if (dut->ru_punct_bitmap)
- 		fprintf (f, "ru_punct_bitmap=%d", dut->ru_punct_bitmap);
+ 	if (dut->ap_punct_bitmap)
+ 		fprintf (f, "punct_bitmap=%d", dut->ap_punct_bitmap);
  
 +	if (dut->ap_he_ppdu == PPDU_MU &&
 +	    dut->ap_he_dlofdma == VALUE_ENABLED) {

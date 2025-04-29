@@ -23,18 +23,58 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  ap.c | 2671 ++++++++++++++++++++++++++++------------------------------
  1 file changed, 1291 insertions(+), 1380 deletions(-)
 
+
 --- a/ap.c
 +++ b/ap.c
-@@ -123,7 +123,7 @@ static void ath_ap_set_params(struct sig
+@@ -123,9 +123,9 @@ static void ath_ap_set_params(struct sig
  static int kill_process(struct sigma_dut *dut, char *proc_name,
  			unsigned char is_proc_instance_one, int sig);
+ static int get_oper_centr_freq_seq_idx(struct sigma_dut *dut, int chwidth,
+-				       int channel);
++				       int channel, int link_id);
  static void mac80211_set_mu_brp_commands(struct sigma_dut *dut, const char *ifname);
 -static bool check_band(struct sigma_dut *dut, enum if_band band, int second_iface);
 +static bool check_band(struct sigma_dut *dut, enum if_band band, int link_id);
  
  
  static int fwtest_cmd_wrapper(struct sigma_dut *dut, const char *arg,
-@@ -9047,22 +9047,13 @@ static void set_ebtables_forward_drop(st
+@@ -1004,12 +1004,13 @@ int get_link_id_by_band(struct sigma_dut
+ }
+ 
+ static int get_bitmap_from_punct_chlist(struct sigma_dut *dut,
+-					const char *punct_channel_list)
++					const char *punct_channel_list,
++					int link_id)
+ {
+ 	int center_chan_idx, start_chan_idx, end_chan_idx;
+ 	int chwidth, punct_bitmap = 0;
+ 
+-	switch (dut->ap_chwidth) {
++	switch (dut->mld[link_id].ap_chwidth) {
+ 	case AP_80:
+ 		chwidth = 80;
+ 		break;
+@@ -1029,7 +1030,8 @@ static int get_bitmap_from_punct_chlist(
+ 		center_chan_idx = freq_to_chan(dut->ap_center_freq);
+ 	else
+ 		center_chan_idx = get_oper_centr_freq_seq_idx(dut, chwidth,
+-							      dut->ap_channel);
++							      dut->ap_channel,
++							      link_id);
+ 	if (center_chan_idx < 0) {
+ 		sigma_dut_print(dut, DUT_MSG_ERROR,
+ 				"%s: couldn't get center channel index",
+@@ -2947,7 +2949,8 @@ static enum sigma_cmd_result cmd_ap_set_
+ 
+ 	val = get_param(cmd, "PunctChannel");
+ 	if (val) {
+-		dut->ap_punct_bitmap = get_bitmap_from_punct_chlist(dut, val);
++		dut->ap_punct_bitmap = get_bitmap_from_punct_chlist(dut, val,
++						get_link_id_by_band(dut, BAND_6G));
+ 		if (dut->ap_punct_bitmap < 0) {
+ 			send_resp(dut, conn, SIGMA_INVALID,
+ 				  "errorCode,Invalid PunctChannel");
+@@ -9143,22 +9146,13 @@ static void set_ebtables_forward_drop(st
  				"Failed to set ebtables rule");
  }
  
@@ -61,7 +101,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  {
  	int channel_list[] = { 36, 40, 44, 48, 52, 60, 64, 100, 104, 108, 112,
  			       116, 120, 124, 128, 132, 140, 144, 149, 153, 157,
-@@ -9077,10 +9068,10 @@ static int check_channel(struct sigma_du
+@@ -9173,10 +9167,10 @@ static int check_channel(struct sigma_du
  	int num_chan, *chan_list;
  	int i;
  
@@ -74,8 +114,8 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		num_chan = ARRAY_SIZE(chan_list_2g);
  		chan_list = chan_list_2g;
  	} else {
-@@ -9163,15 +9154,15 @@ static int get_6g_ch_op_class(int channe
- }
+@@ -9238,15 +9232,15 @@ static int get_6g_ch_op_class(int channe
+ 
  
  static int get_oper_centr_freq_seq_idx(struct sigma_dut *dut, int chwidth,
 -				       int channel, bool second_iface)
@@ -93,7 +133,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		if (chwidth == 40) {
  			if (channel < 7)
  				return channel + 2;
-@@ -9183,7 +9174,7 @@ static int get_oper_centr_freq_seq_idx(s
+@@ -9258,7 +9252,7 @@ static int get_oper_centr_freq_seq_idx(s
  	}
  
  
@@ -102,7 +142,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		return get_oper_center_freq_6g(chwidth, channel);
  
  	if (channel >= 36 && channel <= 64)
-@@ -9332,7 +9323,7 @@ static int write_hostapd_conf_password(s
+@@ -9420,7 +9414,7 @@ static int write_hostapd_conf_password(s
  }
  
  
@@ -111,7 +151,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  {
  	int pdev_id;
  
-@@ -9529,7 +9520,7 @@ static void fwtest_set_he_params(struct
+@@ -9617,7 +9611,7 @@ static void fwtest_set_he_params(struct
  		fwtest_cmd_wrapper(dut, "-m 0x4b -v 0 21 0", ifname);
  	}
  
@@ -120,7 +160,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		mac80211_set_mu_brp_commands(dut, ifname);
  		/* Increase MU traffic */
  		run_system_wrapper(dut,
-@@ -9853,7 +9844,7 @@ nla_put_failure:
+@@ -9949,7 +9943,7 @@ nla_put_failure:
  }
  
  
@@ -129,7 +169,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  {
  	const char *key_mgmt;
  	enum driver_type drv = get_driver_type(dut);
-@@ -9902,7 +9893,7 @@ static void set_second_ap_security_conf(
+@@ -9998,7 +9992,7 @@ static void set_second_ap_security_conf(
  		fprintf(file, "ieee80211w=2\n");
  		break;
  	case AP2_WPA2_SAE:
@@ -138,7 +178,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  			fprintf(file, "sae_pwe=1\n");
  
  		fprintf(file, "wpa=2\n");
-@@ -10068,10 +10059,8 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -10164,10 +10158,8 @@ enum sigma_cmd_result cmd_ap_config_comm
  	char buf[500];
  	char path[100];
  	char ap_conf_path[100];
@@ -149,13 +189,14 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  	bool append_vht = false;
  	enum ap_mode mode;
  #ifdef ANDROID
-@@ -10079,17 +10068,17 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -10175,18 +10167,18 @@ enum sigma_cmd_result cmd_ap_config_comm
  #endif /* ANDROID */
  	enum ap_chwidth chwidth;
  	enum sec_ch_offset offset;
 -	int chan, link_id, dtim;
--	unsigned char main_bssid[6];
 +	int chan, link_id, dtim = 0;
+ 	unsigned char addr[6];
+-	unsigned char main_bssid[6];
 +	unsigned char main_bssid[6], temp_bssid[6];
  	char ifname2[50];
  	bool mld_sae_set = false;
@@ -173,7 +214,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  
  	if (dut->mode == SIGMA_MODE_STATION) {
  		stop_sta_mode(dut);
-@@ -10127,1352 +10116,1416 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -10224,1409 +10216,1472 @@ enum sigma_cmd_result cmd_ap_config_comm
  	if (drv == DRIVER_OPENWRT)
  		return cmd_owrt_ap_config_commit(dut, conn, cmd);
  
@@ -326,12 +367,12 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -				__func__);
 -		return -2;
 -	}
- 
+-
 -	if (conf_counter == dut->num_links - 1)
 -		link_id = 0;
 -	else
 -		link_id = conf_counter + 1;
--
+ 
 -	if (check_band(dut, BAND_2G, conf_counter))
 -		dut->band_to_link[0] = link_id;
 -	else if (check_band(dut, BAND_5G, conf_counter))
@@ -365,8 +406,8 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -	case AP_11ad:
 -		fprintf(f, "hw_mode=ad\n");
 -		break;
--	case AP_11ax:
 -	case AP_11be:
+-	case AP_11ax:
 -		if (check_band(dut, BAND_2G, conf_counter))
 +		switch (mode) {
 +		case AP_11g:
@@ -422,6 +463,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -			fprintf(f, "ieee80211ax=1\n");
 -		if (mode == AP_11be)
 -			fprintf(f, "ieee80211be=1\n");
+-
 -		if (mode == AP_11ng &&
 -		    (chwidth == AP_40 ||
 -		     (chwidth == AP_AUTO &&
@@ -570,7 +612,16 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -
 -		fprintf(f, "ieee80211d=1\n");
 -	}
--
++		if ((drv == DRIVER_MAC80211 || drv == DRIVER_QNXNTO ||
++		     drv == DRIVER_LINUX_WCN) &&
++		    (mode == AP_11ac || mode == AP_11na ||
++		     ((mode == AP_11ax || mode == AP_11be) &&
++		      check_band(dut, BAND_5G, link_id)))) {
++			if (dut->ap_countrycode[0])
++				fprintf(f, "country_code=%s\n", dut->ap_countrycode);
++			else
++				fprintf(f, "country_code=US\n");
+ 
 -	if ((drv == DRIVER_MAC80211 || drv == DRIVER_QNXNTO ||
 -	     drv == DRIVER_LINUX_WCN) &&
 -	    (mode == AP_11ac ||
@@ -596,22 +647,25 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -				ht40plus = 1;
 -			else if (is_ht40minus_chan(chan))
 -				ht40minus = 1;
-+		if ((drv == DRIVER_MAC80211 || drv == DRIVER_QNXNTO ||
-+		     drv == DRIVER_LINUX_WCN) &&
-+		    (mode == AP_11ac || mode == AP_11na ||
-+		     ((mode == AP_11ax || mode == AP_11be) &&
-+		      check_band(dut, BAND_5G, link_id)))) {
-+			if (dut->ap_countrycode[0])
-+				fprintf(f, "country_code=%s\n", dut->ap_countrycode);
-+			else
-+				fprintf(f, "country_code=US\n");
++			fprintf(f, "ieee80211d=1\n");
++			fprintf(f, "ieee80211h=1\n");
++			fprintf(f, "local_pwr_constraint=3\n");
++		}
  
 -			fprintf(f, "ht_capab=%s%s\n",
 -				ht40plus ? "[HT40+]" : "",
 -				ht40minus ? "[HT40-]" : "");
-+			fprintf(f, "ieee80211d=1\n");
-+			fprintf(f, "ieee80211h=1\n");
-+			fprintf(f, "local_pwr_constraint=3\n");
++		if (drv == DRIVER_LINUX_WCN && (mode == AP_11ax || mode == AP_11be)) {
++			if (dut->ap_txBF) {
++				fprintf(f, "he_su_beamformer=1\n");
++				fprintf(f, "he_su_beamformee=1\n");
++				if (dut->ap_mu_txBF)
++					fprintf(f, "he_mu_beamformer=1\n");
++			} else {
++				fprintf(f, "he_su_beamformer=0\n");
++				fprintf(f, "he_su_beamformee=0\n");
++				fprintf(f, "he_mu_beamformer=0\n");
++			}
  		}
 -	}
  
@@ -624,32 +678,27 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -			fprintf(f, "country_code=%s\n", dut->ap_countrycode);
 -		else
 -			fprintf(f, "country_code=US\n");
-+		if (drv == DRIVER_LINUX_WCN && mode == AP_11ax) {
++		if (drv == DRIVER_LINUX_WCN && mode == AP_11be) {
 +			if (dut->ap_txBF) {
-+				fprintf(f, "he_su_beamformer=1\n");
-+				fprintf(f, "he_su_beamformee=1\n");
++				fprintf(f, "eht_su_beamformer=1\n");
++				fprintf(f, "eht_su_beamformee=1\n");
 +				if (dut->ap_mu_txBF)
-+					fprintf(f, "he_mu_beamformer=1\n");
++					fprintf(f, "eht_mu_beamformer=1\n");
 +			} else {
-+				fprintf(f, "he_su_beamformer=0\n");
-+				fprintf(f, "he_su_beamformee=0\n");
-+				fprintf(f, "he_mu_beamformer=0\n");
++				fprintf(f, "eht_su_beamformer=0\n");
++				fprintf(f, "eht_su_beamformee=0\n");
++				fprintf(f, "eht_mu_beamformer=0\n");
 +			}
-+		}
  
 -		fprintf(f, "ieee80211d=1\n");
 -		fprintf(f, "ieee80211h=1\n");
 -		fprintf(f, "local_pwr_constraint=3\n");
 -	}
-+		if (link_id > 0) {
-+			if (dut->dual_ap_ifname)
-+				snprintf(ifname2, sizeof(ifname2), "%s", dut->dual_ap_ifname);
-+			else if (dut->ap_is_mld)
-+				snprintf(ifname2, sizeof(ifname2), "%s", ifname);
-+			else
-+				snprintf(ifname2, sizeof(ifname2), "%s_1", ifname);
++			/* Add puncture channels bitmap */
++			if (dut->ap_punct_bitmap)
++				fprintf(f, "punct_bitmap=%d\n", dut->ap_punct_bitmap);
  
--	if (drv == DRIVER_LINUX_WCN && mode == AP_11ax) {
+-	if (drv == DRIVER_LINUX_WCN && (mode == AP_11ax || mode == AP_11be)) {
 -		if (dut->ap_txBF) {
 -			fprintf(f, "he_su_beamformer=1\n");
 -			fprintf(f, "he_su_beamformee=1\n");
@@ -659,6 +708,51 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -			fprintf(f, "he_su_beamformer=0\n");
 -			fprintf(f, "he_su_beamformee=0\n");
 -			fprintf(f, "he_mu_beamformer=0\n");
+-		}
+-	}
++			/* Single link AP MLD parameters */
++			if (get_hwaddr(get_main_ifname(dut), addr) != 0) {
++				send_resp(dut, conn, SIGMA_ERROR,
++					"errorCode,Failed to get MAC address");
++				return STATUS_SENT_ERROR;
++			}
+ 
+-	if (drv == DRIVER_LINUX_WCN && mode == AP_11be) {
+-		if (dut->ap_txBF) {
+-			fprintf(f, "eht_su_beamformer=1\n");
+-			fprintf(f, "eht_su_beamformee=1\n");
+-			if (dut->ap_mu_txBF)
+-				fprintf(f, "eht_mu_beamformer=1\n");
+-		} else {
+-			fprintf(f, "eht_su_beamformer=0\n");
+-			fprintf(f, "eht_su_beamformee=0\n");
+-			fprintf(f, "eht_mu_beamformer=0\n");
++			fprintf(f, "mld_ap=1\n");
++			/* Use the same MLD and link MAC address */
++			fprintf(f, "mld_addr=%02x:%02x:%02x:%02x:%02x:%02x\n",
++				addr[0], addr[1], addr[2],
++				addr[3], addr[4], addr[5]);
++			fprintf(f, "bssid=%02x:%02x:%02x:%02x:%02x:%02x\n",
++				addr[0], addr[1], addr[2],
++				addr[3], addr[4], addr[5]);
+ 		}
+ 
+-		/* Add puncture channels bitmap */
+-		if (dut->ap_punct_bitmap)
+-			fprintf(f, "punct_bitmap=%d\n", dut->ap_punct_bitmap);
++		if (link_id > 0) {
++			if (dut->dual_ap_ifname)
++				snprintf(ifname2, sizeof(ifname2), "%s", dut->dual_ap_ifname);
++			else if (dut->ap_is_mld)
++				snprintf(ifname2, sizeof(ifname2), "%s", ifname);
++			else
++				snprintf(ifname2, sizeof(ifname2), "%s_1", ifname);
+ 
+-		/* Single link AP MLD parameters */
+-		if (get_hwaddr(get_main_ifname(dut), addr) != 0) {
+-			send_resp(dut, conn, SIGMA_ERROR,
+-				  "errorCode,Failed to get MAC address");
+-			return STATUS_SENT_ERROR;
 +			if (if_nametoindex(ifname2) == 0 && !dut->ap_is_mld) {
 +				if (ap_create_or_remove_interface(dut, ifname2, true)
 +				    >= 0) {
@@ -678,19 +772,27 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +		} else if (!(dut->multi_mbssid)) {
 +			fprintf(f, "interface=%s\n", ifname);
  		}
+ 
+-		fprintf(f, "mld_ap=1\n");
+-		/* Use the same MLD and link MAC address */
+-		fprintf(f, "mld_addr=%02x:%02x:%02x:%02x:%02x:%02x\n",
+-			addr[0], addr[1], addr[2],
+-			addr[3], addr[4], addr[5]);
+-		fprintf(f, "bssid=%02x:%02x:%02x:%02x:%02x:%02x\n",
+-			addr[0], addr[1], addr[2],
+-			addr[3], addr[4], addr[5]);
 -	}
- 
+-
 -	if (conf_counter == 1) {
-+		if (dut->bridge)
-+			fprintf(f, "bridge=%s\n", dut->bridge);
- 
+-
 -		if (dut->dual_ap_ifname)
 -			snprintf(ifname2, sizeof(ifname2), "%s", dut->dual_ap_ifname);
 -		else if (dut->ap_is_mld)
 -			snprintf(ifname2, sizeof(ifname2), "%s", ifname);
 -		else
 -			snprintf(ifname2, sizeof(ifname2), "%s_1", ifname);
-+		fprintf(f, "channel=%d\n", chan);
++		if (dut->bridge)
++			fprintf(f, "bridge=%s\n", dut->bridge);
  
 -		if (if_nametoindex(ifname2) == 0 && !dut->ap_is_mld) {
 -			if (ap_create_or_remove_interface(dut, ifname2, true)
@@ -699,6 +801,8 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -			} else {
 -				sigma_dut_print(dut, DUT_MSG_ERROR,
 -						"Failed to add the second interface");
++		fprintf(f, "channel=%d\n", chan);
++
 +		if (sigma_hapd_ctrl)
 +			fprintf(f, "ctrl_interface=%s\n", sigma_hapd_ctrl);
 +		else if (!(dut->multi_mbssid && !link_id))
@@ -769,13 +873,20 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -		fclose(f);
 -		return -2;
 -	}
--
+ 
 -	fprintf(f, "bssid=%02x:%02x:%02x:%02x",
 -		main_bssid[0], main_bssid[1], main_bssid[2], main_bssid[3]);
 -	if (conf_counter > 0 && strncmp(dut->device_driver, "ath12k", 6) == 0)
 -		fprintf(f, ":%02x:%02x\n", main_bssid[4] + conf_counter, main_bssid[5] + conf_counter);
 -	else
 -		fprintf(f, ":%02x:%02x\n", main_bssid[4], main_bssid[5]);
++		fprintf(f, "bssid=%02x:%02x:%02x:%02x",
++			main_bssid[0], main_bssid[1], main_bssid[2], main_bssid[3]);
++		if (link_id > 0 && strncmp(dut->device_driver, "ath12k", 6) == 0)
++			fprintf(f, ":%02x:%02x\n", main_bssid[4] + link_id, main_bssid[5] +
++				link_id);
++		else
++			fprintf(f, ":%02x:%02x\n", main_bssid[4], main_bssid[5]);
  
 -	if (akm_values) {
 -		struct {
@@ -809,14 +920,6 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -				fprintf(f, "%s%s", first ? "" : " ",
 -					akms[i].str);
 -				first = 0;
-+		fprintf(f, "bssid=%02x:%02x:%02x:%02x",
-+			main_bssid[0], main_bssid[1], main_bssid[2], main_bssid[3]);
-+		if (link_id > 0 && strncmp(dut->device_driver, "ath12k", 6) == 0)
-+			fprintf(f, ":%02x:%02x\n", main_bssid[4] + link_id, main_bssid[5] +
-+				link_id);
-+		else
-+			fprintf(f, ":%02x:%02x\n", main_bssid[4], main_bssid[5]);
-+
 +		if (dut->ap_cohosted_bss) {
 +			memcpy(temp_bssid, main_bssid, 6);
 +			if (link_id > 0) {
@@ -982,13 +1085,13 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -	case AP_WPA2_PSK_SAE:
 -	case AP_WPA2_PSK_SHA256:
 -	case AP_WPA2_FT_PSK:
--	case AP_SAE_EXT:
+-	case AP_WPA3_SAE_EXT:
 -		if (dut->ap_key_mgmt == AP_WPA2_PSK ||
 -		    dut->ap_key_mgmt == AP_WPA2_SAE ||
 -		    dut->ap_key_mgmt == AP_WPA2_PSK_SAE ||
+-		    dut->ap_key_mgmt == AP_WPA3_SAE_EXT ||
 -		    dut->ap_key_mgmt == AP_WPA2_PSK_SHA256 ||
--		    dut->ap_key_mgmt == AP_WPA2_FT_PSK ||
--		    dut->ap_key_mgmt == AP_SAE_EXT)
+-		    dut->ap_key_mgmt == AP_WPA2_FT_PSK)
 -			fprintf(f, "wpa=2\n");
 -		else if (dut->ap_key_mgmt == AP_WPA2_PSK_MIXED)
 -			fprintf(f, "wpa=3\n");
@@ -996,10 +1099,10 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -			fprintf(f, "wpa=1\n");
 -		if (dut->ap_key_mgmt == AP_WPA2_SAE)
 -			key_mgmt = "SAE";
--		else if (dut->ap_key_mgmt == AP_SAE_EXT)
--			key_mgmt = "SAE-EXT-KEY";
 -		else if (dut->ap_key_mgmt == AP_WPA2_PSK_SAE)
 -			key_mgmt = "WPA-PSK SAE";
+-		else if (dut->ap_key_mgmt == AP_WPA3_SAE_EXT)
+-			key_mgmt = "SAE-EXT-KEY";
 -		else if (dut->ap_key_mgmt == AP_WPA2_FT_PSK)
 -			key_mgmt = "WPA-PSK FT-PSK";
 -		else
@@ -1008,11 +1111,11 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -		case AP_PMF_DISABLED:
 -			fprintf(f, "wpa_key_mgmt=%s%s\n", key_mgmt,
 -				dut->ap_add_sha256 ? " WPA-PSK-SHA256" : "");
- 			break;
+-			break;
 -		case AP_PMF_OPTIONAL:
 -			fprintf(f, "wpa_key_mgmt=%s%s\n", key_mgmt,
 -				dut->ap_add_sha256 ? " WPA-PSK-SHA256" : "");
--			break;
+ 			break;
 -		case AP_PMF_REQUIRED:
 +		case AP_WPA2_PSK:
 +		case AP_WPA2_PSK_MIXED:
@@ -1021,13 +1124,13 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +		case AP_WPA2_PSK_SAE:
 +		case AP_WPA2_PSK_SHA256:
 +		case AP_WPA2_FT_PSK:
-+		case AP_SAE_EXT:
++		case AP_WPA3_SAE_EXT:
 +			if (dut->ap_key_mgmt == AP_WPA2_PSK ||
 +			    dut->ap_key_mgmt == AP_WPA2_SAE ||
 +			    dut->ap_key_mgmt == AP_WPA2_PSK_SAE ||
 +			    dut->ap_key_mgmt == AP_WPA2_PSK_SHA256 ||
 +			    dut->ap_key_mgmt == AP_WPA2_FT_PSK ||
-+			    dut->ap_key_mgmt == AP_SAE_EXT)
++			    dut->ap_key_mgmt == AP_WPA3_SAE_EXT)
 +				fprintf(f, "wpa=2\n");
 +			else if (dut->ap_key_mgmt == AP_WPA2_PSK_MIXED)
 +				fprintf(f, "wpa=3\n");
@@ -1035,10 +1138,12 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +				fprintf(f, "wpa=1\n");
  			if (dut->ap_key_mgmt == AP_WPA2_SAE)
  				key_mgmt = "SAE";
- 			else if (dut->ap_key_mgmt == AP_SAE_EXT)
+ 			else if (dut->ap_key_mgmt == AP_WPA3_SAE_EXT)
  				key_mgmt = "SAE-EXT-KEY";
  			else if (dut->ap_key_mgmt == AP_WPA2_PSK_SAE)
 -				key_mgmt = "WPA-PSK-SHA256 SAE";
+-			else if (dut->ap_key_mgmt == AP_WPA3_SAE_EXT)
+-				key_mgmt = "SAE-EXT-KEY";
 +				key_mgmt = "WPA-PSK SAE";
 +			else if (dut->ap_key_mgmt == AP_WPA2_FT_PSK)
 +				key_mgmt = "WPA-PSK FT-PSK";
@@ -1054,6 +1159,41 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -		if (dut->ap_group_cipher != AP_NO_GROUP_CIPHER_SET)
 -			fprintf(f, "group_cipher=%s\n",
 -				hostapd_cipher_name(dut->ap_group_cipher));
+-		if (dut->ap_group_mgmt_cipher != AP_NO_GROUP_MGMT_CIPHER_SET)
+-			fprintf(f, "group_mgmt_cipher=%s\n",
++				key_mgmt = "WPA-PSK";
++			switch (pmf) {
++			case AP_PMF_DISABLED:
++				fprintf(f, "wpa_key_mgmt=%s%s\n", key_mgmt,
++					dut->ap_add_sha256 ? " WPA-PSK-SHA256" : "");
++				break;
++			case AP_PMF_OPTIONAL:
++				fprintf(f, "wpa_key_mgmt=%s%s\n", key_mgmt,
++					dut->ap_add_sha256 ? " WPA-PSK-SHA256" : "");
++				break;
++			case AP_PMF_REQUIRED:
++				if (dut->ap_key_mgmt == AP_WPA2_SAE)
++					key_mgmt = "SAE";
++				else if (dut->ap_key_mgmt == AP_WPA3_SAE_EXT)
++					key_mgmt = "SAE-EXT-KEY";
++				else if (dut->ap_key_mgmt == AP_WPA2_PSK_SAE)
++					key_mgmt = "WPA-PSK-SHA256 SAE";
++				else
++					key_mgmt = "WPA-PSK-SHA256";
++				fprintf(f, "wpa_key_mgmt=%s\n", key_mgmt);
++				break;
++			}
++			if (dut->ap_key_mgmt == AP_WPA2_PSK_SHA256)
++				fprintf(f, "wpa_key_mgmt=WPA-PSK-SHA256\n");
++			fprintf(f, "wpa_pairwise=%s\n",
++				hostapd_cipher_name(cipher));
++			if (group_cipher != AP_NO_GROUP_CIPHER_SET)
++				fprintf(f, "group_cipher=%s\n",
++					hostapd_cipher_name(group_cipher));
++			if (group_cipher != AP_NO_GROUP_MGMT_CIPHER_SET)
++				fprintf(f, "group_mgmt_cipher=%s\n",
+ 				hostapd_group_mgmt_cipher_name(
+-					dut->ap_group_mgmt_cipher));
 -		if (write_hostapd_conf_password(
 -			    dut, f, dut->ap_key_mgmt == AP_WPA2_SAE) < 0) {
 -			fclose(f);
@@ -1082,35 +1222,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -		case AP_PMF_DISABLED:
 -			if (dut->ap_add_sha256)
 -				fprintf(f, "wpa_key_mgmt=WPA-EAP WPA-EAP-SHA256\n");
-+				key_mgmt = "WPA-PSK";
-+			switch (pmf) {
-+			case AP_PMF_DISABLED:
-+				fprintf(f, "wpa_key_mgmt=%s%s\n", key_mgmt,
-+					dut->ap_add_sha256 ? " WPA-PSK-SHA256" : "");
-+				break;
-+			case AP_PMF_OPTIONAL:
-+				fprintf(f, "wpa_key_mgmt=%s%s\n", key_mgmt,
-+					dut->ap_add_sha256 ? " WPA-PSK-SHA256" : "");
-+				break;
-+			case AP_PMF_REQUIRED:
-+				if (dut->ap_key_mgmt == AP_WPA2_SAE)
-+					key_mgmt = "SAE";
-+				else if (dut->ap_key_mgmt == AP_SAE_EXT)
-+					key_mgmt = "SAE-EXT-KEY";
-+				else if (dut->ap_key_mgmt == AP_WPA2_PSK_SAE)
-+					key_mgmt = "WPA-PSK-SHA256 SAE";
-+				else
-+					key_mgmt = "WPA-PSK-SHA256";
-+				fprintf(f, "wpa_key_mgmt=%s\n", key_mgmt);
-+				break;
-+			}
-+			if (dut->ap_key_mgmt == AP_WPA2_PSK_SHA256)
-+				fprintf(f, "wpa_key_mgmt=WPA-PSK-SHA256\n");
-+			fprintf(f, "wpa_pairwise=%s\n",
-+				hostapd_cipher_name(cipher));
-+			if (group_cipher != AP_NO_GROUP_CIPHER_SET)
-+				fprintf(f, "group_cipher=%s\n",
-+					hostapd_cipher_name(group_cipher));
++					group_cipher));
 +			if (write_hostapd_conf_password(
 +				    dut, f, dut->ap_key_mgmt == AP_WPA2_SAE) < 0) {
 +				fclose(f);
@@ -1315,21 +1427,12 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -		if (!tmp) {
 -			fclose(f);
 -			return ERROR_SEND_STATUS;
--		}
 +			tmp = strdup(dut->ap_sae_passwords);
 +			if (!tmp) {
 +				fclose(f);
 +				return ERROR_SEND_STATUS;
 +			}
- 
--		pos = tmp;
--		while (*pos) {
--			end = strchr(pos, ';');
--			if (end)
--				*end = '\0';
--			id = strchr(pos, ':');
--			if (id)
--				*id++ = '\0';
++
 +			pos = tmp;
 +			while (*pos) {
 +				end = strchr(pos, ';');
@@ -1338,12 +1441,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +				id = strchr(pos, ':');
 +				if (id)
 +					*id++ = '\0';
- 
--			fprintf(f, "sae_password=%s%s%s\n",
--				pos, id ? "|id=" : "", id ? id : "");
--			if (!end)
--				break;
--			pos = end + 1;
++
 +				fprintf(f, "sae_password=%s%s%s\n",
 +					pos, id ? "|id=" : "", id ? id : "");
 +				if (!end)
@@ -1353,37 +1451,98 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +			free(tmp);
  		}
  
+-		pos = tmp;
+-		while (*pos) {
+-			end = strchr(pos, ';');
+-			if (end)
+-				*end = '\0';
+-			id = strchr(pos, ':');
+-			if (id)
+-				*id++ = '\0';
+-
+-			fprintf(f, "sae_password=%s%s%s\n",
+-				pos, id ? "|id=" : "", id ? id : "");
+-			if (!end)
+-				break;
+-			pos = end + 1;
++		if (dut->ap_rsn_preauth) {
++			fprintf(f, "rsn_preauth=1\n");
++			fprintf(f, "rsn_preauth_interfaces=%s\n", dut->bridge);
+ 		}
+ 
 -		free(tmp);
 -	}
--
++		if (dut->ap_pmksa && dut->ap_pmksa_caching)
++			fprintf(f, "disable_pmksa_caching=1\n");
+ 
 -	if (dut->ap_rsn_preauth) {
 -		fprintf(f, "rsn_preauth=1\n");
 -		fprintf(f, "rsn_preauth_interfaces=%s\n", dut->bridge);
 -	}
--
++		if (beacon_prot)
++			fprintf(f, "beacon_prot=1\n");
+ 
 -	if (dut->ap_pmksa && dut->ap_pmksa_caching)
 -		fprintf(f, "disable_pmksa_caching=1\n");
-+		if (dut->ap_rsn_preauth) {
-+			fprintf(f, "rsn_preauth=1\n");
-+			fprintf(f, "rsn_preauth_interfaces=%s\n", dut->bridge);
-+		}
++		if (dut->ap_transition_disable)
++			fprintf(f, "transition_disable=0x%02x\n",
++				dut->ap_transition_disable);
  
 -	if (dut->ap_beacon_prot)
 -		fprintf(f, "beacon_prot=1\n");
-+		if (dut->ap_pmksa && dut->ap_pmksa_caching)
-+			fprintf(f, "disable_pmksa_caching=1\n");
++		if (dut->ap_ocvc == 1 || dut->ap_ocvc == 0)
++			fprintf(f, "ocv=%d\n", dut->ap_ocvc);
++
++		switch (pmf) {
++		case AP_PMF_DISABLED:
++			break;
++		case AP_PMF_OPTIONAL:
++			fprintf(f, "ieee80211w=1\n");
++			if (dut->ap_key_mgmt == AP_WPA2_PSK_SAE ||
++			    (akm_values & (AKM_SAE | AKM_WPA_PSK)) ==
++			    (AKM_SAE | AKM_WPA_PSK))
++				fprintf(f, "sae_require_mfp=1\n");
++			break;
++		case AP_PMF_REQUIRED:
++			fprintf(f, "ieee80211w=2\n");
++			break;
++		}
++
++		if ((pmf != AP_PMF_DISABLED || dut->program == PROGRAM_EHT) &&
++		    group_mgmt_cipher != AP_NO_GROUP_MGMT_CIPHER_SET)
++			fprintf(f, "group_mgmt_cipher=%s\n",
++				hostapd_group_mgmt_cipher_name(
++					group_mgmt_cipher));
  
 -	if (dut->ap_transition_disable)
 -		fprintf(f, "transition_disable=0x%02x\n",
 -			dut->ap_transition_disable);
-+		if (beacon_prot)
-+			fprintf(f, "beacon_prot=1\n");
++		if (ap_ft_enabled_link(dut, akm_values)) {
++			unsigned char own_addr[ETH_ALEN], ap2_addr[ETH_ALEN];
++			char own_addr_str[20];
++
++			fprintf(f, "mobility_domain=%s\n",
++				atoi(dut->ap_mobility_domain) ? dut->ap_mobility_domain : "0101");
++			fprintf(f, "ft_over_ds=%d\n", dut->ap_ft_ds == VALUE_ENABLED);
++			if (get_hwaddr(ifname, own_addr) < 0) {
++				memset(own_addr, 0, ETH_ALEN);
++				own_addr[0] = 0x02;
++			}
++			/*
++			 * main_bssid is set in ap_config_commit based on the link_id to keep
++			 * own_addr in line with main_bssid it is also modified similiarly.
++			 */
++			if (link_id > 0 && strncmp(dut->device_driver, "ath12k", 6) == 0) {
++				own_addr[4] += link_id;
++				own_addr[5] += link_id;
++			}
  
 -	if (dut->ap_ocvc == 1 || dut->ap_ocvc == 0)
 -		fprintf(f, "ocv=%d\n", dut->ap_ocvc);
-+		if (dut->ap_transition_disable)
-+			fprintf(f, "transition_disable=0x%02x\n",
-+				dut->ap_transition_disable);
++			snprintf(own_addr_str, sizeof(own_addr_str),
++				 "%02x%02x%02x%02x%02x%02x",
++				 own_addr[0], own_addr[1], own_addr[2],
++				 own_addr[3], own_addr[4], own_addr[5]);
  
 -	switch (ap_pmf) {
 -	case AP_PMF_DISABLED:
@@ -1399,8 +1558,13 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -		fprintf(f, "ieee80211w=2\n");
 -		break;
 -	}
-+		if (dut->ap_ocvc == 1 || dut->ap_ocvc == 0)
-+			fprintf(f, "ocv=%d\n", dut->ap_ocvc);
++			if (dut->program == PROGRAM_MBO || dut->program == PROGRAM_WPA3)
++				fprintf(f,
++					"nas_identifier=%s\n", own_addr_str);
++			else
++				fprintf(f,
++					"nas_identifier=%s.nas.example.com\n",
++					own_addr_str);
  
 -	if ((ap_pmf != AP_PMF_DISABLED || dut->program == PROGRAM_EHT) &&
 -	    dut->ap_group_mgmt_cipher != AP_NO_GROUP_MGMT_CIPHER_SET)
@@ -1426,128 +1590,20 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -		if (conf_counter > 0 && strncmp(dut->device_driver, "ath12k", 6) == 0) {
 -			own_addr[4] += conf_counter;
 -			own_addr[5] += conf_counter;
-+		switch (pmf) {
-+		case AP_PMF_DISABLED:
-+			break;
-+		case AP_PMF_OPTIONAL:
-+			fprintf(f, "ieee80211w=1\n");
-+			if (dut->ap_key_mgmt == AP_WPA2_PSK_SAE ||
-+			    (akm_values & (AKM_SAE | AKM_WPA_PSK)) ==
-+			    (AKM_SAE | AKM_WPA_PSK))
-+				fprintf(f, "sae_require_mfp=1\n");
-+			break;
-+		case AP_PMF_REQUIRED:
-+			fprintf(f, "ieee80211w=2\n");
-+			break;
- 		}
+-		}
++			fprintf(f, "r1_key_holder=%s\n", own_addr_str);
  
 -		snprintf(own_addr_str, sizeof(own_addr_str),
 -			 "%02x%02x%02x%02x%02x%02x",
 -			 own_addr[0], own_addr[1], own_addr[2],
 -			 own_addr[3], own_addr[4], own_addr[5]);
-+		if ((pmf != AP_PMF_DISABLED || dut->program == PROGRAM_EHT) &&
-+		    group_mgmt_cipher != AP_NO_GROUP_MGMT_CIPHER_SET)
-+			fprintf(f, "group_mgmt_cipher=%s\n",
-+				hostapd_group_mgmt_cipher_name(
-+					group_mgmt_cipher));
++			if (dut->ap_key_mgmt == AP_WPA2_FT_PSK)
++				fprintf(f, "ft_psk_generate_local=1\n");
  
 -		if (dut->program == PROGRAM_MBO || dut->program == PROGRAM_WPA3)
 -			fprintf(f,
 -				"nas_identifier=%s\n", own_addr_str);
 -		else
--			fprintf(f,
--				"nas_identifier=%s.nas.example.com\n",
--				own_addr_str);
-+		if (ap_ft_enabled_link(dut, akm_values)) {
-+			unsigned char own_addr[ETH_ALEN], ap2_addr[ETH_ALEN];
-+			char own_addr_str[20];
-+
-+			fprintf(f, "mobility_domain=%s\n",
-+				atoi(dut->ap_mobility_domain) ? dut->ap_mobility_domain : "0101");
-+			fprintf(f, "ft_over_ds=%d\n", dut->ap_ft_ds == VALUE_ENABLED);
-+			if (get_hwaddr(ifname, own_addr) < 0) {
-+				memset(own_addr, 0, ETH_ALEN);
-+				own_addr[0] = 0x02;
-+			}
-+			/*
-+			 * main_bssid is set in ap_config_commit based on the link_id to keep
-+			 * own_addr in line with main_bssid it is also modified similiarly.
-+			 */
-+			if (link_id > 0 && strncmp(dut->device_driver, "ath12k", 6) == 0) {
-+				own_addr[4] += link_id;
-+				own_addr[5] += link_id;
-+			}
- 
--		fprintf(f, "r1_key_holder=%s\n", own_addr_str);
-+			snprintf(own_addr_str, sizeof(own_addr_str),
-+				 "%02x%02x%02x%02x%02x%02x",
-+				 own_addr[0], own_addr[1], own_addr[2],
-+				 own_addr[3], own_addr[4], own_addr[5]);
- 
--		if (dut->ap_key_mgmt == AP_WPA2_FT_PSK)
--			fprintf(f, "ft_psk_generate_local=1\n");
-+			if (dut->program == PROGRAM_MBO || dut->program == PROGRAM_WPA3)
-+				fprintf(f,
-+					"nas_identifier=%s\n", own_addr_str);
-+			else
-+				fprintf(f,
-+					"nas_identifier=%s.nas.example.com\n",
-+					own_addr_str);
- 
--		/* pmk_r1_push needs to be enabled for FT over DS */
--		fprintf(f, "pmk_r1_push=%d\n", (dut->ap_ft_ds == VALUE_ENABLED) ? 1 : 0);
-+			fprintf(f, "r1_key_holder=%s\n", own_addr_str);
- 
--		/* These are the default configuration for FT OA and FT DS*/
--		fprintf(f, "ft_r0_key_lifetime=1209600\n");
--		fprintf(f, "r1_max_key_lifetime=-1\n");
--		fprintf(f, "reassociation_deadline=1000\n");
-+			if (dut->ap_key_mgmt == AP_WPA2_FT_PSK)
-+				fprintf(f, "ft_psk_generate_local=1\n");
- 
--		fprintf(f,
--			"r0kh=%02x:%02x:%02x:%02x:%02x:%02x %s 000102030405060708090a0b0c0d0e0f\n",
--			own_addr[0], own_addr[1], own_addr[2],
--			own_addr[3], own_addr[4], own_addr[5],
--			own_addr_str);
--		/* TODO: Need to update the mac address calculation for partner link */
--		fprintf(f,
--			"r1kh=%02x:%02x:%02x:%02x:%02x:%02x %02x:%02x:%02x:%02x:%02x:%02x 000102030405060708090a0b0c0d0e0f\n",
--			own_addr[0], own_addr[1], own_addr[2],
--			own_addr[3], (conf_counter == 0) ? own_addr[4] + 1 : own_addr[4] - conf_counter,
--			(conf_counter == 0) ? own_addr[5] + 1 : own_addr[5] - conf_counter,
--			own_addr[0], own_addr[1], own_addr[2],
--			own_addr[3], (conf_counter == 0) ? own_addr[4] + 1 : own_addr[4] - conf_counter,
--			(conf_counter == 0) ? own_addr[5] + 1 : own_addr[5] - conf_counter);
--		fprintf(f,
--			"r0kh=%02x:%02x:%02x:%02x:%02x:%02x %02x%02x%02x%02x%02x%02x 000102030405060708090a0b0c0d0e0f\n",
--			own_addr[0], own_addr[1], own_addr[2],
--			own_addr[3], (conf_counter == 0) ? own_addr[4] + 1 : own_addr[4] - conf_counter,
--			(conf_counter == 0) ? own_addr[5] + 1 : own_addr[5] - conf_counter,
--			own_addr[0], own_addr[1], own_addr[2],
--			own_addr[3], (conf_counter == 0) ? own_addr[4] + 1 : own_addr[4] - conf_counter,
--			(conf_counter == 0) ? own_addr[5] + 1 : own_addr[5] - conf_counter);
--
--		for (j = 0; j < dut->ft_bss_mac_cnt; j++) {
--			if (dut->program == PROGRAM_MBO || dut->program == PROGRAM_WPA3) {
--				memcpy(ap2_addr, dut->ft_bss_mac_list[j], ETH_ALEN);
--				fprintf(f,
--					"r0kh=%02x:%02x:%02x:%02x:%02x:%02x %02x%02x%02x%02x%02x%02x 000102030405060708090a0b0c0d0e0f\n",
--					ap2_addr[0], ap2_addr[1], ap2_addr[2],
--					ap2_addr[3], ap2_addr[4], ap2_addr[5],
--					ap2_addr[0], ap2_addr[1], ap2_addr[2],
--					ap2_addr[3], ap2_addr[4], ap2_addr[5]);
--				fprintf(f,
--					"r1kh=%02x:%02x:%02x:%02x:%02x:%02x %02x:%02x:%02x:%02x:%02x:%02x 000102030405060708090a0b0c0d0e0f\n",
--					ap2_addr[0], ap2_addr[1], ap2_addr[2],
--					ap2_addr[3], ap2_addr[4], ap2_addr[5],
--					ap2_addr[0], ap2_addr[1], ap2_addr[2],
--					ap2_addr[3], ap2_addr[4], ap2_addr[5]);
--			} else {
--				fprintf(f,
--					"r0kh=ff:ff:ff:ff:ff:ff * 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff\n");
--				fprintf(f,
--					"r1kh=00:00:00:00:00:00 00:00:00:00:00:00 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff\n");
 +			/* pmk_r1_push needs to be enabled for FT over DS */
 +			fprintf(f, "pmk_r1_push=%d\n", (dut->ap_ft_ds == VALUE_ENABLED) ? 1 : 0);
 +
@@ -1555,11 +1611,12 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +			fprintf(f, "ft_r0_key_lifetime=1209600\n");
 +			fprintf(f, "r1_max_key_lifetime=-1\n");
 +			fprintf(f, "reassociation_deadline=1000\n");
-+			fprintf(f,
+ 			fprintf(f,
+-				"nas_identifier=%s.nas.example.com\n",
 +				"r0kh=%02x:%02x:%02x:%02x:%02x:%02x %s 000102030405060708090a0b0c0d0e0f\n",
 +				own_addr[0], own_addr[1], own_addr[2],
 +				own_addr[3], own_addr[4], own_addr[5],
-+				own_addr_str);
+ 				own_addr_str);
 +			/* TODO: Store the link mac addresses in mld link structures */
 +			fprintf(f,
 +				"r1kh=%02x:%02x:%02x:%02x:%02x:%02x %02x:%02x:%02x:%02x:%02x:%02x 000102030405060708090a0b0c0d0e0f\n",
@@ -1599,24 +1656,18 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +					fprintf(f,
 +						"r1kh=00:00:00:00:00:00 00:00:00:00:00:00 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff\n");
 +				}
- 			}
- 		}
--	}
++			}
++		}
  
--	if (dut->rsne_override)
--		fprintf(f, "own_ie_override=%s\n", dut->rsne_override);
--	if (dut->rsnxe_override_eapol)
--		fprintf(f, "rsnxe_override_eapol=%s\n",
--			dut->rsnxe_override_eapol);
+-		fprintf(f, "r1_key_holder=%s\n", own_addr_str);
 +		if (dut->rsne_override)
 +			fprintf(f, "own_ie_override=%s\n", dut->rsne_override);
 +		if (dut->rsnxe_override_eapol)
 +			fprintf(f, "rsnxe_override_eapol=%s\n",
 +				dut->rsnxe_override_eapol);
  
--	if (dut->sae_commit_override)
--		fprintf(f, "sae_commit_override=%s\n",
--			dut->sae_commit_override);
+-		if (dut->ap_key_mgmt == AP_WPA2_FT_PSK)
+-			fprintf(f, "ft_psk_generate_local=1\n");
 +		if (dut->sae_commit_override)
 +			fprintf(f, "sae_commit_override=%s\n",
 +				dut->sae_commit_override);
@@ -1667,8 +1718,8 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +				dut->ap_p2p_cross_connect);
 +		}
  
--	if (dut->ap_sae_groups)
--		fprintf(f, "sae_groups=%s\n", dut->ap_sae_groups);
+-		/* pmk_r1_push needs to be enabled for FT over DS */
+-		fprintf(f, "pmk_r1_push=%d\n", (dut->ap_ft_ds == VALUE_ENABLED) ? 1 : 0);
 +		if (dut->ap_l2tif || dut->ap_proxy_arp ||
 +		    dut->ap_key_mgmt == AP_WPA2_EAP_OSEN) {
 +			if (!dut->bridge) {
@@ -1680,44 +1731,62 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +			fprintf(f, "ap_isolate=1\n");
 +		}
  
--	if (dut->sae_pwe != SAE_PWE_DEFAULT || dut->sae_h2e_default ||
--	    check_band(dut, BAND_6G, conf_counter) ||
--	    (mld_sae_set && dut->ap_key_mgmt == AP_WPA2_SAE)) {
--		const char *sae_pwe = NULL;
+-		/* These are the default configuration for FT OA and FT DS*/
+-		fprintf(f, "ft_r0_key_lifetime=1209600\n");
+-		fprintf(f, "r1_max_key_lifetime=-1\n");
+-		fprintf(f, "reassociation_deadline=1000\n");
 +		if (dut->ap_proxy_arp)
 +			fprintf(f, "proxy_arp=1\n");
  
--		if (dut->sae_pwe == SAE_PWE_LOOP && sae_pw_id_used(dut))
--			sae_pwe = "3";
--		else if (dut->sae_pwe == SAE_PWE_LOOP)
--			sae_pwe = "0";
--		else if (dut->sae_pwe == SAE_PWE_H2E || dut->ap_band_6g ||
--			 (mld_sae_set && dut->ap_key_mgmt == AP_WPA2_SAE))
--			sae_pwe = "1";
--		else if (dut->sae_h2e_default)
--			sae_pwe = "2";
--		if (sae_pwe)
--			fprintf(f, "sae_pwe=%s\n", sae_pwe);
--	}
+-		fprintf(f,
+-			"r0kh=%02x:%02x:%02x:%02x:%02x:%02x %s 000102030405060708090a0b0c0d0e0f\n",
+-			own_addr[0], own_addr[1], own_addr[2],
+-			own_addr[3], own_addr[4], own_addr[5],
+-			own_addr_str);
+-		/* TODO: Need to update the mac address calculation for partner link */
+-		fprintf(f,
+-			"r1kh=%02x:%02x:%02x:%02x:%02x:%02x %02x:%02x:%02x:%02x:%02x:%02x 000102030405060708090a0b0c0d0e0f\n",
+-			own_addr[0], own_addr[1], own_addr[2],
+-			own_addr[3], (conf_counter == 0) ? own_addr[4] + 1 : own_addr[4] - conf_counter,
+-			(conf_counter == 0) ? own_addr[5] + 1 : own_addr[5] - conf_counter,
+-			own_addr[0], own_addr[1], own_addr[2],
+-			own_addr[3], (conf_counter == 0) ? own_addr[4] + 1 : own_addr[4] - conf_counter,
+-			(conf_counter == 0) ? own_addr[5] + 1 : own_addr[5] - conf_counter);
+-		fprintf(f,
+-			"r0kh=%02x:%02x:%02x:%02x:%02x:%02x %02x%02x%02x%02x%02x%02x 000102030405060708090a0b0c0d0e0f\n",
+-			own_addr[0], own_addr[1], own_addr[2],
+-			own_addr[3], (conf_counter == 0) ? own_addr[4] + 1 : own_addr[4] - conf_counter,
+-			(conf_counter == 0) ? own_addr[5] + 1 : own_addr[5] - conf_counter,
+-			own_addr[0], own_addr[1], own_addr[2],
+-			own_addr[3], (conf_counter == 0) ? own_addr[4] + 1 : own_addr[4] - conf_counter,
+-			(conf_counter == 0) ? own_addr[5] + 1 : own_addr[5] - conf_counter);
+-
+-		for (j = 0; j < dut->ft_bss_mac_cnt; j++) {
+-			if (dut->program == PROGRAM_MBO || dut->program == PROGRAM_WPA3) {
+-				memcpy(ap2_addr, dut->ft_bss_mac_list[j], ETH_ALEN);
+-				fprintf(f,
+-					"r0kh=%02x:%02x:%02x:%02x:%02x:%02x %02x%02x%02x%02x%02x%02x 000102030405060708090a0b0c0d0e0f\n",
+-					ap2_addr[0], ap2_addr[1], ap2_addr[2],
+-					ap2_addr[3], ap2_addr[4], ap2_addr[5],
+-					ap2_addr[0], ap2_addr[1], ap2_addr[2],
+-					ap2_addr[3], ap2_addr[4], ap2_addr[5]);
+-				fprintf(f,
+-					"r1kh=%02x:%02x:%02x:%02x:%02x:%02x %02x:%02x:%02x:%02x:%02x:%02x 000102030405060708090a0b0c0d0e0f\n",
+-					ap2_addr[0], ap2_addr[1], ap2_addr[2],
+-					ap2_addr[3], ap2_addr[4], ap2_addr[5],
+-					ap2_addr[0], ap2_addr[1], ap2_addr[2],
+-					ap2_addr[3], ap2_addr[4], ap2_addr[5]);
+-			} else {
+-				fprintf(f,
+-					"r0kh=ff:ff:ff:ff:ff:ff * 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff\n");
+-				fprintf(f,
+-					"r1kh=00:00:00:00:00:00 00:00:00:00:00:00 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff\n");
 +		if (dut->ap_wme)
 +			fprintf(f, "wmm_enabled=1\n");
- 
--	if (dut->sae_anti_clogging_threshold >= 0)
--		fprintf(f, "sae_anti_clogging_threshold=%d\n",
--			dut->sae_anti_clogging_threshold);
--	if (dut->sae_reflection)
--		fprintf(f, "sae_reflection_attack=1\n");
--	if (dut->ap_sae_commit_status >= 0)
--		fprintf(f, "sae_commit_status=%d\n", dut->ap_sae_commit_status);
--	if (dut->ap_sae_pk_omit)
--		fprintf(f, "sae_pk_omit=1\n");
--	if (dut->sae_confirm_immediate)
--		fprintf(f, "sae_confirm_immediate=2\n");
++
 +		if (dut->ap_wmmps == AP_WMMPS_ON)
 +			fprintf(f, "uapsd_advertisement_enabled=1\n");
- 
--	if (dut->ap_p2p_mgmt)
--		fprintf(f, "manage_p2p=1\n");
++
 +		if (dut->ap_hs2) {
 +			if (dut->ap_bss_load) {
 +				char *bss_load;
@@ -1742,22 +1811,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +					bss_load = NULL;
 +					break;
 +				}
- 
--	if (dut->ap_tdls_prohibit || dut->ap_l2tif)
--		fprintf(f, "tdls_prohibit=1\n");
--	if (dut->ap_tdls_prohibit_chswitch || dut->ap_l2tif)
--		fprintf(f, "tdls_prohibit_chan_switch=1\n");
--	if (dut->ap_p2p_cross_connect >= 0) {
--		fprintf(f, "manage_p2p=1\n"
--			"allow_cross_connection=%d\n",
--			dut->ap_p2p_cross_connect);
--	}
--
--	if (dut->ap_l2tif || dut->ap_proxy_arp ||
--	    dut->ap_key_mgmt == AP_WPA2_EAP_OSEN) {
--		if (!dut->bridge) {
--			sigma_dut_print(dut, DUT_MSG_ERROR,
--					"Bridge must be configured. Run with -b <brname>.");
++
 +				if (!bss_load) {
 +					fclose(f);
 +					return -2;
@@ -1768,24 +1822,29 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +			if (append_hostapd_conf_hs2(dut, f)) {
 +				fclose(f);
 +				return -2;
-+			}
-+		}
-+
-+		if (dut->ap_interworking && append_hostapd_conf_interworking(dut, f)) {
- 			fclose(f);
- 			return -2;
+ 			}
  		}
--		fprintf(f, "ap_isolate=1\n");
 -	}
  
--	if (dut->ap_proxy_arp)
--		fprintf(f, "proxy_arp=1\n");
+-	if (dut->rsne_override)
+-		fprintf(f, "own_ie_override=%s\n", dut->rsne_override);
+-	if (dut->rsnxe_override_eapol)
+-		fprintf(f, "rsnxe_override_eapol=%s\n",
+-			dut->rsnxe_override_eapol);
++		if (dut->ap_interworking && append_hostapd_conf_interworking(dut, f)) {
++			fclose(f);
++			return -2;
++		}
+ 
+-	if (dut->sae_commit_override)
+-		fprintf(f, "sae_commit_override=%s\n",
+-			dut->sae_commit_override);
 +		if (dut->ap_hs2 && strlen(dut->ap_tag_ssid[0])) {
 +			unsigned char bssid[6];
 +			char ifname2[50];
  
--	if (dut->ap_wme)
--		fprintf(f, "wmm_enabled=1\n");
+-	if (dut->ap_sae_groups)
+-		fprintf(f, "sae_groups=%s\n", dut->ap_sae_groups);
 +			if (get_hwaddr(ifname, bssid)) {
 +				fclose(f);
 +				return -2;
@@ -1795,17 +1854,28 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +			else
 +				bssid[0] |= 0x02;
  
--	if (dut->ap_wmmps == AP_WMMPS_ON)
--		fprintf(f, "uapsd_advertisement_enabled=1\n");
+-	if (dut->sae_pwe != SAE_PWE_DEFAULT || dut->sae_h2e_default ||
+-	    check_band(dut, BAND_6G, conf_counter) ||
+-	    (mld_sae_set && dut->ap_key_mgmt == AP_WPA2_SAE)) {
+-		const char *sae_pwe = NULL;
 +			snprintf(ifname2, sizeof(ifname2), "%s_1", ifname);
 +			fprintf(f, "bss=%s\n", ifname2);
 +			fprintf(f, "ssid=%s\n", dut->ap_tag_ssid[0]);
 +			if (dut->bridge)
 +				fprintf(f, "bridge=%s\n", dut->bridge);
  
--	if (dut->ap_hs2) {
--		if (dut->ap_bss_load) {
--			char *bss_load;
+-		if (dut->sae_pwe == SAE_PWE_LOOP && sae_pw_id_used(dut))
+-			sae_pwe = "3";
+-		else if (dut->sae_pwe == SAE_PWE_LOOP)
+-			sae_pwe = "0";
+-		else if (dut->sae_pwe == SAE_PWE_H2E || dut->ap_band_6g ||
+-			 (mld_sae_set && dut->ap_key_mgmt == AP_WPA2_SAE))
+-			sae_pwe = "1";
+-		else if (dut->sae_h2e_default)
+-			sae_pwe = "2";
+-		if (sae_pwe)
+-			fprintf(f, "sae_pwe=%s\n", sae_pwe);
+-	}
 +			if (drv == DRIVER_LINUX_WCN)
 +				fprintf(f, "use_driver_iface_addr=1\n");
 +			else
@@ -1813,25 +1883,17 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +					bssid[0], bssid[1], bssid[2], bssid[3],
 +					bssid[4], bssid[5]);
  
--			switch (dut->ap_bss_load) {
--			case -1:
--				bss_load = "bss_load_update_period=10";
--				break;
--			case 1:
--				/* STA count: 1, CU: 50, AAC: 65535 */
--				bss_load = "bss_load_test=1:50:65535";
--				break;
--			case 2:
--				/* STA count: 1, CU: 200, AAC: 65535 */
--				bss_load = "bss_load_test=1:200:65535";
--				break;
--			case 3:
--				/* STA count: 1, CU: 75, AAC: 65535 */
--				bss_load = "bss_load_test=1:75:65535";
--				break;
--			default:
--				bss_load = NULL;
--				break;
+-	if (dut->sae_anti_clogging_threshold >= 0)
+-		fprintf(f, "sae_anti_clogging_threshold=%d\n",
+-			dut->sae_anti_clogging_threshold);
+-	if (dut->sae_reflection)
+-		fprintf(f, "sae_reflection_attack=1\n");
+-	if (dut->ap_sae_commit_status >= 0)
+-		fprintf(f, "sae_commit_status=%d\n", dut->ap_sae_commit_status);
+-	if (dut->ap_sae_pk_omit)
+-		fprintf(f, "sae_pk_omit=1\n");
+-	if (dut->sae_confirm_immediate)
+-		fprintf(f, "sae_confirm_immediate=2\n");
 +			if (dut->ap_tag_key_mgmt[0] == AP2_OSEN) {
 +				fprintf(f, "osen=1\n");
 +				/* Disable DGAF for OSEN BSS */
@@ -1851,11 +1913,10 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +			} else if (dut->ap2_osu) {
 +				fprintf(f, "ap_isolate=1\n");
 +				set_ebtables_forward_drop(dut, ifname, ifname2);
- 			}
++			}
  
--			if (!bss_load) {
--				fclose(f);
--				return -2;
+-	if (dut->ap_p2p_mgmt)
+-		fprintf(f, "manage_p2p=1\n");
 +			if (dut->ap2_proxy_arp) {
 +				if (!dut->bridge) {
 +					sigma_dut_print(dut, DUT_MSG_ERROR,
@@ -1865,20 +1926,37 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +				}
 +				fprintf(f, "ap_isolate=1\n");
 +				fprintf(f, "proxy_arp=1\n");
-+
+ 
+-	if (dut->ap_tdls_prohibit || dut->ap_l2tif)
+-		fprintf(f, "tdls_prohibit=1\n");
+-	if (dut->ap_tdls_prohibit_chswitch || dut->ap_l2tif)
+-		fprintf(f, "tdls_prohibit_chan_switch=1\n");
+-	if (dut->ap_p2p_cross_connect >= 0) {
+-		fprintf(f, "manage_p2p=1\n"
+-			"allow_cross_connection=%d\n",
+-			dut->ap_p2p_cross_connect);
+-	}
+-
+-	if (dut->ap_l2tif || dut->ap_proxy_arp ||
+-	    dut->ap_key_mgmt == AP_WPA2_EAP_OSEN) {
+-		if (!dut->bridge) {
+-			sigma_dut_print(dut, DUT_MSG_ERROR,
+-					"Bridge must be configured. Run with -b <brname>.");
+-			fclose(f);
+-			return -2;
 +				if (set_ebtables_proxy_arp(dut, "FORWARD", ifname2) ||
 +				    set_ebtables_proxy_arp(dut, "OUTPUT", ifname2)) {
 +					fclose(f);
 +					return -2;
 +				}
 +
- 			}
--			fprintf(f, "%s\n", bss_load);
++			}
  		}
+-		fprintf(f, "ap_isolate=1\n");
+-	}
  
--		if (append_hostapd_conf_hs2(dut, f)) {
--			fclose(f);
--			return -2;
+-	if (dut->ap_proxy_arp)
+-		fprintf(f, "proxy_arp=1\n");
 +		if (dut->ap_mbo) {
 +			fprintf(f, "mbo=1\n");
 +			/* OCE AP mode */
@@ -1933,13 +2011,10 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +			}
 +			if (dut->eap_fragment)
 +				fprintf(f, "fragment_size=128\n");
- 		}
--	}
++		}
  
--	if (dut->ap_interworking && append_hostapd_conf_interworking(dut, f)) {
--		fclose(f);
--		return -2;
--	}
+-	if (dut->ap_wme)
+-		fprintf(f, "wmm_enabled=1\n");
 +		if (dut->ap_dpp_conf_addr && dut->ap_dpp_conf_pkhash) {
 +			if (strcasecmp(dut->ap_dpp_conf_addr, "mDNS") != 0) {
 +				fprintf(f, "dpp_controller=ipaddr=%s pkhash=%s\n",
@@ -1949,19 +2024,19 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +			fprintf(f, "dpp_relay_port=8908\n");
 +		}
  
--	if (dut->ap_hs2 && strlen(dut->ap_tag_ssid[0])) {
--		unsigned char bssid[6];
--		char ifname2[50];
+-	if (dut->ap_wmmps == AP_WMMPS_ON)
+-		fprintf(f, "uapsd_advertisement_enabled=1\n");
 +		if (dut->ap_he_rtsthrshld == VALUE_ENABLED)
 +			fprintf(f, "he_rts_threshold=512\n");
 +		else if (dut->ap_he_rtsthrshld == VALUE_DISABLED)
 +			fprintf(f, "he_rts_threshold=1024\n");
  
--		if (get_hwaddr(ifname, bssid)) {
--			fclose(f);
--			return -2;
+-	if (dut->ap_hs2) {
+-		if (dut->ap_bss_load) {
+-			char *bss_load;
 +		if ((dut->program == PROGRAM_VHT) ||
-+		    ((dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT) &&
++		    ((dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT ||
++			  dut->program == PROGRAM_WPA3) &&
 +		     !check_band(dut, BAND_2G, link_id))) {
 +			int vht_oper_centr_freq_idx;
 +
@@ -1987,42 +2062,95 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +				return 0;
 +			}
 +
++			if (dut->ap_center_freq) {
++				vht_oper_centr_freq_idx =
++					freq_to_chan(dut->ap_center_freq);
++				goto set_center_freq_idx_conf;
++			}
+ 
+-			switch (dut->ap_bss_load) {
+-			case -1:
+-				bss_load = "bss_load_update_period=10";
 +			switch (chwidth) {
 +			case AP_20:
 +				dut->ap_oper_chan_chwidth = AP_20_40_VHT_OPER_CHWIDTH;
 +				vht_oper_centr_freq_idx =
 +					get_oper_centr_freq_seq_idx(dut, 20,
 +								    chan, link_id);
-+				break;
+ 				break;
+-			case 1:
+-				/* STA count: 1, CU: 50, AAC: 65535 */
+-				bss_load = "bss_load_test=1:50:65535";
 +			case AP_40:
 +				dut->ap_oper_chan_chwidth = AP_20_40_VHT_OPER_CHWIDTH;
 +				vht_oper_centr_freq_idx =
 +					get_oper_centr_freq_seq_idx(dut, 40,
 +								    chan, link_id);
-+				break;
+ 				break;
+-			case 2:
+-				/* STA count: 1, CU: 200, AAC: 65535 */
+-				bss_load = "bss_load_test=1:200:65535";
 +			case AP_80:
 +				dut->ap_oper_chan_chwidth = AP_80_VHT_OPER_CHWIDTH;
 +				vht_oper_centr_freq_idx =
 +					get_oper_centr_freq_seq_idx(dut, 80,
 +								    chan, link_id);
-+				break;
+ 				break;
+-			case 3:
+-				/* STA count: 1, CU: 75, AAC: 65535 */
+-				bss_load = "bss_load_test=1:75:65535";
 +			case AP_160:
 +				dut->ap_oper_chan_chwidth = AP_160_VHT_OPER_CHWIDTH;
 +				vht_oper_centr_freq_idx =
 +					get_oper_centr_freq_seq_idx(dut, 160,
 +								    chan, link_id);
 +				break;
-+			default:
++			case AP_320:
++				dut->ap_oper_chan_chwidth = AP_320_VHT_OPER_CHWIDTH;
++				vht_oper_centr_freq_idx =
++					get_oper_centr_freq_seq_idx(dut, 320,
++									chan, link_id);
+ 				break;
+ 			default:
+-				bss_load = NULL;
 +				dut->ap_oper_chan_chwidth = VHT_DEFAULT_OPER_CHWIDTH;
 +				vht_oper_centr_freq_idx =
 +					get_oper_centr_freq_seq_idx(dut, 80,
 +								    chan, link_id);
-+				break;
-+			}
+ 				break;
+ 			}
+ 
+-			if (!bss_load) {
+-				fclose(f);
+-				return -2;
+-			}
+-			fprintf(f, "%s\n", bss_load);
+-		}
+-
+-		if (append_hostapd_conf_hs2(dut, f)) {
+-			fclose(f);
+-			return -2;
+-		}
+-	}
+-
+-	if (dut->ap_interworking && append_hostapd_conf_interworking(dut, f)) {
+-		fclose(f);
+-		return -2;
+-	}
+-
+-	if (dut->ap_hs2 && strlen(dut->ap_tag_ssid[0])) {
+-		unsigned char bssid[6];
+-		char ifname2[50];
++set_center_freq_idx_conf:
 +			if (!check_band(dut, BAND_6G, link_id)) {
 +				fprintf(f, "vht_oper_centr_freq_seg0_idx=%d\n",
 +					vht_oper_centr_freq_idx);
 +				fprintf(f, "vht_oper_chwidth=%d\n", dut->ap_oper_chan_chwidth);
++			}
++
++			if (check_band(dut, BAND_6G, link_id)) {
++				fprintf(f, "op_class=%d\n",
++					get_6g_ch_op_class(vht_oper_centr_freq_idx));
 +			}
 +
 +			find_ap_ampdu_exp_and_max_mpdu_len(dut);
@@ -2034,6 +2162,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +			     dut->ap_ampdu_exp || dut->ap_max_mpdu_len ||
 +			     chwidth == AP_160 ||
 +			     chwidth == AP_80_80 ||
++			     chwidth == AP_320 ||
 +			     dut->ap_su_txBF) &&
 +			    check_band(dut, BAND_5G, link_id)) {
 +				fprintf(f, "vht_capab=%s%s%s%s%s%s%s",
@@ -2046,7 +2175,8 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +					(dut->ap_tx_stbc == VALUE_ENABLED) ?
 +					"[TX-STBC-2BY1][RX-STBC-1]" : "",
 +					dut->ap_mu_txBF ? "[MU-BEAMFORMER]" : "",
-+					chwidth == AP_160 ? "[VHT160]" :
++					chwidth == AP_160 ||
++					chwidth == AP_320 ? "[VHT160]" :
 +					(chwidth == AP_80_80 ?
 +					 "[VHT160-80PLUS80]" : ""));
 +
@@ -2057,7 +2187,10 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +				if (dut->ap_max_mpdu_len)
 +					fprintf(f, "[MAX-MPDU-%d]",
 +						dut->ap_max_mpdu_len);
-+
+ 
+-		if (get_hwaddr(ifname, bssid)) {
+-			fclose(f);
+-			return -2;
 +				fprintf(f, "\n");
 +			}
  		}
@@ -2118,13 +2251,6 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -				fprintf(f, "auth_server_shared_secret=%s\n",
 -					dut->ap2_radius_password);
 +			if (check_band(dut, BAND_6G, link_id)) {
-+				fprintf(f, "op_class=%d\n",
-+					get_6g_ch_op_class(chan, chwidth));
- 
--			set_ebtables_forward_drop(dut, ifname, ifname2);
--		} else if (dut->ap2_osu) {
--			fprintf(f, "ap_isolate=1\n");
--			set_ebtables_forward_drop(dut, ifname, ifname2);
 +				if (dut->ap_6g_unsol_prb_resp) {
 +					fprintf(f, "unsol_bcast_probe_resp_interval=20\n");
 +					fprintf(f, "force_disable_in_band_discovery=0\n");
@@ -2132,7 +2258,11 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +					fprintf(f, "fils_discovery_max_interval=20\n");
 +				}
 +			}
-+
+ 
+-			set_ebtables_forward_drop(dut, ifname, ifname2);
+-		} else if (dut->ap2_osu) {
+-			fprintf(f, "ap_isolate=1\n");
+-			set_ebtables_forward_drop(dut, ifname, ifname2);
 +			fprintf(f, "eht_oper_chwidth=%d\n", dut->ap_oper_chan_chwidth);
 +			fprintf(f, "eht_oper_centr_freq_seg0_idx=%d\n", seg_indx);
  		}
@@ -2157,13 +2287,16 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  
 -			if (set_ebtables_proxy_arp(dut, "FORWARD", ifname2) ||
 -			    set_ebtables_proxy_arp(dut, "OUTPUT", ifname2)) {
+-				fclose(f);
+-				return -2;
+-			}
 +			if (dut->ap_he_rtsthrshld == VALUE_ENABLED)
 +				fprintf(f, "he_rts_threshold=512\n");
 +			else if (dut->ap_he_rtsthrshld == VALUE_DISABLED)
 +				fprintf(f, "he_rts_threshold=1023\n");
 +			else
 +				fprintf(f, "he_rts_threshold=0\n");
-+
+ 
 +			if (dut->program == PROGRAM_EHT) {
 +				fprintf(f, "eht_su_beamformer=%d\n", dut->ap_txBF);
 +				fprintf(f, "eht_mu_beamformer=%d\n", dut->ap_mu_txBF);
@@ -2172,54 +2305,6 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +				fprintf(f, "eht_ulmumimo_160mhz=%d\n", dut->ap_ulmumimo_160mhz);
 +				fprintf(f, "eht_ulmumimo_320mhz=%d\n", dut->ap_ulmumimo_320mhz);
 +			}
-+		}
-+
-+		if (dut->program == PROGRAM_EHT || mode == AP_11be)
-+			fprintf(f, "mld_ap=1\n");
-+
-+		if (dut->ap_key_mgmt == AP_WPA2_OWE && dut->ap_tag_ssid[0][0] &&
-+		    dut->ap_tag_key_mgmt[0] == AP2_OPEN) {
-+			/* OWE transition mode */
-+			unsigned char bssid[6];
-+			char ifname2[50];
-+			unsigned long val;
-+			FILE *f2;
-+
-+			snprintf(ifname2, sizeof(ifname2), "%s_1", ifname);
-+
-+			fprintf(f, "owe_transition_ifname=%s\n", ifname2);
-+			val = 0x12345678; /* default to something */
-+			f2 = fopen("/dev/urandom", "r");
-+			if (f2) {
-+				if (fread(&val, 1, sizeof(val), f2) != sizeof(val)) {
-+					sigma_dut_print(dut, DUT_MSG_ERROR,
-+							"Could not read /dev/urandom");
-+				}
-+				fclose(f2);
-+			}
-+			fprintf(f, "ssid=owe-%lx\n", val);
-+			fprintf(f, "ignore_broadcast_ssid=1\n");
-+
-+			if (get_hwaddr(ifname, bssid)) {
- 				fclose(f);
- 				return -2;
- 			}
-+			if (bssid[0] & 0x02)
-+				bssid[5] ^= 0x01;
-+			else
-+				bssid[0] |= 0x02;
- 
-+			fprintf(f, "bss=%s\n", ifname2);
-+			fprintf(f, "ssid=%s\n", dut->ap_ssid);
-+			if (dut->bridge)
-+				fprintf(f, "bridge=%s\n", dut->bridge);
-+			if (drv == DRIVER_LINUX_WCN)
-+				fprintf(f, "use_driver_iface_addr=1\n");
-+			else
-+				fprintf(f, "bssid=%02x:%02x:%02x:%02x:%02x:%02x\n",
-+					bssid[0], bssid[1], bssid[2], bssid[3],
-+					bssid[4], bssid[5]);
-+			fprintf(f, "owe_transition_ifname=%s\n", ifname);
  		}
 -	}
  
@@ -2287,13 +2372,15 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -		}
 -		fprintf(f, "dpp_relay_port=8908\n");
 -	}
++		if (dut->program == PROGRAM_EHT || mode == AP_11be)
++			fprintf(f, "mld_ap=1\n");
  
 -	if (dut->ap_he_rtsthrshld == VALUE_ENABLED)
 -		fprintf(f, "he_rts_threshold=512\n");
 -	else if (dut->ap_he_rtsthrshld == VALUE_DISABLED)
 -		fprintf(f, "he_rts_threshold=1024\n");
-+		if (dut->ap_key_mgmt == AP_OPEN &&
-+		    dut->ap_tag_key_mgmt[0] == AP2_WPA2_OWE) {
++		if (dut->ap_key_mgmt == AP_WPA2_OWE && dut->ap_tag_ssid[0][0] &&
++		    dut->ap_tag_key_mgmt[0] == AP2_OPEN) {
 +			/* OWE transition mode */
 +			unsigned char bssid[6];
 +			char ifname2[50];
@@ -2301,7 +2388,8 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +			FILE *f2;
  
 -	if ((dut->program == PROGRAM_VHT) ||
--	    ((dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT) &&
+-	    ((dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT ||
+-	      dut->program == PROGRAM_WPA3) &&
 -	     !check_band(dut, BAND_2G, conf_counter))) {
 -		int vht_oper_centr_freq_idx;
 -
@@ -2321,20 +2409,174 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -			} else {
 -				append_vht = true;
 +			fprintf(f, "owe_transition_ifname=%s\n", ifname2);
-+			fprintf(f, "ssid=%s\n", dut->ap_ssid);
-+
++			val = 0x12345678; /* default to something */
++			f2 = fopen("/dev/urandom", "r");
++			if (f2) {
++				if (fread(&val, 1, sizeof(val), f2) != sizeof(val)) {
++					sigma_dut_print(dut, DUT_MSG_ERROR,
++							"Could not read /dev/urandom");
++				}
++				fclose(f2);
+ 			}
+-		}
+-
+-		if (!append_vht)
+-			goto skip_vht_parameters_set;
++			fprintf(f, "ssid=owe-%lx\n", val);
++			fprintf(f, "ignore_broadcast_ssid=1\n");
+ 
+-		if (check_channel(dut, chan, conf_counter) < 0) {
+-			send_resp(dut, conn, SIGMA_INVALID,
+-				  "errorCode,Invalid channel");
+-			fclose(f);
+-			return 0;
+-		}
 +			if (get_hwaddr(ifname, bssid)) {
 +				fclose(f);
 +				return -2;
- 			}
--		}
++			}
 +			if (bssid[0] & 0x02)
 +				bssid[5] ^= 0x01;
 +			else
 +				bssid[0] |= 0x02;
  
--		if (!append_vht)
--			goto skip_vht_parameters_set;
+-		if (dut->ap_center_freq) {
+-			vht_oper_centr_freq_idx =
+-				freq_to_chan(dut->ap_center_freq);
+-			goto set_center_freq_idx_conf;
++			fprintf(f, "bss=%s\n", ifname2);
++			fprintf(f, "ssid=%s\n", dut->ap_ssid);
++			if (dut->bridge)
++				fprintf(f, "bridge=%s\n", dut->bridge);
++			if (drv == DRIVER_LINUX_WCN)
++				fprintf(f, "use_driver_iface_addr=1\n");
++			else
++				fprintf(f, "bssid=%02x:%02x:%02x:%02x:%02x:%02x\n",
++					bssid[0], bssid[1], bssid[2], bssid[3],
++					bssid[4], bssid[5]);
++			fprintf(f, "owe_transition_ifname=%s\n", ifname);
+ 		}
+ 
+-		switch (chwidth) {
+-		case AP_20:
+-			dut->ap_oper_chan_chwidth = AP_20_40_VHT_OPER_CHWIDTH;
+-			vht_oper_centr_freq_idx =
+-				get_oper_centr_freq_seq_idx(dut, 20,
+-							    chan, conf_counter);
+-			break;
+-		case AP_40:
+-			dut->ap_oper_chan_chwidth = AP_20_40_VHT_OPER_CHWIDTH;
+-			vht_oper_centr_freq_idx =
+-				get_oper_centr_freq_seq_idx(dut, 40,
+-							    chan, conf_counter);
+-			break;
+-		case AP_80:
+-			dut->ap_oper_chan_chwidth = AP_80_VHT_OPER_CHWIDTH;
+-			vht_oper_centr_freq_idx =
+-				get_oper_centr_freq_seq_idx(dut, 80,
+-							    chan, conf_counter);
+-			break;
+-		case AP_160:
+-			dut->ap_oper_chan_chwidth = AP_160_VHT_OPER_CHWIDTH;
+-			vht_oper_centr_freq_idx =
+-				get_oper_centr_freq_seq_idx(dut, 160,
+-							    chan, conf_counter);
+-			break;
+-		case AP_320:
+-			dut->ap_oper_chan_chwidth = AP_320_VHT_OPER_CHWIDTH;
+-			vht_oper_centr_freq_idx =
+-				get_oper_centr_freq_seq_idx(dut, 320,
+-							    chan, conf_counter);
+-			break;
+-		default:
+-			dut->ap_oper_chan_chwidth = VHT_DEFAULT_OPER_CHWIDTH;
+-			vht_oper_centr_freq_idx =
+-				get_oper_centr_freq_seq_idx(dut, 80,
+-							    chan, conf_counter);
+-			break;
+-		}
+ 
+-set_center_freq_idx_conf:
+-		if (!check_band(dut, BAND_6G, conf_counter)) {
+-			fprintf(f, "vht_oper_centr_freq_seg0_idx=%d\n",
+-				vht_oper_centr_freq_idx);
+-			fprintf(f, "vht_oper_chwidth=%d\n", dut->ap_oper_chan_chwidth);
+-		}
+-
+-		find_ap_ampdu_exp_and_max_mpdu_len(dut);
+-
+-		if (append_vht &&
+-		    (dut->ap_sgi80 || dut->ap_txBF ||
+-		     dut->ap_ldpc != VALUE_NOT_SET ||
+-		     dut->ap_tx_stbc == VALUE_ENABLED || dut->ap_mu_txBF ||
+-		     dut->ap_ampdu_exp || dut->ap_max_mpdu_len ||
+-		     dut->ap_chwidth == AP_160 ||
+-		     dut->ap_chwidth == AP_80_80 ||
+-		     dut->ap_chwidth == AP_320 ||
+-		     dut->ap_su_txBF) &&
+-		     check_band(dut, BAND_5G, conf_counter)) {
+-			fprintf(f, "vht_capab=%s%s%s%s%s%s%s",
+-				dut->ap_sgi80 ? "[SHORT-GI-80]" : "",
+-				dut->ap_txBF ?
+-				"[SU-BEAMFORMER][BF-ANTENNA-2][SOUNDING-DIMENSION-2]" : "",
+-				dut->ap_su_txBF ? "[SU-BEAMFORMEE]":"",
+-				(dut->ap_ldpc == VALUE_ENABLED) ?
+-				"[RXLDPC]" : "",
+-				(dut->ap_tx_stbc == VALUE_ENABLED) ?
+-				"[TX-STBC-2BY1][RX-STBC-1]" : "",
+-				dut->ap_mu_txBF ? "[MU-BEAMFORMER]" : "",
+-				dut->ap_chwidth == AP_160 ||
+-				dut->ap_chwidth == AP_320 ? "[VHT160]" :
+-				(dut->ap_chwidth == AP_80_80 ?
+-				 "[VHT160-80PLUS80]" : ""));
+-
+-			if (dut->ap_ampdu_exp)
+-				fprintf(f, "[MAX-A-MPDU-LEN-EXP%d]",
+-					dut->ap_ampdu_exp);
+-
+-			if (dut->ap_max_mpdu_len)
+-				fprintf(f, "[MAX-MPDU-%d]",
+-					dut->ap_max_mpdu_len);
++		if (dut->ap_key_mgmt == AP_OPEN &&
++		    dut->ap_tag_key_mgmt[0] == AP2_WPA2_OWE) {
++			/* OWE transition mode */
++			unsigned char bssid[6];
++			char ifname2[50];
++			unsigned long val;
++			FILE *f2;
+ 
+-			fprintf(f, "\n");
+-		}
+-	}
+-skip_vht_parameters_set:
++			snprintf(ifname2, sizeof(ifname2), "%s_1", ifname);
+ 
+-	if ((mode == AP_11ax || mode == AP_11be) &&
+-	     !check_band(dut, BAND_2G, conf_counter)) {
+-		int seg_indx;
++			fprintf(f, "owe_transition_ifname=%s\n", ifname2);
++			fprintf(f, "ssid=%s\n", dut->ap_ssid);
+ 
+-		/*
+-		 * Get the center freq for HE Operation,
+-		 * if the operating bandwidth is 320 MHz forcefully
+-		 * override with maximum HE supported bandwidth to 160 MHz
+-		 */
+-		seg_indx = get_center_freq_seg_index(dut,
+-						     chwidth == AP_320 ? AP_160 : chwidth,
+-						     chan,
+-						     conf_counter);
++			if (get_hwaddr(ifname, bssid)) {
++				fclose(f);
++				return -2;
++			}
++			if (bssid[0] & 0x02)
++				bssid[5] ^= 0x01;
++			else
++				bssid[0] |= 0x02;
+ 
+-		fprintf(f, "he_oper_chwidth=%d\n", dut->ap_oper_chan_chwidth);
+-		fprintf(f, "he_oper_centr_freq_seg0_idx=%d\n", seg_indx);
 +			fprintf(f, "bss=%s\n", ifname2);
 +			val = 0x12345678; /* default to something */
 +			f2 = fopen("/dev/urandom", "r");
@@ -2366,86 +2608,20 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +				fprintf(f, "owe_ptk_workaround=1\n");
 +		}
  
--		if (check_channel(dut, chan, conf_counter) < 0) {
--			send_resp(dut, conn, SIGMA_INVALID,
--				  "errorCode,Invalid channel");
--			fclose(f);
--			return 0;
+-		if (((dut->ap_link_chwidth[0] == AP_320) || (dut->ap_link_chwidth[1] == AP_320)) &&
+-		    (check_band(dut, BAND_6G, conf_counter))) {
+-			seg_indx = freq_to_channel(dut->cfreq);
+-		} else {
+-			seg_indx = get_center_freq_seg_index(dut, chwidth, chan,
+-						     	     conf_counter);
 +		if (dut->program == PROGRAM_OCE) {
 +			fprintf(f, "oce=%d\n",
 +				dut->dev_role == DEVROLE_STA_CFON ? 2 : 1);
  		}
  
--		switch (chwidth) {
--		case AP_20:
--			dut->ap_oper_chan_chwidth = AP_20_40_VHT_OPER_CHWIDTH;
--			vht_oper_centr_freq_idx =
--				get_oper_centr_freq_seq_idx(dut, 20,
--							    chan, conf_counter);
--			break;
--		case AP_40:
--			dut->ap_oper_chan_chwidth = AP_20_40_VHT_OPER_CHWIDTH;
--			vht_oper_centr_freq_idx =
--				get_oper_centr_freq_seq_idx(dut, 40,
--							    chan, conf_counter);
--			break;
--		case AP_80:
--			dut->ap_oper_chan_chwidth = AP_80_VHT_OPER_CHWIDTH;
--			vht_oper_centr_freq_idx =
--				get_oper_centr_freq_seq_idx(dut, 80,
--							    chan, conf_counter);
--			break;
--		case AP_160:
--			dut->ap_oper_chan_chwidth = AP_160_VHT_OPER_CHWIDTH;
--			vht_oper_centr_freq_idx =
--				get_oper_centr_freq_seq_idx(dut, 160,
--							    chan, conf_counter);
--			break;
--		default:
--			dut->ap_oper_chan_chwidth = VHT_DEFAULT_OPER_CHWIDTH;
--			vht_oper_centr_freq_idx =
--				get_oper_centr_freq_seq_idx(dut, 80,
--							    chan, conf_counter);
--			break;
--		}
--		if (!check_band(dut, BAND_6G, conf_counter)) {
--			fprintf(f, "vht_oper_centr_freq_seg0_idx=%d\n",
--				vht_oper_centr_freq_idx);
--			fprintf(f, "vht_oper_chwidth=%d\n", dut->ap_oper_chan_chwidth);
--		}
--
--		find_ap_ampdu_exp_and_max_mpdu_len(dut);
--
--		if (append_vht &&
--		    (dut->ap_sgi80 || dut->ap_txBF ||
--		     dut->ap_ldpc != VALUE_NOT_SET ||
--		     dut->ap_tx_stbc == VALUE_ENABLED || dut->ap_mu_txBF ||
--		     dut->ap_ampdu_exp || dut->ap_max_mpdu_len ||
--		     dut->ap_chwidth == AP_160 ||
--		     dut->ap_chwidth == AP_80_80 ||
--		     dut->ap_su_txBF) &&
--		     check_band(dut, BAND_5G, conf_counter)) {
--			fprintf(f, "vht_capab=%s%s%s%s%s%s%s",
--				dut->ap_sgi80 ? "[SHORT-GI-80]" : "",
--				dut->ap_txBF ?
--				"[SU-BEAMFORMER][BF-ANTENNA-2][SOUNDING-DIMENSION-2]" : "",
--				dut->ap_su_txBF ? "[SU-BEAMFORMEE]":"",
--				(dut->ap_ldpc == VALUE_ENABLED) ?
--				"[RXLDPC]" : "",
--				(dut->ap_tx_stbc == VALUE_ENABLED) ?
--				"[TX-STBC-2BY1][RX-STBC-1]" : "",
--				dut->ap_mu_txBF ? "[MU-BEAMFORMER]" : "",
--				dut->ap_chwidth == AP_160 ? "[VHT160]" :
--				(dut->ap_chwidth == AP_80_80 ?
--				 "[VHT160-80PLUS80]" : ""));
--
--			if (dut->ap_ampdu_exp)
--				fprintf(f, "[MAX-A-MPDU-LEN-EXP%d]",
--					dut->ap_ampdu_exp);
--
--			if (dut->ap_max_mpdu_len)
--				fprintf(f, "[MAX-MPDU-%d]",
--					dut->ap_max_mpdu_len);
+-		if (check_band(dut, BAND_6G, conf_counter)) {
+-			fprintf(f, "op_class=%d\n",
+-				get_6g_ch_op_class(chan, chwidth));
 +		if ((dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT) &&
 +		    dut->ap_mbssid == VALUE_ENABLED && !link_id &&
 +		    dut->multi_mbssid) {
@@ -2456,80 +2632,23 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +			char ifname2[50];
 +			int i, count = 0;
  
--			fprintf(f, "\n");
--		}
--	}
--skip_vht_parameters_set:
-+			if (get_hwaddr(ifname, bssid)) {
-+				fclose(f);
-+				return -2;
-+			}
- 
--	if ((mode == AP_11ax || mode == AP_11be) &&
--	     !check_band(dut, BAND_2G, conf_counter)) {
--		int seg_indx;
-+			for (int j = 0; j < dut->no_of_mbssid_groups; j++) {
-+				if (!dut->mbss_set[j].num_non_tx_bss)
-+					return -2;
-+
-+				fprintf(f, "\nmbssid=3\n");
-+				fprintf(f, "mbssid_group_size=%d\n", (dut->mbss_set[j].num_non_tx_bss + 1));
-+
-+				/* Sanity check to indicate below logic holds good
-+				 * for upto 256 bss(including tx,non-tx bss) support in sigma-dut
-+				 * Can be extended if really required
-+				 */
-+				if (dut->mbss_set[j].num_non_tx_bss > 255)
-+					return -2;
- 
--		/*
--		 * Get the center freq for HE Operation,
--		 * if the operating bandwidth is 320 MHz forcefully
--		 * override with maximum HE supported bandwidth to 160 MHz
--		 */
--		seg_indx = get_center_freq_seg_index(dut,
--						     chwidth == AP_320 ? AP_160 : chwidth,
--						     chan,
--						     conf_counter);
-+				num_bss = dut->mbss_set[j].num_non_tx_bss;
- 
--		fprintf(f, "he_oper_chwidth=%d\n", dut->ap_oper_chan_chwidth);
--		fprintf(f, "he_oper_centr_freq_seg0_idx=%d\n", seg_indx);
-+				do {
-+					max_bssid_ind++;
-+					num_bss = num_bss >> 1;
-+				} while (num_bss);
- 
--		if (((dut->ap_link_chwidth[0] == AP_320) || (dut->ap_link_chwidth[1] == AP_320)) &&
--		    (check_band(dut, BAND_6G, conf_counter))) {
--			seg_indx = freq_to_channel(dut->cfreq);
--		} else {
--			seg_indx = get_center_freq_seg_index(dut, chwidth, chan,
--						     	     conf_counter);
--		}
-+				max_bss_count = 1 << max_bssid_ind;
-+				bssid_mask = max_bss_count - 1;
- 
--		if (check_band(dut, BAND_6G, conf_counter)) {
--			fprintf(f, "op_class=%d\n",
--				get_6g_ch_op_class(chan, chwidth));
-+				base_val = bssid[5] & ~bssid_mask;
-+				init_val = bssid[5] & bssid_mask;
- 
 -			if (dut->ap_6g_unsol_prb_resp) {
 -				fprintf(f, "unsol_bcast_probe_resp_interval=20\n");
 -				fprintf(f, "force_disable_in_band_discovery=0\n");
 -			} else
 -				fprintf(f, "fils_discovery_max_interval=20\n");
 -		}
-+				for (i = 0; i < dut->mbss_set[j].num_non_tx_bss + 1; i++) {
-+					fprintf(f, "\n");
++			if (get_hwaddr(ifname, bssid)) {
++				fclose(f);
++				return -2;
++			}
  
 -		fprintf(f, "eht_oper_chwidth=%d\n", dut->ap_oper_chan_chwidth);
 -		fprintf(f, "eht_oper_centr_freq_seg0_idx=%d\n", seg_indx);
 -	}
-+					/* start from 1 for non tx bssid */
-+					bssid[5] = base_val + ((init_val + count + 1) % max_bss_count);
++			for (int j = 0; j < dut->no_of_mbssid_groups; j++) {
++				if (!dut->mbss_set[j].num_non_tx_bss)
++					return -2;
  
 -	if (dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT) {
 -		fprintf(f, "he_su_beamformer=%d\n", dut->ap_txBF);
@@ -2543,19 +2662,8 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -			fclose(f);
 -			return -2;
 -		}
-+					if ((i == 0) && (j == 0)) {
-+						fprintf(f, "interface=%s\n", ifname);
-+					} else {
-+						snprintf(ifname2, sizeof(ifname2), "%s-%d", ifname, count);
-+						fprintf(f, "bss=%s\n", ifname2);
-+					}
-+					if (sigma_hapd_ctrl)
-+						fprintf(f, "ctrl_interface=%s\n", sigma_hapd_ctrl);
-+					else
-+						fprintf(f, "ctrl_interface=/var/run/hostapd\n");
-+					fprintf(f, "ssid=%s\n", dut->mbss_set[j].conf[i].ssid);
-+					if (dut->bridge)
-+						fprintf(f, "bridge=%s\n", dut->bridge);
++				fprintf(f, "\nmbssid=3\n");
++				fprintf(f, "mbssid_group_size=%d\n", (dut->mbss_set[j].num_non_tx_bss + 1));
  
 -		if (dut->ap_he_rtsthrshld == VALUE_ENABLED)
 -			fprintf(f, "he_rts_threshold=512\n");
@@ -2563,7 +2671,12 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -			fprintf(f, "he_rts_threshold=1023\n");
 -		else
 -			fprintf(f, "he_rts_threshold=0\n");
-+					strlcpy(dut->mbss_set[j].conf[i].ifname, ifname2, IFNAMSIZ);
++				/* Sanity check to indicate below logic holds good
++				 * for upto 256 bss(including tx,non-tx bss) support in sigma-dut
++				 * Can be extended if really required
++				 */
++				if (dut->mbss_set[j].num_non_tx_bss > 255)
++					return -2;
  
 -		if (dut->program == PROGRAM_EHT) {
 -			fprintf(f, "eht_su_beamformer=%d\n", dut->ap_txBF);
@@ -2574,8 +2687,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -			fprintf(f, "eht_ulmumimo_320mhz=%d\n", dut->ap_ulmumimo_320mhz);
 -		}
 -	}
-+					if (dut->ap_wme)
-+						fprintf(f, "wmm_enabled=1\n");
++				num_bss = dut->mbss_set[j].num_non_tx_bss;
  
 -	if (dut->program == PROGRAM_EHT || dut->ap_mode == AP_11be)
 -		fprintf(f, "mld_ap=1\n");
@@ -2602,8 +2714,36 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -		}
 -		fprintf(f, "ssid=owe-%lx\n", val);
 -		fprintf(f, "ignore_broadcast_ssid=1\n");
-+					if (dut->ap_wmmps == AP_WMMPS_ON)
-+						fprintf(f, "uapsd_advertisement_enabled=1\n");
++				do {
++					max_bssid_ind++;
++					num_bss = num_bss >> 1;
++				} while (num_bss);
++
++				max_bss_count = 1 << max_bssid_ind;
++				bssid_mask = max_bss_count - 1;
++
++				base_val = bssid[5] & ~bssid_mask;
++				init_val = bssid[5] & bssid_mask;
++
++				for (i = 0; i < dut->mbss_set[j].num_non_tx_bss + 1; i++) {
++					fprintf(f, "\n");
++
++					/* start from 1 for non tx bssid */
++					bssid[5] = base_val + ((init_val + count + 1) % max_bss_count);
++
++					if ((i == 0) && (j == 0)) {
++						fprintf(f, "interface=%s\n", ifname);
++					} else {
++						snprintf(ifname2, sizeof(ifname2), "%s-%d", ifname, count);
++						fprintf(f, "bss=%s\n", ifname2);
++					}
++					if (sigma_hapd_ctrl)
++						fprintf(f, "ctrl_interface=%s\n", sigma_hapd_ctrl);
++					else
++						fprintf(f, "ctrl_interface=/var/run/hostapd\n");
++					fprintf(f, "ssid=%s\n", dut->mbss_set[j].conf[i].ssid);
++					if (dut->bridge)
++						fprintf(f, "bridge=%s\n", dut->bridge);
  
 -		if (get_hwaddr(ifname, bssid)) {
 -			fclose(f);
@@ -2613,9 +2753,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -			bssid[5] ^= 0x01;
 -		else
 -			bssid[0] |= 0x02;
-+					fprintf(f, "bssid=%02x:%02x:%02x:%02x:%02x:%02x\n",
-+						bssid[0], bssid[1], bssid[2], bssid[3],
-+						bssid[4] - j, bssid[5]);
++					strlcpy(dut->mbss_set[j].conf[i].ifname, ifname2, IFNAMSIZ);
  
 -		fprintf(f, "bss=%s\n", ifname2);
 -		fprintf(f, "ssid=%s\n", dut->ap_ssid);
@@ -2629,7 +2767,9 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -				bssid[4], bssid[5]);
 -		fprintf(f, "owe_transition_ifname=%s\n", ifname);
 -	}
--
++					if (dut->ap_wme)
++						fprintf(f, "wmm_enabled=1\n");
+ 
 -	if (dut->ap_key_mgmt == AP_OPEN &&
 -	    dut->ap_tag_key_mgmt[0] == AP2_WPA2_OWE) {
 -		/* OWE transition mode */
@@ -2637,33 +2777,17 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -		char ifname2[50];
 -		unsigned long val;
 -		FILE *f2;
-+					memcpy(dut->mbss_set[j].conf[i].non_tx_bssid, bssid, 6);
++					if (dut->ap_wmmps == AP_WMMPS_ON)
++						fprintf(f, "uapsd_advertisement_enabled=1\n");
  
 -		snprintf(ifname2, sizeof(ifname2), "%s_1", ifname);
-+					if (dut->mbss_set[j].conf[i].key_mgmt == AP_WPA2_SAE) {
-+						fprintf(f, "wpa=2\n");
-+						fprintf(f, "wpa_key_mgmt=SAE\n");
-+						fprintf(f, "wpa_pairwise=CCMP\n");
-+						fprintf(f, "ieee80211w=2\n");
-+						fprintf(f, "sae_password=%s\n", dut->mbss_set[j].conf[i].psk);
-+						fprintf(f, "sae_pwe=1\n");
-+					}
++					fprintf(f, "bssid=%02x:%02x:%02x:%02x:%02x:%02x\n",
++						bssid[0], bssid[1], bssid[2], bssid[3],
++						bssid[4] - j, bssid[5]);
  
 -		fprintf(f, "owe_transition_ifname=%s\n", ifname2);
 -		fprintf(f, "ssid=%s\n", dut->ap_ssid);
-+					if (dut->mbss_set[j].conf[i].key_mgmt == AP_SAE_EXT) {
-+						fprintf(f, "wpa=2\n");
-+						fprintf(f, "wpa_key_mgmt=SAE-EXT-KEY\n");
-+						if (dut->program == PROGRAM_EHT) {
-+							fprintf(f, "wpa_pairwise=GCMP-256\n");
-+							fprintf(f, "group_mgmt_cipher=BIP-GMAC-256\n");
-+						} else
-+							fprintf(f, "wpa_pairwise=CCMP\n");
-+						fprintf(f, "ieee80211w=2\n");
-+						fprintf(f, "sae_password=%s\n", dut->mbss_set[j].conf[i].psk);
-+						if (check_band(dut, BAND_6G, link_id))
-+							fprintf(f, "sae_pwe=1\n");
-+					}
++					memcpy(dut->mbss_set[j].conf[i].non_tx_bssid, bssid, 6);
  
 -		if (get_hwaddr(ifname, bssid)) {
 -			fclose(f);
@@ -2673,11 +2797,13 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -			bssid[5] ^= 0x01;
 -		else
 -			bssid[0] |= 0x02;
-+					if (dut->mbss_set[j].conf[i].key_mgmt == AP_WPA2_PSK) {
++					if (dut->mbss_set[j].conf[i].key_mgmt == AP_WPA2_SAE) {
 +						fprintf(f, "wpa=2\n");
-+						fprintf(f, "wpa_key_mgmt=WPA-PSK\n");
++						fprintf(f, "wpa_key_mgmt=SAE\n");
 +						fprintf(f, "wpa_pairwise=CCMP\n");
-+						fprintf(f, "wpa_passphrase=%s\n", dut->mbss_set[j].conf[i].psk);
++						fprintf(f, "ieee80211w=2\n");
++						fprintf(f, "sae_password=%s\n", dut->mbss_set[j].conf[i].psk);
++						fprintf(f, "sae_pwe=1\n");
 +					}
  
 -		fprintf(f, "bss=%s\n", ifname2);
@@ -2687,12 +2813,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -			if (fread(&val, 1, sizeof(val), f2) != sizeof(val)) {
 -				sigma_dut_print(dut, DUT_MSG_ERROR,
 -						"Could not read /dev/urandom");
-+					if (dut->program == PROGRAM_EHT || mode == AP_11be)
-+						fprintf(f, "mld_ap=1\n");
-+
-+					count = count + 1;
-+				}
- 			}
+-			}
 -			fclose(f2);
 -		}
 -		fprintf(f, "ssid=owe-%lx\n", val);
@@ -2715,12 +2836,31 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -		if (dut->owe_ptk_workaround)
 -			fprintf(f, "owe_ptk_workaround=1\n");
 -	}
--
++					if (dut->mbss_set[j].conf[i].key_mgmt == AP_WPA3_SAE_EXT) {
++						fprintf(f, "wpa=2\n");
++						fprintf(f, "wpa_key_mgmt=SAE-EXT-KEY\n");
++						if (dut->program == PROGRAM_EHT) {
++							fprintf(f, "wpa_pairwise=GCMP-256\n");
++							fprintf(f, "group_mgmt_cipher=BIP-GMAC-256\n");
++						} else
++							fprintf(f, "wpa_pairwise=CCMP\n");
++						fprintf(f, "ieee80211w=2\n");
++						fprintf(f, "sae_password=%s\n", dut->mbss_set[j].conf[i].psk);
++						if (check_band(dut, BAND_6G, link_id))
++							fprintf(f, "sae_pwe=1\n");
++					}
+ 
 -	if (dut->program == PROGRAM_OCE) {
 -		fprintf(f, "oce=%d\n",
 -			dut->dev_role == DEVROLE_STA_CFON ? 2 : 1);
 -	}
--
++					if (dut->mbss_set[j].conf[i].key_mgmt == AP_WPA2_PSK) {
++						fprintf(f, "wpa=2\n");
++						fprintf(f, "wpa_key_mgmt=WPA-PSK\n");
++						fprintf(f, "wpa_pairwise=CCMP\n");
++						fprintf(f, "wpa_passphrase=%s\n", dut->mbss_set[j].conf[i].psk);
++					}
+ 
 -	if ((dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT) &&
 -	    dut->ap_mbssid == VALUE_ENABLED && !conf_counter &&
 -	    dut->multi_mbssid) {
@@ -2730,6 +2870,14 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -		unsigned char bssid[6];
 -		char ifname2[50];
 -		int i, count = 0;
++					if (dut->program == PROGRAM_EHT || mode == AP_11be)
++						fprintf(f, "mld_ap=1\n");
+ 
+-		if (get_hwaddr(ifname, bssid)) {
+-			fclose(f);
++					count = count + 1;
++				}
++			}
 +		} else if ((dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT) &&
 +		    dut->ap_mbssid == VALUE_ENABLED && !link_id) {
 +			uint8_t num_bss, bssid_mask, max_bss_count;
@@ -2738,9 +2886,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +			unsigned char bssid[6];
 +			char ifname2[50];
 +			int i;
- 
--		if (get_hwaddr(ifname, bssid)) {
--			fclose(f);
++
 +			if (get_hwaddr(ifname, bssid)) {
 +				fclose(f);
  			return -2;
@@ -2767,7 +2913,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  			do {
  				max_bssid_ind++;
  				num_bss = num_bss >> 1;
-@@ -11484,28 +11537,24 @@ skip_vht_parameters_set:
+@@ -11638,28 +11693,24 @@ skip_vht_parameters_set:
  			base_val = bssid[5] & ~bssid_mask;
  			init_val = bssid[5] & bssid_mask;
  
@@ -2803,7 +2949,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  				if (dut->ap_wme)
  					fprintf(f, "wmm_enabled=1\n");
  
-@@ -11514,20 +11563,20 @@ skip_vht_parameters_set:
+@@ -11668,20 +11719,20 @@ skip_vht_parameters_set:
  
  				fprintf(f, "bssid=%02x:%02x:%02x:%02x:%02x:%02x\n",
  					bssid[0], bssid[1], bssid[2], bssid[3],
@@ -2824,12 +2970,12 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  					fprintf(f, "sae_pwe=1\n");
  				}
  
--				if (dut->mbss_set[j].conf[i].key_mgmt == AP_SAE_EXT) {
-+				if (dut->mbss.conf[i].key_mgmt == AP_SAE_EXT) {
+-				if (dut->mbss_set[j].conf[i].key_mgmt == AP_WPA3_SAE_EXT) {
++				if (dut->mbss.conf[i].key_mgmt == AP_WPA3_SAE_EXT) {
  					fprintf(f, "wpa=2\n");
  					fprintf(f, "wpa_key_mgmt=SAE-EXT-KEY\n");
  					if (dut->program == PROGRAM_EHT) {
-@@ -11536,268 +11585,166 @@ skip_vht_parameters_set:
+@@ -11690,268 +11741,166 @@ skip_vht_parameters_set:
  					} else
  						fprintf(f, "wpa_pairwise=CCMP\n");
  					fprintf(f, "ieee80211w=2\n");
@@ -2873,7 +3019,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -
 -		if (!dut->mbss.num_non_tx_bss)
 -			return -2;
- 
+-
 -		/* Sanity check to indicate below logic holds good
 -		 * for upto 256 bss(including tx,non-tx bss) support in sigma-dut
 -		 * Can be extended if really required
@@ -2882,7 +3028,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -			return -2;
 -
 -		num_bss = dut->mbss.num_non_tx_bss;
--
+ 
 -		do {
 -			max_bssid_ind++;
 -			num_bss = num_bss >> 1;
@@ -3006,7 +3152,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +				 */
 +				fprintf(f, "noscan=1\n");
  
--			if (dut->mbss.conf[i].key_mgmt == AP_SAE_EXT) {
+-			if (dut->mbss.conf[i].key_mgmt == AP_WPA3_SAE_EXT) {
 -				fprintf(f, "wpa=2\n");
 -				fprintf(f, "wpa_key_mgmt=SAE-EXT-KEY\n");
 -				if (dut->program == PROGRAM_EHT) {
@@ -3115,7 +3261,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -				fprintf(f, "sae_pwe=1\n");
 -			}
 +				if (dut->cohosted[dut->cohost_iface].conf[i].key_mgmt ==
-+				    AP_SAE_EXT) {
++				    AP_WPA3_SAE_EXT) {
 +					fprintf(f, "wpa=2\n");
 +					fprintf(f, "wpa_key_mgmt=SAE-EXT-KEY\n");
 +					if (dut->program == PROGRAM_EHT) {
@@ -3129,7 +3275,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +					fprintf(f, "sae_pwe=1\n");
 +				}
  
--			if (dut->cohosted[dut->cohost_iface].conf[i].key_mgmt == AP_SAE_EXT) {
+-			if (dut->cohosted[dut->cohost_iface].conf[i].key_mgmt == AP_WPA3_SAE_EXT) {
 -				fprintf(f, "wpa=2\n");
 -				fprintf(f, "wpa_key_mgmt=SAE-EXT-KEY\n");
 -				if (dut->program == PROGRAM_EHT) {
@@ -3163,16 +3309,14 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +			}
  		}
 -	}
- 
+-
 -	if (dtim)
 -		fprintf(f, "dtim_period=%d\n", dtim);
+ 
+-	if (dut->ap_punct_bitmap && check_band(dut, BAND_6G, conf_counter))
+-		fprintf (f, "punct_bitmap=%d\n", dut->ap_punct_bitmap);
 +		if (dtim)
 +			fprintf(f, "dtim_period=%d\n", dtim);
- 
--	if (dut->ru_punct_bitmap && check_band(dut, BAND_6G, conf_counter))
--		fprintf (f, "ru_punct_bitmap=%d\n", dut->ru_punct_bitmap);
-+		if (dut->ru_punct_bitmap && check_band(dut, BAND_6G, link_id))
-+			fprintf(f, "ru_punct_bitmap=%d\n", dut->ru_punct_bitmap);
  
 -	if (dut->ap_he_ppdu == PPDU_MU &&
 -	    dut->ap_he_dlofdma == VALUE_ENABLED) {
@@ -3184,11 +3328,11 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -		 */
 -		fprintf(f, "ap_max_inactivity=%d\n", (AP_DEFAULT_MAX_INACTIVITY * 2));
 -	}
--
++		if (dut->ap_punct_bitmap && check_band(dut, BAND_6G, link_id))
++			fprintf(f, "punct_bitmap=%d\n", dut->ap_punct_bitmap);
+ 
 -	if (check_band(dut, BAND_6G, conf_counter))
 -		fprintf (f, "he_6ghz_reg_pwr_type=0\n");
--
--	fclose(f);
 +		if (dut->ap_he_ppdu == PPDU_MU &&
 +		    dut->ap_he_dlofdma == VALUE_ENABLED) {
 +			/* WAR: To increase the max inactivity timer in AP to avoid
@@ -3200,6 +3344,10 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 +			fprintf(f, "ap_max_inactivity=%d\n", (AP_DEFAULT_MAX_INACTIVITY * 2));
 +		}
  
+-	fclose(f);
++		if (check_band(dut, BAND_6G, link_id))
++			fprintf(f, "he_6ghz_reg_pwr_type=0\n");
+ 
 -	if (dut->ap_is_dual && conf_counter == 0) {
 -		conf_counter++;
 -		goto write_conf;
@@ -3207,9 +3355,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -		conf_counter++;
 -		goto write_conf;
 -	}
-+		if (check_band(dut, BAND_6G, link_id))
-+			fprintf(f, "he_6ghz_reg_pwr_type=0\n");
- 
+-
 -	/*As link_id is getting swapped in the ap_config_commit() function,
 -	 * swapping the variables which are related to link_id
 -	 */
@@ -3221,7 +3367,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  	}
  
  	if (dut->use_hostapd_pid_file)
-@@ -11908,9 +11855,15 @@ skip_vht_parameters_set:
+@@ -12062,9 +12011,15 @@ skip_vht_parameters_set:
  				return 0;
  			}
  		} else if (dut->ap_is_mld) {
@@ -3240,7 +3386,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		} else {
  			if (add_hapd_ctrl_iface(dut, ifname, "sigma_dut-ap.conf")) {
  				send_resp(dut, conn, SIGMA_ERROR,
-@@ -11926,6 +11879,8 @@ skip_vht_parameters_set:
+@@ -12080,6 +12035,8 @@ skip_vht_parameters_set:
  		 * beaconing, so remove it (if injection was used) before
  		 * starting hostapd.
  		 */
@@ -3249,7 +3395,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		if (if_nametoindex("sigmadut") > 0 &&
  		    system("iw dev sigmadut del") != 0)
  			sigma_dut_print(dut, DUT_MSG_ERROR, "Failed to remove "
-@@ -11939,8 +11894,15 @@ skip_vht_parameters_set:
+@@ -12093,8 +12050,15 @@ skip_vht_parameters_set:
  
  		snprintf(path, sizeof(path), "%shostapd",
  			 file_exists("hostapd") ? "./" : "");
@@ -3266,7 +3412,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  			 dut->hostapd_bin ? dut->hostapd_bin : path,
  			 dut->hostapd_debug_log ? " -dddKt" : "",
  			 (dut->hostapd_debug_log && dut->hostapd_debug_log[0]) ?
-@@ -11951,9 +11913,7 @@ skip_vht_parameters_set:
+@@ -12105,9 +12069,7 @@ skip_vht_parameters_set:
  			 "",
  			 dut->use_hostapd_pid_file ?
  			 " -P " SIGMA_DUT_HOSTAPD_PID_FILE : "",
@@ -3277,7 +3423,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  	}
  
  	sigma_dut_print(dut, DUT_MSG_DEBUG, "hostapd command: %s", buf);
-@@ -12147,17 +12107,17 @@ hapd_started:
+@@ -12303,17 +12265,17 @@ hapd_started:
  	if (drv == DRIVER_MAC80211 && dut->program == PROGRAM_HE) {
  		int i;
  
@@ -3296,5 +3442,31 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -			if ((dut->device_type == AP_dut) && (dut->ap_mode == AP_11be)
 +			if ((dut->device_type == AP_dut) && (mode == AP_11be)
  			    && (dut->ap_he_mimo == MIMO_UL)) {
- 				if (dut->ru_punct_bitmap)
+ 				if (dut->ap_punct_bitmap)
  					fwtest_linkid_cmd_wrapper(dut, "-m 10 -v 0 86 1", ifname, i);
+@@ -12377,7 +12339,6 @@ hapd_started:
+ 	return 1;
+ }
+ 
+-
+ static int parse_qos_params(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			    struct qos_params *qos, const char *cwmin,
+ 			    const char *cwmax, const char *aifs,
+@@ -17959,7 +17920,7 @@ static int hostapd_chan_switch(struct si
+ 								    is_6g);
+ 			center_freq_idx = get_oper_centr_freq_seq_idx(dut,
+ 								      chwidth,
+-								      channel);
++								      channel, 0);
+ 		} else {
+ 			sec_channel_offset = 1;
+ 			center_freq_idx = channel + 10;
+@@ -18251,7 +18212,7 @@ static enum sigma_cmd_result wcn_ap_set_
+ 			return ERROR_SEND_STATUS;
+ 		}
+ 
+-		dut->ap_punct_bitmap = get_bitmap_from_punct_chlist(dut, val);
++		dut->ap_punct_bitmap = get_bitmap_from_punct_chlist(dut, val, 0);
+ 		if (dut->ap_punct_bitmap < 0) {
+ 			send_resp(dut, conn, SIGMA_ERROR,
+ 				  "errorCode,Invalid punct bitmap");

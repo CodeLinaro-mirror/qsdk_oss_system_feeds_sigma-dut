@@ -14,106 +14,25 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -2824,6 +2824,80 @@ static enum sigma_cmd_result cmd_ap_set_
+@@ -2921,7 +2921,6 @@ static enum sigma_cmd_result cmd_ap_set_
  		dut->ap_mu_txBF = 1;
  	}
  
-+	val = get_param(cmd, "PunctChannel");
-+	if (val) {
-+		if (dut->program == PROGRAM_EHT) {
-+			unsigned int punct_index = 0;
-+			char *punctchannel_val;
-+			char *saveptr;
-+			char *punct_channel = NULL;
-+			int n, i = 0;
-+
-+			punct_channel = strdup(val);
-+			if (!punct_channel) {
-+				return STATUS_SENT_ERROR;
-+			}
-+
-+			punctchannel_val = strtok_r(punct_channel, " ", &saveptr);
-+			if (dut->ap_link_chwidth[0] == AP_80) {
-+				int punct_80[] = {33, 37, 41, 45};
-+
-+				while (punctchannel_val != NULL) {
-+					n = atoi(punctchannel_val);
-+					for (i = 0; i < 4; i++) {
-+						if (n == punct_80[i]) {
-+							punct_index |= 1 << i;
-+						}
-+					}
-+					punctchannel_val = strtok_r(NULL, " ", &saveptr);
-+				}
-+			} else if (dut->ap_link_chwidth[0] == AP_160) {
-+				int punct_160[] = {33, 37, 41, 45, 49, 53, 57, 61};
-+
-+				while (punctchannel_val != NULL) {
-+					n = atoi(punctchannel_val);
-+					for (i = 0; i < 8; i++) {
-+						if (n == punct_160[i]) {
-+							punct_index |= 1 << i;
-+						}
-+					}
-+					punctchannel_val = strtok_r(NULL, " ", &saveptr);
-+				}
-+			} else {
-+				if (dut->cfreq == 6105) {
-+					int punct_320_1[] = {1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 49, 53, 57, 61};
-+
-+					while (punctchannel_val != NULL) {
-+						n = atoi(punctchannel_val);
-+						for (i = 0; i < 16; i++) {
-+							if (n == punct_320_1[i]) {
-+								punct_index |= 1 << i;
-+							}
-+						}
-+						punctchannel_val = strtok_r(NULL, " ", &saveptr);
-+					}
-+				} else {
-+					int punct_320_2[] = {33, 37, 41, 45, 49, 53, 57, 61, 65, 69, 73, 77, 81, 85, 89, 93};
-+
-+					while (punctchannel_val != NULL) {
-+						n = atoi(punctchannel_val);
-+						for (i = 0; i < 16; i++) {
-+							if (n == punct_320_2[i]) {
-+								punct_index |= 1 << i;
-+							}
-+						}
-+						punctchannel_val = strtok_r(NULL, " ", &saveptr);
-+					}
-+				}
-+			}
-+			dut->ru_punct_bitmap = punct_index;
-+			if (dut->ru_punct_bitmap) {
-+				sigma_dut_print(dut, DUT_MSG_DEBUG, "ru_punct_bitmap=0x%04x",
-+						dut->ru_punct_bitmap);
-+			}
-+			free(punct_channel);
-+		}
-+	}
- 
- 	val = get_param(cmd, "MBSSID_MU");
+-
+ 	val = get_param(cmd, "PunctChannel");
  	if (val) {
-@@ -11050,6 +11124,9 @@ skip_vht_parameters_set:
+ 		dut->ap_punct_bitmap = get_bitmap_from_punct_chlist(dut, val);
+@@ -11278,6 +11277,9 @@ skip_vht_parameters_set:
  	if (dtim)
  		fprintf(f, "dtim_period=%d\n", dtim);
  
-+	if (dut->ru_punct_bitmap && check_band(dut, BAND_6G, conf_counter))
-+		fprintf (f, "ru_punct_bitmap=%d\n", dut->ru_punct_bitmap);
++	if (dut->ap_punct_bitmap && check_band(dut, BAND_6G, conf_counter))
++		fprintf (f, "punct_bitmap=%d\n", dut->ap_punct_bitmap);
 +
  	fclose(f);
  
  	if (dut->ap_is_dual && conf_counter == 0) {
-@@ -12272,6 +12349,7 @@ static enum sigma_cmd_result cmd_ap_rese
- 	dut->eht_txmcs = 0;
- 	dut->ap_ehtmcs_map = 0;
- 	dut->run_set_param = 0;
-+	dut->ru_punct_bitmap = 0;
- 
- 	if (dut->device_type == AP_testbed) {
- 		dut->ap_he_dlofdma = VALUE_DISABLED;
-@@ -17504,7 +17582,7 @@ static enum sigma_cmd_result mac80211_ap
+@@ -18048,7 +18050,7 @@ static enum sigma_cmd_result mac80211_ap
  	int ap_he_ackpolicy;
  	int link_id = 0;
  	int param;
@@ -122,7 +41,7 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
  	int val_bw = -1;
  	const char *value_bw;
  	char link_param[10];
-@@ -17791,6 +17869,110 @@ static enum sigma_cmd_result mac80211_ap
+@@ -18335,6 +18337,110 @@ static enum sigma_cmd_result mac80211_ap
  		link_set = true;
  	}
  
@@ -197,10 +116,10 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
 +					}
 +				}
 +			}
-+			dut->ru_punct_bitmap = punct_index;
-+			if (dut->ru_punct_bitmap) {
-+				sigma_dut_print(dut, DUT_MSG_DEBUG, "ru_punct_bitmap=0x%04x",
-+						dut->ru_punct_bitmap);
++			dut->ap_punct_bitmap = punct_index;
++			if (dut->ap_punct_bitmap) {
++				sigma_dut_print(dut, DUT_MSG_DEBUG, "punct_bitmap=0x%04x",
++						dut->ap_punct_bitmap);
 +			}
 +
 +			chan = channel_to_freq(dut, dut->ap_channel);
@@ -218,9 +137,9 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
 +			center_freq = channel_to_freq(dut, center_freq_idx);
 +
 +			res = snprintf(buf, sizeof(buf),
-+					" -i %s %s chan_switch 10 %d sec_channel_offset=%d center_freq1=%d bandwidth=%d ru_punct_bitmap=%d blocktx %s",
++					" -i %s %s chan_switch 10 %d sec_channel_offset=%d center_freq1=%d bandwidth=%d punct_bitmap=%d blocktx %s",
 +				ifname, link_set ? link_param : "", chan,
-+				sec_ch_offset, center_freq, chwidth, dut->ru_punct_bitmap, "eht");
++				sec_ch_offset, center_freq, chwidth, dut->ap_punct_bitmap, "eht");
 +
 +			if (res < 0 || res >= sizeof(buf) || run_hostapd_cli(dut, buf) != 0) {
 +				sigma_dut_print(dut, DUT_MSG_ERROR,
@@ -233,19 +152,9 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
  	val = get_param(cmd, "STA_WMMPE_ECWmin_BK");
  	if (val) {
  		param = atoi(val);
---- a/sigma_dut.h
-+++ b/sigma_dut.h
-@@ -1284,6 +1284,7 @@ struct sigma_dut {
- 	int i2rlmr_iftmr;
- 	int i2rlmrpolicy;
- 	int rnm_mfp;
-+	u16 ru_punct_bitmap;
- 	struct device_pairing_info dev_info;
- 	struct peer_pairing_info peer_info;
- #ifdef ANDROID_MDNS
 --- a/utils.c
 +++ b/utils.c
-@@ -316,6 +316,8 @@ unsigned int channel_to_freq(struct sigm
+@@ -320,6 +320,8 @@ unsigned int channel_to_freq(struct sigm
  		return 0;
  	}
  

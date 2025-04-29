@@ -234,7 +234,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  
  				chwidth = 160;
 @@ -19332,8 +19328,8 @@ static enum sigma_cmd_result mac80211_ap
- 						dut->ru_punct_bitmap);
+ 						dut->ap_punct_bitmap);
  			}
  
 -			chan = channel_to_freq(dut, dut->ap_channel);
@@ -253,10 +253,10 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  			center_freq = channel_to_freq(dut, center_freq_idx);
  
  			res = snprintf(buf, sizeof(buf),
--					" -i %s %s chan_switch 10 %d sec_channel_offset=%d center_freq1=%d bandwidth=%d ru_punct_bitmap=%d blocktx %s",
+-					" -i %s %s chan_switch 10 %d sec_channel_offset=%d center_freq1=%d bandwidth=%d punct_bitmap=%d blocktx %s",
 +					" -i %s %s chan_switch 10 %d sec_channel_offset=%d center_freq1=%d bandwidth=%d punct_bitmap=%d blocktx %s",
  				ifname, link_set ? link_param : "", chan,
- 				sec_ch_offset, center_freq, chwidth, dut->ru_punct_bitmap, "eht");
+ 				sec_ch_offset, center_freq, chwidth, dut->ap_punct_bitmap, "eht");
  
 @@ -19473,15 +19469,15 @@ static enum sigma_cmd_result mac80211_ap
  

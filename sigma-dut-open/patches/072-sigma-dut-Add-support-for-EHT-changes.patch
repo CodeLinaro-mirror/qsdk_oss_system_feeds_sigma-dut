@@ -152,9 +152,9 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  	}
  
 +
- 	val = get_param(cmd, "MBSSID_MU");
+ 	val = get_param(cmd, "PunctChannel");
  	if (val) {
- 		if (strcasecmp(val, "enable") == 0) {
+ 	dut->ap_punct_bitmap = get_bitmap_from_punct_chlist(dut, val);
 @@ -8915,6 +8959,9 @@ static void fwtest_set_he_params(struct
  		fwtest_cmd_wrapper(dut, "-t 1 -m 0x0 -v 0 0x1D 0", ifname);
  	}
@@ -195,12 +195,13 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  }
  
  #define IEEE80211_VHT_CAP_TXSTBC                               ((u32) (1 << 7))
-@@ -9386,10 +9442,11 @@ enum sigma_cmd_result cmd_ap_config_comm
+@@ -9386,11 +9442,12 @@ enum sigma_cmd_result cmd_ap_config_comm
  #endif /* ANDROID */
  	enum ap_chwidth chwidth;
  	enum sec_ch_offset offset;
 -	int chan, link_id;
 +	int chan, link_id, dtim;
+ 	unsigned char addr[6];
  	unsigned char main_bssid[6];
  	char ifname2[50];
  	bool mld_sae_set = false;
@@ -1020,9 +1021,9 @@ Signed-off-by: Arunpandi Kannan <quic_arunpand@quicinc.com>
  #define MAX_NON_TX_BSS_COUNT	2
  #define MAX_PSK_LEN		20
 @@ -1266,6 +1286,10 @@ struct sigma_dut {
- #endif /* ANDROID_MDNS */
- 	char host_name[100];
- 	int sta_roaming_disabled;
+ 	u8 pasn_type;
+ 	bool is_p2p_twt_power_mgmt_enabled;
+ 	struct twt_config_params twt_param;
 +
 +	int dtim;
 +	int dtim_1;

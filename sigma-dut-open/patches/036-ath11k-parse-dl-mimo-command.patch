@@ -11,9 +11,9 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
 --- a/ap.c
 +++ b/ap.c
 @@ -109,6 +109,7 @@ static int ath_ap_start_hostapd(struct s
- static void ath_ap_set_params(struct sigma_dut *dut);
- static int kill_process(struct sigma_dut *dut, char *proc_name,
  			unsigned char is_proc_instance_one, int sig);
+ static int get_oper_centr_freq_seq_idx(struct sigma_dut *dut, int chwidth,
+ 				       int channel);
 +static void mac80211_set_mu_brp_commands(struct sigma_dut *dut, const char *ifname);
  
  static int ap_ft_enabled(struct sigma_dut *dut)

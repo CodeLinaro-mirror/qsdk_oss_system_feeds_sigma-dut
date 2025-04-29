@@ -200,7 +200,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  				if (strcasecmp(val, "SAE") == 0) {
 -					if (dut->ap_mode == AP_11be)
 +					if (dut->mld[0].ap_mode == AP_11be)
- 						dut->mbss_set[mbssid_set_idx].conf[mbss_conf_idx].key_mgmt = AP_SAE_EXT;
+ 						dut->mbss_set[mbssid_set_idx].conf[mbss_conf_idx].key_mgmt = AP_WPA3_SAE_EXT;
  					else
  						dut->mbss_set[mbssid_set_idx].conf[mbss_conf_idx].key_mgmt = AP_WPA2_SAE;
 @@ -3369,7 +3508,7 @@ static enum sigma_cmd_result cmd_ap_set_
@@ -209,7 +209,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  			if (strcasecmp(val, "SAE") == 0) {
 -				if (dut->ap_mode == AP_11be)
 +				if (dut->mld[0].ap_mode == AP_11be)
- 					dut->mbss.conf[non_tx_bss_idx - 1].key_mgmt = AP_SAE_EXT;
+ 					dut->mbss.conf[non_tx_bss_idx - 1].key_mgmt = AP_WPA3_SAE_EXT;
  				else
  					dut->mbss.conf[non_tx_bss_idx - 1].key_mgmt = AP_WPA2_SAE;
 @@ -3424,7 +3563,7 @@ static enum sigma_cmd_result cmd_ap_set_
@@ -219,7 +219,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -				if (dut->ap_mode == AP_11be) {
 +				if (dut->mld[0].ap_mode == AP_11be) {
  					dut->cohosted[dut->cohost_iface].conf
- 						[cohosted_bss_index - 1].key_mgmt = AP_SAE_EXT;
+ 						[cohosted_bss_index - 1].key_mgmt = AP_WPA3_SAE_EXT;
  				} else {
 @@ -3458,14 +3597,14 @@ static enum sigma_cmd_result cmd_ap_set_
  		if (strcasecmp(val, "WPA2-PSK") == 0 ||
@@ -245,7 +245,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 -			if (dut->ap_mode == AP_11be) {
 +			if (dut->mld[0].ap_mode == AP_11be) {
  				dut->ap_cipher = AP_GCMP_256;
- 				dut->ap_key_mgmt = AP_SAE_EXT;
+ 				dut->ap_key_mgmt = AP_WPA3_SAE_EXT;
  			}
 @@ -3751,7 +3890,7 @@ static enum sigma_cmd_result cmd_ap_set_
  		val = get_param(cmd, "passphrase");

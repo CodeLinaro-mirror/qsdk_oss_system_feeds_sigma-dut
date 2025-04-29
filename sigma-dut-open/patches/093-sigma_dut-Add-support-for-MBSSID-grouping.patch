@@ -176,7 +176,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 +			if (val) {
 +				if (strcasecmp(val, "SAE") == 0) {
 +					if (dut->ap_mode == AP_11be)
-+						dut->mbss_set[mbssid_set_idx].conf[mbss_conf_idx].key_mgmt = AP_SAE_EXT;
++						dut->mbss_set[mbssid_set_idx].conf[mbss_conf_idx].key_mgmt = AP_WPA3_SAE_EXT;
 +					else
 +						dut->mbss_set[mbssid_set_idx].conf[mbss_conf_idx].key_mgmt = AP_WPA2_SAE;
 +				} else {
@@ -324,7 +324,7 @@ Signed-off-by: Dhanavandhana Kannan <quic_dhanavan@quicinc.com>
 +					fprintf(f, "sae_pwe=1\n");
 +				}
 +
-+				if (dut->mbss_set[j].conf[i].key_mgmt == AP_SAE_EXT) {
++				if (dut->mbss_set[j].conf[i].key_mgmt == AP_WPA3_SAE_EXT) {
 +					fprintf(f, "wpa=2\n");
 +					fprintf(f, "wpa_key_mgmt=SAE-EXT-KEY\n");
 +					if (dut->program == PROGRAM_EHT) {

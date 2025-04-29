@@ -37,23 +37,23 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 @@ -6400,6 +6404,7 @@ static int cmd_wcn_ap_config_commit(stru
  	case AP_WPA2_PSK_SHA256:
  	case AP_WPA2_ENT_FT_EAP:
- 	case AP_SAE_EXT:
+ 	case AP_WPA3_SAE_EXT:
 +	case AP_WPA3_COMPAT:
  		/* Not supported */
  		break;
  	}
 @@ -8615,6 +8620,7 @@ static int cmd_ath_ap_config_commit(stru
- 	case AP_WPA2_PSK_SHA256:
  	case AP_WPA2_ENT_FT_EAP:
  	case AP_OSEN:
+ 	case AP_WPA3_SAE_EXT:
 +	case AP_WPA3_COMPAT:
  		/* TODO */
  		send_resp(dut, conn, SIGMA_ERROR,
  			  "errorCode,Unsupported KeyMgnt value");
 @@ -8730,6 +8736,7 @@ static int cmd_ath_ap_config_commit(stru
- 		case AP_WPA2_PSK_SHA256:
  		case AP_WPA2_ENT_FT_EAP:
  		case AP_OSEN:
+ 		case AP_WPA3_SAE_EXT:
 +		case AP_WPA3_COMPAT:
  			/* TODO */
  			send_resp(dut, conn, SIGMA_ERROR,
@@ -134,7 +134,7 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
 @@ -576,6 +576,7 @@ enum ap_key_mgmt {
  	AP_WPA2_ENT_FT_EAP,
  	AP_OSEN,
- 	AP_SAE_EXT,
+ 	AP_WPA3_SAE_EXT,
 +	AP_WPA3_COMPAT,
  };
  

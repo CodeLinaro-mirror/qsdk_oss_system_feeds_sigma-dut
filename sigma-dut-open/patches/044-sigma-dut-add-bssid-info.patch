@@ -14,9 +14,9 @@ Signed-off-by: Sriram R <srirrama@codeaurora.org>
 --- a/ap.c
 +++ b/ap.c
 @@ -8424,6 +8424,7 @@ enum sigma_cmd_result cmd_ap_config_comm
- 	enum ap_chwidth chwidth;
  	enum sec_ch_offset offset;
  	int chan;
+ 	unsigned char addr[6];
 +	unsigned char main_bssid[6];
  
  	drv = get_driver_type(dut);
