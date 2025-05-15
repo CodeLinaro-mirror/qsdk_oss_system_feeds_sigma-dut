@@ -14,6 +14,15 @@ Signed-off-by: Ramasamy Kaliappan <quic_rkaliapp@quicinc.com>
 
 --- a/ap.c
 +++ b/ap.c
+@@ -1001,7 +1001,7 @@ static int get_bitmap_from_punct_chlist(
+ 		center_chan_idx = freq_to_chan(dut->ap_center_freq);
+ 	else
+ 		center_chan_idx = get_oper_centr_freq_seq_idx(dut, chwidth,
+-							      dut->ap_channel);
++							      dut->mld[link_id].ap_channel);
+ 	if (center_chan_idx < 0) {
+ 		sigma_dut_print(dut, DUT_MSG_ERROR,
+ 				"%s: couldn't get center channel index",
 @@ -2921,7 +2921,6 @@ static enum sigma_cmd_result cmd_ap_set_
  		dut->ap_mu_txBF = 1;
  	}

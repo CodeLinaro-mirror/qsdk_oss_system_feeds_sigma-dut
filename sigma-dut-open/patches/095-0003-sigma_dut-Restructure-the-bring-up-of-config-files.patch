@@ -58,8 +58,8 @@ Signed-off-by: Naveen S <quic_naves@quicinc.com>
  		center_chan_idx = freq_to_chan(dut->ap_center_freq);
  	else
  		center_chan_idx = get_oper_centr_freq_seq_idx(dut, chwidth,
--							      dut->ap_channel);
-+							      dut->ap_channel,
+-							      dut->mld[link_id].ap_channel);
++							      dut->mld[link_id].ap_channel,
 +							      link_id);
  	if (center_chan_idx < 0) {
  		sigma_dut_print(dut, DUT_MSG_ERROR,
