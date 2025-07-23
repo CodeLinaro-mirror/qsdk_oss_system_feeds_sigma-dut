@@ -15,7 +15,48 @@ Signed-off-by: Shwetha G K <kshwetha@qti.qualcomm.com>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -19788,6 +19788,11 @@ static enum sigma_cmd_result mac80211_ap
+@@ -3094,6 +3094,22 @@ static enum sigma_cmd_result cmd_ap_set_
+ 		}
+ 	}
+ 
++	val = get_param(cmd, "T2LM_Negotiation_Support");
++	if (val) {
++		int ttlm = 0;
++
++		ttlm = atoi(val);
++		if (ttlm == 1)
++			dut->ap_ttlm = VALUE_ENABLED;
++		else if (ttlm == 0)
++			dut->ap_ttlm = VALUE_DISABLED;
++		else {
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "errorCode, Unsupported TTLM value");
++			return STATUS_SENT_ERROR;
++		}
++	}
++
+ 	return SUCCESS_SEND_STATUS;
+ }
+ 
+@@ -12125,6 +12141,9 @@ skip_vht_parameters_set:
+ 		else if (dut->ap_btwt == VALUE_ENABLED)
+ 			fprintf(f, "twt_responder_caps=2\n");
+ 
++		if (dut->ap_ttlm == VALUE_ENABLED)
++			fprintf(f, "ttlm_enable=1\n");
++
+ 		fclose(f);
+ 	}
+ 
+@@ -13663,6 +13682,7 @@ static enum sigma_cmd_result cmd_ap_rese
+ 		dut->ap_beacon_prot = 1;
+ 		dut->nontrigger_txbf = VALUE_NOT_SET;
+ 		dut->switch_he_eht = 0;
++		dut->ap_ttlm = VALUE_NOT_SET;
+ 	}
+ 
+ 	if (dut->ap_mode == AP_11be)
+@@ -20111,6 +20131,11 @@ static enum sigma_cmd_result mac80211_ap
  #ifdef NL80211_SUPPORT
  	char phy_name[PHY_NAME_SIZE];
  #endif /* NL80211_SUPPORT */
@@ -27,7 +68,7 @@ Signed-off-by: Shwetha G K <kshwetha@qti.qualcomm.com>
  	ifname = get_main_ifname(dut);
  
  	val = get_param(cmd, "Interface");
-@@ -20410,6 +20415,27 @@ static enum sigma_cmd_result mac80211_ap
+@@ -20735,6 +20760,27 @@ static enum sigma_cmd_result mac80211_ap
  			return res;
  	}
  
@@ -55,7 +96,7 @@ Signed-off-by: Shwetha G K <kshwetha@qti.qualcomm.com>
  	val = get_param(cmd, "AffiliatedAP_Action");
  	if (val) {
  		if (dut->program == PROGRAM_EHT) {
-@@ -20433,6 +20459,18 @@ static enum sigma_cmd_result mac80211_ap
+@@ -20758,6 +20804,18 @@ static enum sigma_cmd_result mac80211_ap
  					 ifname, dut->sigma_tmpdir, file);
  #endif /* NL80211_SUPPORT */
  				run_system(dut, buf);
@@ -74,3 +115,13 @@ Signed-off-by: Shwetha G K <kshwetha@qti.qualcomm.com>
  			}
  		} else {
  			send_resp(dut, conn, SIGMA_ERROR,
+--- a/sigma_dut.h
++++ b/sigma_dut.h
+@@ -1494,6 +1494,7 @@ struct sigma_dut {
+ 	enum value_not_set_enabled_disabled ap_trigsubfb;
+ 	enum value_not_set_enabled_disabled ap_dscp_cap;
+ 	enum value_not_set_enabled_disabled ap_epcs;
++	enum value_not_set_enabled_disabled ap_ttlm;
+ };
+ 
+ #ifdef NL80211_SUPPORT
