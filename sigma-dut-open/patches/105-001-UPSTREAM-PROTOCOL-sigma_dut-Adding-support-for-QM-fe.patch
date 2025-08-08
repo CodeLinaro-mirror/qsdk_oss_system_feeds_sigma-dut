@@ -57,7 +57,17 @@ Signed-off-by: Naveen Sivasamy <naves@qti.qualcomm.com>
  }
  
  #define IEEE80211_VHT_CAP_TXSTBC                               ((u32) (1 << 7))
-@@ -12011,6 +12032,12 @@ skip_vht_parameters_set:
+@@ -11352,7 +11373,8 @@ skip_key_mgmt:
+ 
+ 		if ((dut->program == PROGRAM_VHT) ||
+ 		    ((dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT ||
+-			  dut->program == PROGRAM_WPA3) &&
++			  dut->program == PROGRAM_WPA3 ||
++			  dut->program == PROGRAM_QM) &&
+ 		     !check_band(dut, BAND_2G, link_id))) {
+ 			int vht_oper_centr_freq_idx;
+ 
+@@ -12011,6 +12033,12 @@ skip_vht_parameters_set:
  		if (check_band(dut, BAND_6G, link_id))
  			fprintf(f, "he_6ghz_reg_pwr_type=0\n");
  
@@ -70,7 +80,7 @@ Signed-off-by: Naveen Sivasamy <naves@qti.qualcomm.com>
  		fclose(f);
  	}
  
-@@ -12447,6 +12474,21 @@ hapd_started:
+@@ -12447,6 +12475,21 @@ hapd_started:
  			 */
  			fwtest_cmd_wrapper(dut, "-m 0x48 -v 0 926 1", ifname);
  		}
@@ -92,7 +102,7 @@ Signed-off-by: Naveen Sivasamy <naves@qti.qualcomm.com>
  	}
  
  	/* Disable latency aware txmode selection */
-@@ -13686,10 +13728,17 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -13686,10 +13729,17 @@ static enum sigma_cmd_result cmd_ap_rese
  	dut->multi_mld = 0;
  
  	dut->hostapd_running = 0;
@@ -111,7 +121,7 @@ Signed-off-by: Naveen Sivasamy <naves@qti.qualcomm.com>
  	if (get_openwrt_driver_type() == OPENWRT_DRIVER_ATHEROS)
  		return 1;
  
-@@ -20428,6 +20477,25 @@ static enum sigma_cmd_result mac80211_ap
+@@ -20428,6 +20478,25 @@ static enum sigma_cmd_result mac80211_ap
  		}
  	}
  
