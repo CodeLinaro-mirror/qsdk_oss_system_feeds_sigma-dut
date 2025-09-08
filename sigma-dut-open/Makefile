@@ -4,6 +4,7 @@ PKG:=sigma-dut
 PKG_NAME:=sigma-dut-open
 PKG_VERSION:=20250224
 PKG_RELEASE:=1
+PKG_LICENSE:=Clear BSD, BSD-3-Clause and and ISC
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/qca/sigma-dut.git
@@ -19,8 +20,11 @@ WIFI_ath12k:=PACKAGE_kmod-ath12k
 WIFI_wigig:=PACKAGE_kmod-qca-wigig-driver
 WIFI_OPEN:=$(WIFI_ath9k)||$(WIFI_ath10k)||$(WIFI_ath11k)||$(WIFI_ath12k)||$(WIFI_wigig)
 
-
-include $(INCLUDE_DIR)/local-development.mk
+ifeq ($(CONFIG_TARGET_sdx85_cpe-v1),y)
+    include $(TOPDIR)/owrt-qti-ipq-open/include/local-development.mk
+else
+    include $(INCLUDE_DIR)/local-development.mk
+endif
 
 ifeq ($(DUMP)$(PKG_VERSION),)
   PKG_REV:=$(shell git ls-remote $(PKG_SOURCE_URL) $(PKG_BRANCH) | cut -b -7)
@@ -37,6 +41,9 @@ TARGET_CFLAGS+= -Wall -Werror
 TARGET_CFLAGS+= -DNL80211_SUPPORT -I$(STAGING_DIR)/usr/include/libnl3
 TARGET_LDFLAGS+= -lm -lnl-3 -lnl-genl-3 -lnl-route-3
 
+ifeq ($(CONFIG_TARGET_sdx85_cpe-v1),y)
+    TARGET_CFLAGS+= -Wno-error=format-truncation
+endif 
 
 define Package/$(PKG_NAME)
   SECTION:=QCA
