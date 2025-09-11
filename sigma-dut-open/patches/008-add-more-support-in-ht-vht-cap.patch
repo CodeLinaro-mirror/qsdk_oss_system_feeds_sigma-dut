@@ -1,16 +1,5 @@
 --- a/ap.c
 +++ b/ap.c
-@@ -1527,6 +1527,10 @@ static enum sigma_cmd_result cmd_ap_set_
- 		}
- 	}
- 
-+	val = get_param(cmd, "MU_TxBF");
-+	if (val)
-+		dut->ap_mu_txBF = strcasecmp(val, "enable") == 0;
-+
- 	/* UNSUPPORTED: tx_lgi_rate */
- 
- 	val = get_param(cmd, "wpsnfc");
 @@ -8333,7 +8337,9 @@ write_conf:
  	     drv == DRIVER_LINUX_WCN) &&
 	    (mode == AP_11ng || mode == AP_11na ||
