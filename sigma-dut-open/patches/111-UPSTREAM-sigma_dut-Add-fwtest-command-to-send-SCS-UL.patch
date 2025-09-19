@@ -1,0 +1,45 @@
+From ba25dce9dc83a486a2758a532ec28b4bca55da42 Mon Sep 17 00:00:00 2001
+From: Naveen Sivasamy <naves@qti.qualcomm.com>
+Date: Thu, 18 Sep 2025 11:12:33 +0530
+Subject: [PATCH] UPSTREAM:PROTOCOL:sigma_dut: Add fwtest command to
+make the UL triggers consistent in SCS UL OFDMA tests
+
+In SCS testcases with UL OFDMA enabled, UL triggers are expected to be
+sent consistently. However, current behavior relies on QoS NULL frames
+from stations to initiate triggers, leading to inconsistency. This
+change introduces a fwtest command to make the UL triggers consistent
+by sending UL triggers irrespective of QoS NULL frames from the
+station.
+
+Signed-off-by: Naveen Sivasamy <naves@qti.qualcomm.com>
+---
+ ap.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/ap.c b/ap.c
+index 500d828..82c169e 100644
+--- a/ap.c
++++ b/ap.c
+@@ -12585,13 +12585,18 @@ hapd_started:
+ 		}
+ 	}
+ 
+-	if (dut->program == PROGRAM_QM) {
++	if (drv == DRIVER_MAC80211 && dut->program == PROGRAM_QM) {
+ 		if (dut->ap_mscs == VALUE_ENABLED)
+ 			run_system_wrapper(dut,
+ 					   "echo 1 > /sys/kernel/debug/ecm/ecm_classifier_mscs/enabled");
+ 		else if (dut->ap_mscs == VALUE_DISABLED)
+ 			run_system_wrapper(dut,
+ 					   "echo 0 > /sys/kernel/debug/ecm/ecm_classifier_mscs/enabled");
++
++		if (dut->ap_scs == VALUE_ENABLED && dut->ap_he_ulofdma == VALUE_ENABLED) {
++			/* Send UL triggers consistently irrespective of station's QoS NULL frames*/
++			fwtest_cmd_wrapper(dut, "-m 0x48 -v 0 926 1", ifname);
++		}
+ 	}
+ 
+ 	/* Disable latency aware txmode selection */
+-- 
+2.34.1
+
