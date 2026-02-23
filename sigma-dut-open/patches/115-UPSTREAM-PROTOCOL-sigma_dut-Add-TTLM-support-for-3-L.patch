@@ -17,11 +17,9 @@ Signed-off-by: Vikram Kandukuri <vikram@qti.qualcomm.com>
  ap.c | 214 +++++++++++++++++++++++++++++++++++++++++++++--------------
  1 file changed, 164 insertions(+), 50 deletions(-)
 
-diff --git a/ap.c b/ap.c
-index 7f3cbba..92a3b88 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -15197,6 +15197,7 @@ static int mac80211_ap_send_frame_btm_req(struct sigma_dut *dut,
+@@ -15200,6 +15200,7 @@ static int mac80211_ap_send_frame_btm_re
  	bool link_set = false;
  	char link_param[10];
  	int link_id = 0;
@@ -29,7 +27,7 @@ index 7f3cbba..92a3b88 100644
  
  	val = get_param(cmd, "Interface");
  	if (val) {
-@@ -15235,6 +15236,11 @@ static int mac80211_ap_send_frame_btm_req(struct sigma_dut *dut,
+@@ -15238,6 +15239,11 @@ static int mac80211_ap_send_frame_btm_re
  		return -1;
  	}
  
@@ -41,7 +39,7 @@ index 7f3cbba..92a3b88 100644
  	if (dut->program == PROGRAM_EHT) {
  		snprintf(link_param, sizeof(link_param), "-l %d", link_id);
  		link_set = true;
-@@ -15313,39 +15319,67 @@ static int mac80211_ap_send_frame_btm_req(struct sigma_dut *dut,
+@@ -15316,39 +15322,67 @@ static int mac80211_ap_send_frame_btm_re
  		for (i = 0; i < count; i++)
  			strlcat(nr_cmd_buf, nr[i], sizeof(nr_cmd_buf));
  
@@ -78,31 +76,31 @@ index 7f3cbba..92a3b88 100644
 -				dut->ap_btmreq_disassoc_imnt, disassoc_timer,
 -				bss_term ? bss_term_str : " ", dut->ap_assoc_delay, dut->btm[0].ap_ne_pref,
 -				dut->btm[0].nebor_linkid[0]);
-+		if (dut->ap_ttlm) {
-+			sigma_dut_print(dut, DUT_MSG_INFO, " TTLM Case - Version5\n");
++		if (dut->ap_ttlm == VALUE_ENABLED) {
++			sigma_dut_print(dut, DUT_MSG_INFO, " TTLM Case 3 Link \n");
 +			if (dut->btm[0].nebor_linkid[0] != -1 && dut->btm[0].nebor_linkid[1] != -1 && dut->btm[0].nebor_linkid[2] != -1) {
 +				snprintf(buf, sizeof(buf),
-+						"-i %s %s bss_tm_req %02x:%02x:%02x:%02x:%02x:%02x pref=%d abridged=1 valid_int=15 disassoc_imminent=%d disassoc_timer=%d %s %s mbo=%d:%d:1 partner_link_set=%d,%d,%d,%d",
++						"-i %s %s bss_tm_req %02x:%02x:%02x:%02x:%02x:%02x pref=%d abridged=1 valid_int=15 disassoc_imminent=%d disassoc_timer=%d %s mbo=%d:%d:1 partner_link_set=%d,%d,%d,%d",
 +						ifname, link_set ? link_param : "", mac_addr[0], mac_addr[1], mac_addr[2],
 +						mac_addr[3], mac_addr[4], mac_addr[5], cand_list,
 +						dut->ap_btmreq_disassoc_imnt, disassoc_timer,
-+						bss_term ? bss_term_str : " ", cand_list ? nr_cmd_buf : " ", mbo_reason, dut->ap_assoc_delay, dut->btm[0].ap_ne_pref,
++						bss_term ? bss_term_str : " ", mbo_reason, dut->ap_assoc_delay, dut->btm[0].ap_ne_pref,
 +						dut->btm[0].nebor_linkid[0], dut->btm[0].nebor_linkid[1],  dut->btm[0].nebor_linkid[2]);
 +			} else if (dut->btm[0].nebor_linkid[0] != -1 && dut->btm[0].nebor_linkid[1] != -1) {
 +				snprintf(buf, sizeof(buf),
-+						"-i %s %s bss_tm_req %02x:%02x:%02x:%02x:%02x:%02x pref=%d abridged=1 valid_int=15 disassoc_imminent=%d disassoc_timer=%d %s %s mbo=%d:%d:1 partner_link_set=%d,%d,%d",
++						"-i %s %s bss_tm_req %02x:%02x:%02x:%02x:%02x:%02x pref=%d abridged=1 valid_int=15 disassoc_imminent=%d disassoc_timer=%d %s mbo=%d:%d:1 partner_link_set=%d,%d,%d",
 +						ifname, link_set ? link_param : "", mac_addr[0], mac_addr[1], mac_addr[2],
 +						mac_addr[3], mac_addr[4], mac_addr[5], cand_list,
 +						dut->ap_btmreq_disassoc_imnt, disassoc_timer,
-+						bss_term ? bss_term_str : " ", cand_list ? nr_cmd_buf : " ", mbo_reason, dut->ap_assoc_delay, dut->btm[0].ap_ne_pref,
++						bss_term ? bss_term_str : " ", mbo_reason, dut->ap_assoc_delay, dut->btm[0].ap_ne_pref,
 +						dut->btm[0].nebor_linkid[0], dut->btm[0].nebor_linkid[1]);
 +			} else if (dut->btm[0].nebor_linkid[0] != -1) {
 +				snprintf(buf, sizeof(buf),
-+						"-i %s %s bss_tm_req %02x:%02x:%02x:%02x:%02x:%02x pref=%d abridged=1 valid_int=15 disassoc_imminent=%d disassoc_timer=%d %s %s mbo=%d:%d:1 partner_link_set=%d,%d",
++						"-i %s %s bss_tm_req %02x:%02x:%02x:%02x:%02x:%02x pref=%d abridged=1 valid_int=15 disassoc_imminent=%d disassoc_timer=%d %s mbo=%d:%d:1 partner_link_set=%d,%d",
 +						ifname, link_set ? link_param : "", mac_addr[0], mac_addr[1], mac_addr[2],
 +						mac_addr[3], mac_addr[4], mac_addr[5], cand_list,
 +						dut->ap_btmreq_disassoc_imnt, disassoc_timer,
-+						bss_term ? bss_term_str : " ", cand_list ? nr_cmd_buf : " ", mbo_reason, dut->ap_assoc_delay, dut->btm[0].ap_ne_pref,
++						bss_term ? bss_term_str : " ", mbo_reason, dut->ap_assoc_delay, dut->btm[0].ap_ne_pref,
 +						dut->btm[0].nebor_linkid[0]);
 +			}
 +		} else {
@@ -142,19 +140,19 @@ index 7f3cbba..92a3b88 100644
  		}
  
  		sigma_dut_print(dut, DUT_MSG_INFO, "bss_tm_req buf %s\n", buf);
-@@ -15359,7 +15393,10 @@ static int mac80211_ap_send_frame_btm_req(struct sigma_dut *dut,
+@@ -15362,7 +15396,10 @@ static int mac80211_ap_send_frame_btm_re
  
  		if (cand_list) {
  			self_mac = dut->mbo_self_ap_tuple.mac_addr;
 -			self_ap_ne_pref = dut->mbo_self_ap_tuple.ap_ne_pref;
-+			if (!dut->ap_ttlm)
-+				self_ap_ne_pref = dut->mbo_self_ap_tuple.ap_ne_pref;
-+			else
++			if (dut->ap_ttlm == VALUE_ENABLED)
 +				self_ap_ne_pref = 0;
++			else
++				self_ap_ne_pref = dut->mbo_self_ap_tuple.ap_ne_pref;
  			snprintf(nrbuf[0], sizeof(nrbuf[0]),
  				"neighbor=%02x:%02x:%02x:%02x:%02x:%02x,0x00000017,%02d,%02d,%02d,0301%02x ",
  				self_mac[0], self_mac[1], self_mac[2],
-@@ -15368,28 +15405,59 @@ static int mac80211_ap_send_frame_btm_req(struct sigma_dut *dut,
+@@ -15371,28 +15408,59 @@ static int mac80211_ap_send_frame_btm_re
  				dut->mbo_self_ap_tuple.ap_ne_op_ch, 0,
  				dut->ap_btmreq_disassoc_imnt ? 0 : self_ap_ne_pref);
  
@@ -167,7 +165,7 @@ index 7f3cbba..92a3b88 100644
 -					dut->mbo_pref_aps[i].ap_ne_class,
 -					dut->mbo_pref_aps[i].ap_ne_op_ch, 0,
 -					dut->mbo_pref_aps[i].ap_ne_pref);
-+			if (!dut->ap_ttlm) {
++			if (dut->ap_ttlm != VALUE_ENABLED) {
 +				for (i = 0; i < dut->mbo_pref_ap_cnt; i++) {
 +					pref_mac_addr = dut->mbo_pref_aps[i].mac_addr;
 +					snprintf(nrbuf[i + 1], sizeof(nrbuf[0]),
@@ -191,8 +189,8 @@ index 7f3cbba..92a3b88 100644
 -			dut->ap_btmreq_disassoc_imnt, disassoc_timer,
 -			bss_term ? bss_term_str : " ",
 -			cand_list ? nr_cmd_buf : " ", dut->ap_assoc_delay);
-+		if (dut->ap_ttlm) {
-+			sigma_dut_print(dut, DUT_MSG_INFO, " TTLM Case - Version5\n");
++		if (dut->ap_ttlm == VALUE_ENABLED) {
++			sigma_dut_print(dut, DUT_MSG_INFO, " TTLM Case - 2 Link\n");
 +			if (dut->btm[0].nebor_linkid[0] != -1 && dut->btm[0].nebor_linkid[1] != -1 && dut->btm[0].nebor_linkid[2] != -1) {
 +				snprintf(buf, sizeof(buf),
 +						"-i %s %s bss_tm_req %02x:%02x:%02x:%02x:%02x:%02x pref=%d abridged=1 valid_int=15 disassoc_imminent=%d disassoc_timer=%d %s mbo=%d:%d:1 partner_link_set=%d,%d,%d,%d",
@@ -230,7 +228,7 @@ index 7f3cbba..92a3b88 100644
  
  		sigma_dut_print(dut, DUT_MSG_INFO, "bss_tm_req buf %s\n", buf);
  
-@@ -15449,6 +15517,50 @@ static int mac80211_ap_send_frame_disassoc(struct sigma_dut *dut,
+@@ -15452,6 +15520,51 @@ static int mac80211_ap_send_frame_disass
  	return 0;
  }
  
@@ -274,6 +272,7 @@ index 7f3cbba..92a3b88 100644
 +			 "hostapd_cli -i %s %s negotiated_ttlm teardown %02x:%02x:%02x:%02x:%02x:%02x",
 +			 ifname, link_set ? link_param : "", peer_mld_macaddr[0], peer_mld_macaddr[1], peer_mld_macaddr[2],
 +			 peer_mld_macaddr[3], peer_mld_macaddr[4], peer_mld_macaddr[5]);
++			 sigma_dut_print(dut, DUT_MSG_INFO, "teardown: '%s'\n", buf);
 +			 run_system(dut, buf);
 +	}
 +	return 0;
@@ -281,7 +280,7 @@ index 7f3cbba..92a3b88 100644
  
  static int mac80211_ap_send_frame_mbo(struct sigma_dut *dut, struct sigma_conn *conn,
  				      struct sigma_cmd *cmd)
-@@ -15472,6 +15584,8 @@ static int mac80211_ap_send_frame_mbo(struct sigma_dut *dut, struct sigma_conn *
+@@ -15475,6 +15588,8 @@ static int mac80211_ap_send_frame_mbo(st
  		mac80211_ap_send_frame_bcn_rpt_req(dut, cmd, (const char *)ifname);
  	else if (strcasecmp(val, "disassoc") == 0)
  		mac80211_ap_send_frame_disassoc(dut, cmd, (const char *)ifname);
@@ -290,6 +289,3 @@ index 7f3cbba..92a3b88 100644
  	else
  		return -1;
  
--- 
-2.34.1
-
