@@ -228,7 +228,7 @@ Signed-off-by: Vikram Kandukuri <vikram@qti.qualcomm.com>
  
  		sigma_dut_print(dut, DUT_MSG_INFO, "bss_tm_req buf %s\n", buf);
  
-@@ -15452,6 +15520,51 @@ static int mac80211_ap_send_frame_disass
+@@ -15452,6 +15520,50 @@ static int mac80211_ap_send_frame_disass
  	return 0;
  }
  
@@ -267,20 +267,19 @@ Signed-off-by: Vikram Kandukuri <vikram@qti.qualcomm.com>
 +		link_set = true;
 +	}
 +
-+	if (dut->ap_mode == AP_11be) {
-+		snprintf(buf, sizeof(buf),
-+			 "hostapd_cli -i %s %s negotiated_ttlm teardown %02x:%02x:%02x:%02x:%02x:%02x",
-+			 ifname, link_set ? link_param : "", peer_mld_macaddr[0], peer_mld_macaddr[1], peer_mld_macaddr[2],
-+			 peer_mld_macaddr[3], peer_mld_macaddr[4], peer_mld_macaddr[5]);
-+			 sigma_dut_print(dut, DUT_MSG_INFO, "teardown: '%s'\n", buf);
-+			 run_system(dut, buf);
-+	}
++	snprintf(buf, sizeof(buf),
++		"hostapd_cli -i %s %s negotiated_ttlm teardown %02x:%02x:%02x:%02x:%02x:%02x",
++		ifname, link_set ? link_param : "", peer_mld_macaddr[0], peer_mld_macaddr[1], peer_mld_macaddr[2],
++		peer_mld_macaddr[3], peer_mld_macaddr[4], peer_mld_macaddr[5]);
++	sigma_dut_print(dut, DUT_MSG_INFO, "teardown: '%s'\n", buf);
++	run_system(dut, buf);
++
 +	return 0;
 +}
  
  static int mac80211_ap_send_frame_mbo(struct sigma_dut *dut, struct sigma_conn *conn,
  				      struct sigma_cmd *cmd)
-@@ -15475,6 +15588,8 @@ static int mac80211_ap_send_frame_mbo(st
+@@ -15475,6 +15587,8 @@ static int mac80211_ap_send_frame_mbo(st
  		mac80211_ap_send_frame_bcn_rpt_req(dut, cmd, (const char *)ifname);
  	else if (strcasecmp(val, "disassoc") == 0)
  		mac80211_ap_send_frame_disassoc(dut, cmd, (const char *)ifname);
