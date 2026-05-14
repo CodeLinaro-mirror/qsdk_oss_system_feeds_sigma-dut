@@ -1,0 +1,200 @@
+From 0000000000000000000000000000000000000001 Mon Sep 17 00:00:00 2001
+From: Hari Naraayana Desikan Kannan <hnaraaya@qti.qualcomm.com>
+Date: Fri, 17 Apr 2026 01:43:20 +0530
+Subject: [PATCH] QSDK:PROTOCOL:sigma-dut: add OCE certification test case support
+
+Add sigma-dut support for Wi-Fi CERTIFIED Optimized Connectivity
+(OCE) AP certification test cases per Wi-Fi Optimized Connectivity
+Specification v2.0.
+
+The following parameters are added to cmd_ap_set_wireless() and
+committed to hostapd configuration in cmd_ap_config_commit():
+
+- AssocReject/RSSIthreshold/RetryDelay: write
+  rssi_reject_assoc_rssi and rssi_reject_assoc_timeout to hostapd
+  config for RSSI-based association rejection (Section 3.14,
+  RSSI-based association rejection information)
+
+- ACS channel restriction: write freqlist=2412 2437 2462 when
+  channel=0 to restrict ACS to non-overlapping 2.4 GHz channels
+  (Section 3.10, Scanning mutually non-overlapping channels)
+
+- oce_rnr_scan_and_update(): trigger a scan and rebuild the RNR
+  neighbour list in hostapd after bring-up (Section 3.4, Reduced
+  Neighbor Report and AP Channel Report elements)
+
+cmd_ap_reset_default() is updated to initialise the new fields
+on each reset for PROGRAM_OCE.
+
+Patch-dependency: NA
+Patch-work: NA
+
+Change-Id: I22195b30913e2fc1df4c9ca0efdcee2b621c4a1a
+Signed-off-by: Hari Naraayana Desikan Kannan <hnaraaya@qti.qualcomm.com>
+---
+ ap.c        | 93 ++++++++++++++++++++++++++++++++++++++++++++++++++---
+ sigma_dut.h | 3 +++
+ 2 files changed, 93 insertions(+), 3 deletions(-)
+
+--- a/ap.c	2026-04-25 00:51:15.655539413 +0530
++++ b/ap.c	2026-04-25 00:52:29.334309740 +0530
+@@ -2449,6 +2449,27 @@
+ 		}
+ 	}
+ 
++	val = get_param(cmd, "AssocReject");
++	if (val) {
++		if (strcasecmp(val, "enable") == 0) {
++			dut->ap_assoc_reject = VALUE_ENABLED;
++		} else if (strcasecmp(val, "disable") == 0) {
++			dut->ap_assoc_reject = VALUE_DISABLED;
++		} else {
++			send_resp(dut, conn, SIGMA_INVALID,
++				  "errorCode,Unsupported AssocReject");
++			return STATUS_SENT;
++		}
++	}
++
++	val = get_param(cmd, "RSSIthreshold");
++	if (val)
++		dut->ap_rssi_threshold = atoi(val);
++
++	val = get_param(cmd, "RetryDelay");
++	if (val)
++		dut->ap_retry_delay = atoi(val);
++
+ 	val = get_param(cmd, "BLEChannelUtil");
+ 	if (val)
+ 		dut->ap_blechanutil = atoi(val);
+@@ -10420,6 +10441,42 @@
+ 	return oper_centr_freq_idx;
+ }
+ 
++
++/*
++ * oce_rnr_scan_and_update - Trigger a scan on the AP radio, populate the
++ * RNR neighbor list in hostapd, and update OCE Capability Indication bits.
++ *
++ * Used for OCE test cases 4.3.1 and 4.3.2.
++ */
++static void oce_rnr_scan_and_update(struct sigma_dut *dut, const char *ifname)
++{
++	char cmd[256];
++
++	/* Trigger a scan to populate the driver scan cache */
++	snprintf(cmd, sizeof(cmd), "iw dev %s scan 2>/dev/null", ifname);
++	sigma_dut_print(dut, DUT_MSG_INFO,
++			"OCE RNR: triggering scan on %s", ifname);
++	if (system(cmd) != 0) {
++		sigma_dut_print(dut, DUT_MSG_ERROR,
++				"OCE RNR: scan trigger failed on %s", ifname);
++		return;
++	}
++
++	/* Allow scan to complete */
++	sleep(3);
++
++	snprintf(cmd, sizeof(cmd), "-i %s set_neighbor scan", ifname);
++	run_hostapd_cli(dut, cmd);
++
++	/* Push updated OCE Capability Indication IE into beacon/probe resp */
++	snprintf(cmd, sizeof(cmd), "-i %s UPDATE_BEACON", ifname);
++	run_hostapd_cli(dut, cmd);
++
++	sigma_dut_print(dut, DUT_MSG_INFO,
++			"OCE RNR: neighbor DB and OCE channel info updated on %s",
++			ifname);
++}
++
+ enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
+ 					   struct sigma_conn *conn,
+ 					   struct sigma_cmd *cmd)
+@@ -10788,6 +10845,11 @@
+ 
+ 		fprintf(f, "channel=%d\n", chan);
+ 
++		/* OCE 4.7.1: restrict ACS to channels 1, 6, 11 (2.4 GHz only) */
++		if (dut->program == PROGRAM_OCE && chan == 0 &&
++		    check_band(dut, BAND_2G, link_id))
++			fprintf(f, "freqlist=2412 2437 2462\n");
++
+ 		if (sigma_hapd_ctrl)
+ 			fprintf(f, "ctrl_interface=%s\n", sigma_hapd_ctrl);
+ 		else if (!(dut->multi_mbssid && !link_id))
+@@ -11860,7 +11921,26 @@
+ 
+ 		if (dut->program == PROGRAM_OCE) {
+ 			fprintf(f, "oce=%d\n",
+-				dut->dev_role == DEVROLE_STA_CFON ? 2 : 1);
++				dut->dev_role == DEVROLE_STA_CFON ? 2 : 4);
++			fprintf(f, "mbo=1\n");
++			if (dut->ap_assoc_reject == VALUE_ENABLED &&
++			    dut->ap_rssi_threshold != 0) {
++				fprintf(f, "rssi_reject_assoc_rssi=%d\n",
++					dut->ap_rssi_threshold);
++				if (dut->ap_retry_delay > 0)
++					fprintf(f, "rssi_reject_assoc_timeout=%d\n",
++						dut->ap_retry_delay);
++			}
++			if (dut->ap_filsdscv == VALUE_ENABLED) {
++				/* FILS discovery requires ieee80211ax */
++				fprintf(f, "ieee80211ax=1\n");
++				fprintf(f, "fils_discovery_min_interval=%d\n",
++					dut->ap_fils_dscv_int);
++				fprintf(f, "fils_discovery_max_interval=%d\n",
++					dut->ap_fils_dscv_int);
++			}
++			/* OCE 4.3.x: RNR scan requires neighbor report capability */
++			fprintf(f, "rrm_neighbor_report=1\n");
+ 		}
+ 
+ 		if ((dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT) &&
+@@ -12880,6 +12960,10 @@
+ 		run_hostapd_cli(dut, buf);
+ 	}
+ 
++	/* OCE 4.3.1/4.3.2: after hostapd is up, scan and populate RNR neighbors */
++	if (dut->program == PROGRAM_OCE && dut->ap_rnr == VALUE_ENABLED)
++		oce_rnr_scan_and_update(dut, ifname);
++
+ 	return 1;
+ }
+ 
+@@ -13763,12 +13847,16 @@
+ 
+ 		dut->ap_dhcp_stop = 0;
+ 		dut->ap_oce = VALUE_ENABLED;
+ 		dut->ap_broadcast_ssid = VALUE_ENABLED;
+ 		dut->ap_fils_dscv_int = 20;
+-		dut->ap_filsdscv = dut->dev_role == DEVROLE_STA_CFON ?
+-			VALUE_NOT_SET : VALUE_ENABLED;
++		dut->ap_filsdscv = (dut->dev_role == DEVROLE_STA_CFON) ?
++			VALUE_NOT_SET : VALUE_ENABLED;
+ 		dut->ap_filshlp = VALUE_DISABLED;
+ 		dut->ap_rnr = VALUE_DISABLED;
++		dut->ap_assoc_reject = VALUE_NOT_SET;
++		dut->ap_rssi_threshold = 0;
++		dut->ap_retry_delay = 0;
++		dut->ap_pmf = AP_PMF_OPTIONAL;
+ 		dut->ap_nairealm[0] = '\0';
+ 		dut->ap_nairealm_int = 0;
+ 		dut->ap_blechanutil = 0;
+--- a/sigma_dut.h	2026-04-25 00:51:15.655539413 +0530
++++ b/sigma_dut.h	2026-04-25 00:52:29.334309740 +0530
+@@ -1102,6 +1102,8 @@
+ 	int ap_assoc_delay;
+ 	int ap_btmreq_bss_term_tsf;
+ 	int ap_fils_dscv_int;
++	int ap_rssi_threshold;   /* OCE: RSSI-based assoc reject threshold (dBm) */
++	int ap_retry_delay;      /* OCE: assoc reject retry delay (seconds) */
+ 	int ap_nairealm_int;
+ 	char ap_nairealm[33];
+ 	int ap_blechanutil;
+@@ -1153,6 +1155,7 @@
+ 	enum value_not_set_enabled_disabled ap_filshlp;
+ 	enum value_not_set_enabled_disabled ap_broadcast_ssid;
+ 	enum value_not_set_enabled_disabled ap_rnr;
++	enum value_not_set_enabled_disabled ap_assoc_reject; /* OCE: RSSI-based assoc reject */
+ 	enum value_not_set_enabled_disabled ap_esp;
+ 
+ 	enum value_not_set_enabled_disabled ap_he_ulofdma;
