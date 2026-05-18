@@ -20,7 +20,7 @@ WIFI_ath12k:=PACKAGE_kmod-ath12k
 WIFI_wigig:=PACKAGE_kmod-qca-wigig-driver
 WIFI_OPEN:=$(WIFI_ath9k)||$(WIFI_ath10k)||$(WIFI_ath11k)||$(WIFI_ath12k)||$(WIFI_wigig)
 
-ifeq ($(CONFIG_TARGET_sdx85_cpe-v1),y)
+ifeq (y, $(filter y, $(CONFIG_TARGET_sdx85_cpe-v1) $(CONFIG_TARGET_echo_cpe)))
     include $(TOPDIR)/owrt-qti-ipq-open/include/local-development.mk
 else
     include $(INCLUDE_DIR)/local-development.mk
@@ -41,7 +41,7 @@ TARGET_CFLAGS+= -Wall -Werror
 TARGET_CFLAGS+= -DNL80211_SUPPORT -I$(STAGING_DIR)/usr/include/libnl3
 TARGET_LDFLAGS+= -lm -lnl-3 -lnl-genl-3 -lnl-route-3
 
-ifeq ($(CONFIG_TARGET_sdx85_cpe-v1),y)
+ifeq (y, $(filter y, $(CONFIG_TARGET_sdx85_cpe-v1) $(CONFIG_TARGET_echo_cpe)))
     TARGET_CFLAGS+= -Wno-error=format-truncation
 endif
 
