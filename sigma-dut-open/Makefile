@@ -45,10 +45,6 @@ ifeq (y, $(filter y, $(CONFIG_TARGET_sdx85_cpe-v1) $(CONFIG_TARGET_echo_cpe)))
     TARGET_CFLAGS+= -Wno-error=format-truncation
 endif
 
-ifeq ($(CONFIG_KERNEL_IPQ_MEM_PROFILE),512)
-    TARGET_CFLAGS+= -DMEM_PROFILE=512
-endif
-
 define Package/$(PKG_NAME)
   SECTION:=QCA
   CATEGORY:=QCA software
