@@ -369,7 +369,20 @@ Signed-off-by: Hari Naraayana Desikan Kannan <hnaraaya@qti.qualcomm.com>
  		}
  
  		fprintf(f, "bssid=%02x:%02x:%02x:%02x",
-@@ -11933,11 +12119,82 @@ skip_vht_parameters_set:
+@@ -11565,12 +11751,10 @@ skip_key_mgmt:
+ 		}
+ 
+ 		if (dut->ap_mbo && (dut->ap_key_mgmt != AP_WPA3_COMPAT ||
+ 				    check_band(dut, BAND_6G, link_id))) {
+ 			fprintf(f, "mbo=1\n");
+-			/* OCE AP mode */
+-			fprintf(f, "oce=4\n");
+ 			/* Advertise MBO Cellular data aware capability */
+ 			fprintf(f, "mbo_ap_cap_ind=64\n");
+ 			/* MBO Cellular Data Preference set to excluded (0) */
+ 			fprintf(f, "mbo_cell_data_conn_pref=0\n");
+ 			/* Update Country environment for MBO Global Reg Domain */
+@@ -11933,11 +12117,82 @@ skip_vht_parameters_set:
  				fprintf(f, "owe_ptk_workaround=1\n");
  		}
  
@@ -453,7 +466,7 @@ Signed-off-by: Hari Naraayana Desikan Kannan <hnaraaya@qti.qualcomm.com>
  		if ((dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT) &&
  		    dut->ap_mbssid == VALUE_ENABLED && !link_id &&
  		    dut->multi_mbssid) {
-@@ -12510,10 +12767,28 @@ skip_vht_parameters_set:
+@@ -12510,10 +12765,28 @@ skip_vht_parameters_set:
  			snprintf(buf, sizeof(buf), " %s/sigma_dut-ap_%d.conf",
  				 dut->sigma_tmpdir, i);
  			strlcat(file_name_buf, buf, 500);
@@ -482,7 +495,7 @@ Signed-off-by: Hari Naraayana Desikan Kannan <hnaraaya@qti.qualcomm.com>
  			 dut->hostapd_bin ? dut->hostapd_bin : path,
  			 dut->hostapd_debug_log ? " -dddKt" : "",
  			 (dut->hostapd_debug_log && dut->hostapd_debug_log[0]) ?
-@@ -12557,10 +12832,35 @@ hapd_started:
+@@ -12557,10 +12830,35 @@ hapd_started:
  		send_resp(dut, conn, SIGMA_ERROR,
  			  "errorCode,Failed to talk to hostapd");
  		return 0;
@@ -518,7 +531,7 @@ Signed-off-by: Hari Naraayana Desikan Kannan <hnaraaya@qti.qualcomm.com>
  
  		if (dut->ap_ba_bufsize == BA_BUFSIZE_1024)
  			buf_size = 1024;
-@@ -13846,10 +14146,19 @@ static enum sigma_cmd_result cmd_ap_rese
+@@ -13846,10 +14144,19 @@ static enum sigma_cmd_result cmd_ap_rese
  		if (dut->ap_dhcp_stop)
  			run_system(dut, "/etc/init.d/dnsmasq start");
  
@@ -538,7 +551,7 @@ Signed-off-by: Hari Naraayana Desikan Kannan <hnaraaya@qti.qualcomm.com>
  		dut->ap_filsdscv = dut->dev_role == DEVROLE_STA_CFON ?
  			VALUE_NOT_SET : VALUE_ENABLED;
  		dut->ap_filshlp = VALUE_DISABLED;
-@@ -15233,15 +15542,11 @@ static int return_subelem_id(const char
+@@ -15233,15 +15540,11 @@ static int return_subelem_id(const char
  }
  
  static int mac80211_process_wlan_tag(struct sigma_dut *dut, int wlan_tag,
@@ -555,7 +568,7 @@ Signed-off-by: Hari Naraayana Desikan Kannan <hnaraaya@qti.qualcomm.com>
  		return -1;
  	}
  
-@@ -16312,12 +16617,14 @@ static enum sigma_cmd_result cmd_ap_get_
+@@ -16312,12 +16615,14 @@ static enum sigma_cmd_result cmd_ap_get_
  		wlan_tag = atoi(val);
  		if (mac80211_process_wlan_tag(dut, wlan_tag, ifname, &link_id) == -1)
  			return -1;
@@ -571,7 +584,7 @@ Signed-off-by: Hari Naraayana Desikan Kannan <hnaraaya@qti.qualcomm.com>
  
  	val = get_param(cmd, "Interface");
  #ifdef NL80211_SUPPORT
-@@ -16532,17 +16839,13 @@ enum sigma_cmd_result cmd_dev_ap_get_par
+@@ -16532,17 +16837,13 @@ enum sigma_cmd_result cmd_dev_ap_get_par
  	int mld_id = 0;
  
  	val = get_param(cmd, "WLAN_TAG");
@@ -591,7 +604,7 @@ Signed-off-by: Hari Naraayana Desikan Kannan <hnaraaya@qti.qualcomm.com>
  	}
  
  	get_if_name(dut, ifname, sizeof(ifname), wlan_tag);
-@@ -21418,10 +21721,35 @@ static enum sigma_cmd_result mac80211_ap
+@@ -21418,10 +21719,35 @@ static enum sigma_cmd_result mac80211_ap
  	}
  
  	if (++dut->intf_defined < dut->num_links)
