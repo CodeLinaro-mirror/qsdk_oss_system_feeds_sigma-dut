@@ -604,7 +604,7 @@ Signed-off-by: Hari Naraayana Desikan Kannan <hnaraaya@qti.qualcomm.com>
  	}
  
  	get_if_name(dut, ifname, sizeof(ifname), wlan_tag);
-@@ -21418,10 +21719,35 @@ static enum sigma_cmd_result mac80211_ap
+@@ -21418,10 +21719,46 @@ static enum sigma_cmd_result mac80211_ap
  	}
  
  	if (++dut->intf_defined < dut->num_links)
@@ -634,6 +634,17 @@ Signed-off-by: Hari Naraayana Desikan Kannan <hnaraaya@qti.qualcomm.com>
 +
 +	if (dut->ap_dl_availcap >= 0 || dut->ap_ul_availcap >= 0)
 +		run_hostapd_cli(dut, "UPDATE_BEACON");
++
++	if (dut->ap_assoc_reject == VALUE_ENABLED && dut->ap_rssi_threshold != 0) {
++		snprintf(buf, sizeof(buf), "set rssi_reject_assoc_rssi %d",
++			 dut->ap_rssi_threshold);
++		run_hostapd_cli(dut, buf);
++		if (dut->ap_retry_delay > 0) {
++			snprintf(buf, sizeof(buf), "set rssi_reject_assoc_timeout %d",
++				 dut->ap_retry_delay);
++			run_hostapd_cli(dut, buf);
++		}
++	}
 +
  	return SUCCESS_SEND_STATUS;
  }
