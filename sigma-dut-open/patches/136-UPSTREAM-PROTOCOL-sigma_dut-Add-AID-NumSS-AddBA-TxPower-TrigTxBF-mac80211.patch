@@ -1,0 +1,168 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Mon, 17 Aug 2026 21:00:42 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Add AID NumSS AddBA TxPower TrigTxBF mac80211
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 43be299..d1ff4eb 100644
+--- a/ap.c
++++ b/ap.c
+@@ -22500,6 +22500,12 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 	int exp_dur = 0;
+ 	int link_map_value = 0;
+ 	int i;
++	/* Variables for AID/NumSS/AddBA handling */
++	char *num_ss = NULL;
++	char *nss[4] = { NULL, NULL, NULL, NULL };
++	char *aid[4] = { NULL, NULL, NULL, NULL };
++	char *aid_ss = NULL;
++	int transmitomi_eht = 0;
+ 
+ 	ifname = get_main_ifname(dut);
+ 
+@@ -23329,6 +23335,143 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 	if (dut->ap_dl_availcap >= 0 || dut->ap_ul_availcap >= 0)
+ 		run_hostapd_cli(dut, "UPDATE_BEACON");
+ 
++	/* AID — space-separated list of STAs AID values; state for AddbaReq/AddbaResp */
++	val = get_param(cmd, "AID");
++	if (val) {
++		int j = 0;
++		char *aid_val, *saveptr;
++
++		aid_ss = strdup(val);
++		if (!aid_ss)
++			return ERROR_SEND_STATUS;
++		aid_val = strtok_r(aid_ss, " ", &saveptr);
++		for (j = 0; aid_val && j < 4; j++) {
++			aid[j] = aid_val;
++			aid_val = strtok_r(NULL, " ", &saveptr);
++		}
++	}
++
++	/* NumSS — space-separated per-STA spatial stream counts; state for NumSS_MAC */
++	val = get_param(cmd, "NumSS");
++	if (val) {
++		/* AP_testbed with TxEMLOMN disabled: no-op per WFA spec */
++		if (!(dut->eht_txemlomn == VALUE_DISABLED &&
++		      dut->device_type == AP_testbed)) {
++			int j = 0;
++			char *numss_val, *saveptr;
++
++			num_ss = strdup(val);
++			if (!num_ss)
++				return ERROR_SEND_STATUS;
++			numss_val = strtok_r(num_ss, " ", &saveptr);
++			for (j = 0; numss_val && j < 4; j++) {
++				nss[j] = numss_val;
++				numss_val = strtok_r(NULL, " ", &saveptr);
++			}
++		}
++	}
++
++	/* NumSS_MAC — pair each STA MAC with its NSS from NumSS via wifitool chmask_persta */
++	val = get_param(cmd, "NumSS_MAC");
++	if (val) {
++		if (!(dut->eht_txemlomn == VALUE_DISABLED &&
++		      dut->device_type == AP_testbed)) {
++			char *sta_mac_str, *saveptr, *sta_mac_list_str;
++
++			sta_mac_list_str = strdup(val);
++			if (!sta_mac_list_str) {
++				free(num_ss);
++				return ERROR_SEND_STATUS;
++			}
++			sta_mac_str = strtok_r(sta_mac_list_str, " ", &saveptr);
++			if (sta_mac_str && nss[0])
++				run_system_wrapper(dut,
++						   "wifitool %s chmask_persta %s %s",
++						   ifname, sta_mac_str, nss[0]);
++			sta_mac_str = strtok_r(NULL, " ", &saveptr);
++			if (sta_mac_str && nss[1])
++				run_system_wrapper(dut,
++						   "wifitool %s chmask_persta %s %s",
++						   ifname, sta_mac_str, nss[1]);
++			sta_mac_str = strtok_r(NULL, " ", &saveptr);
++			if (sta_mac_str && nss[2])
++				run_system_wrapper(dut,
++						   "wifitool %s chmask_persta %s %s",
++						   ifname, sta_mac_str, nss[2]);
++			sta_mac_str = strtok_r(NULL, " ", &saveptr);
++			if (sta_mac_str && nss[3])
++				run_system_wrapper(dut,
++						   "wifitool %s chmask_persta %s %s",
++						   ifname, sta_mac_str, nss[3]);
++			free(sta_mac_list_str);
++		}
++	}
++
++	/* AddbaReq — trigger ADDBA request to STA identified by AID */
++	val = get_param(cmd, "AddbaReq");
++	if (val) {
++		if (strcasecmp(val, "enable") == 0) {
++			run_iwpriv(dut, ifname, "setaddbaoper 1");
++			run_system_wrapper(dut, "wifitool %s sendaddba %s 0 64",
++					   ifname, aid[0] ? aid[0] : "");
++		} else {
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "errorCode,Unsupported AddbaReq value");
++			free(aid_ss);
++			free(num_ss);
++			return STATUS_SENT_ERROR;
++		}
++	}
++
++	/* AddbaResp — accept ADDBA from all STAs except the AID-specified STA */
++	val = get_param(cmd, "AddbaResp");
++	if (val) {
++		if (aid_ss && strcasecmp(val, "accepted") == 0) {
++			int aid_1 = atoi(aid_ss);
++
++			aid_1 = (aid_1 == 1) ? 2 : aid_1 - 1;
++			run_iwpriv(dut, ifname, "setaddbaoper 1");
++			run_system_wrapper(dut,
++					   "wifitool %s refusealladdbas 0",
++					   ifname);
++			run_system_wrapper(dut,
++					   "wifitool %s setaddbaresp %d 0 37",
++					   ifname, aid_1);
++		} else {
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "errorCode,Unsupported AddbaResp value");
++			free(aid_ss);
++			free(num_ss);
++			return STATUS_SENT_ERROR;
++		}
++	}
++
++	/* Trigger_TxBF — enable TBSU (trigger-based SU) sounding */
++	val = get_param(cmd, "Trigger_TxBF");
++	if (val && strcasecmp(val, "enable") == 0) {
++		dut->ap_trigsubfb = VALUE_ENABLED;
++		mac80211_enable_tbsu_sounding(dut, ifname, link_id);
++	}
++
++	/* TxPower — set runtime AP TX power (high=29dBm, low=1dBm) */
++	val = get_param(cmd, "TxPower");
++	if (val) {
++		if (strcasecmp(val, "high") == 0)
++			run_system_wrapper(dut, "iwconfig %s txpower 29", ifname);
++		else if (strcasecmp(val, "low") == 0)
++			run_system_wrapper(dut, "iwconfig %s txpower 1", ifname);
++		else
++			sigma_dut_print(dut, DUT_MSG_ERROR,
++					"Unsupported TxPower value: %s", val);
++	}
++
++	/* transmitEHTOMI — EHT OM indicator flag; used with OMCtrl_RxNSS/ChnlWidth
++	 * via the Client_mac fwtest call already present in this function */
++	val = get_param(cmd, "transmitEHTOMI");
++	if (val)
++		transmitomi_eht = atoi(val);
++	(void) transmitomi_eht; /* suppress unused warning until OMCtrl is ported */
++
+ 	val = get_param(cmd, "nss_mcs_opt");
+ 	if (val && mac80211_vht_nss_mcs(dut, ifname, val) < 0)
+ 		return ERROR_SEND_STATUS;
