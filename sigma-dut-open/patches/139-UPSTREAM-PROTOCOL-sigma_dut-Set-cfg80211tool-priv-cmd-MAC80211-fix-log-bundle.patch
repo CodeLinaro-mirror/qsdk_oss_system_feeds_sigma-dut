@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Mon, 17 Aug 2026 21:03:00 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Set cfg80211tool priv cmd MAC80211 fix log bundle
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/sigma_dut.c b/sigma_dut.c
+index 05233ac..11f7d4e 100644
+--- a/sigma_dut.c
++++ b/sigma_dut.c
+@@ -1436,6 +1436,18 @@ int main(int argc, char *argv[])
+ 	if (get_openwrt_driver_type() == OPENWRT_DRIVER_ATHEROS)
+ 		get_nl80211_config_enable_option(&sigma_dut);
+ 
++	/*
++	 * MAC80211/ath12k uses the nl80211 cfg80211 interface exclusively.
++	 * run_iwpriv() uses dut->priv_cmd as the command prefix; set it to
++	 * cfg80211tool so all run_iwpriv() calls issue the correct driver
++	 * commands instead of the legacy iwpriv ioctl which ath12k does not
++	 * implement.  Without this, all run_iwpriv()-based testbed configuration
++	 * commands (eht_rxmcsmap, set_eht_trig_su_bf_fb, nss, etc.) are silently
++	 * ignored by the driver.
++	 */
++	if (get_driver_type(&sigma_dut) == DRIVER_MAC80211)
++		sigma_dut.priv_cmd = "cfg80211tool";
++
+ 	sigma_dut_get_device_driver_name(get_main_ifname(&sigma_dut),
+ 					 sigma_dut.device_driver,
+ 					 sizeof(sigma_dut.device_driver));

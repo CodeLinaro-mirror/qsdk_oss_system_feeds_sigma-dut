@@ -1,0 +1,33 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Mon, 17 Aug 2026 21:00:42 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Add persistent command logging
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/dev.c b/dev.c
+index f20a338..296f7d6 100644
+--- a/dev.c
++++ b/dev.c
+@@ -629,6 +629,12 @@ enum sigma_cmd_result dev_start_test_log(struct sigma_dut *dut,
+ 	/* clear sigma and hostapd log */
+ 	run_system_wrapper(dut, "> /tmp/sigma.txt");
+ 	run_system_wrapper(dut, "> /tmp/hostapd_log.txt");
++	/* Raise hostapd log level to EXCESSIVE and restart its logging so the
++	 * per-test hostapd log captures full frame processing details. */
++	run_system_wrapper(dut, "wpa_cli -g /var/run/hostapd/global raw SHOW_KEYS");
++	run_system_wrapper(dut, "wpa_cli -g /var/run/hostapd/global raw RELOG");
++	run_system_wrapper(dut,
++			   "wpa_cli -g /var/run/hostapd/global raw LOG_LEVEL EXCESSIVE 1");
+ 	/* clear dmesg logs without capturing */
+ 	run_system_wrapper(dut, "dmesg -c > /dev/zero");
+ #endif /* ANDROID */
+@@ -917,6 +923,8 @@ static enum sigma_cmd_result dev_stop_test_log(struct sigma_dut *dut,
+         run_system_wrapper(dut, "cp /tmp/sigma.txt %s", dir);
+         run_system_wrapper(dut, "cp /tmp/*sigma_dut-ap_* %s", dir);
+         run_system_wrapper(dut, "cp /tmp/hostapd_log.txt %s", dir);
++	/* Close hostapd's logging session opened at test start. */
++	run_system_wrapper(dut, "wpa_cli -g /var/run/hostapd/global raw CLOSE_LOG");
+ 
+ 	if (dut->log_file_fd) {
+ 		fclose(dut->log_file_fd);
