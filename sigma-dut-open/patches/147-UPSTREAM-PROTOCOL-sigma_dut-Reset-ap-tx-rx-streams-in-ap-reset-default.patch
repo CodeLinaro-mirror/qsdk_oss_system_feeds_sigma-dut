@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Mon, 17 Aug 2026 21:04:32 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Reset ap tx rx streams in ap reset default
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 19f8212..bbd9b8a 100644
+--- a/ap.c
++++ b/ap.c
+@@ -15837,6 +15837,12 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+ 	dut->eht_txmcs = 0;
+ 	dut->uhr_txmcs = 0;
+ 	dut->uhr_2xldpc = VALUE_DISABLED;
++	/* Reset ap_tx/rx_streams to 0 so nss_mcs_opt def;N defaults to 4
++	 * streams per link instead of the hardware antenna count (which
++	 * reflects all radio chains combined and can exceed 4).
++	 * NSSMCSCap CAPI sets the Testbed-specific value when needed. */
++	dut->ap_tx_streams = 0;
++	dut->ap_rx_streams = 0;
+ 	free(dut->ar_gi);
+ 	dut->ar_gi = NULL;
+ 	dut->ap_addba_amsdu = -1;

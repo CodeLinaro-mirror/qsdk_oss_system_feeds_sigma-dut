@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Mon, 17 Aug 2026 21:04:32 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Fix UHR ar gi dead code in mac80211 he gi
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 2b4c3b4..1f6dcfc 100644
+--- a/ap.c
++++ b/ap.c
+@@ -21976,19 +21976,17 @@ static enum sigma_cmd_result mac80211_he_gi(struct sigma_dut *dut,
+ 
+ 	if (dut->program == PROGRAM_EHT)
+ 		snprintf(program, sizeof(program), "eht");
+-	else if (dut->program == PROGRAM_UHR)
+-		snprintf(program, sizeof(program), "uhr");
+-	else if (dut->program == PROGRAM_HE)
+-		snprintf(program, sizeof(program), "he");
+ 	else if (dut->program == PROGRAM_UHR) {
+ 		/* For UHR, defer GI so it can be combined with nss_mcs_opt.
+ 		 * Store for use in mac80211_vht_nss_mcs().  If nss_mcs_opt
+-		 * never arrives, the pending GI is consumed here anyway.
+-		 */
++		 * never arrives, the pending GI is consumed by the flush at
++		 * the end of mac80211_ap_set_rfeature. */
+ 		free(dut->ar_gi);
+ 		dut->ar_gi = val ? strdup(val) : NULL;
+ 		snprintf(program, sizeof(program), "uhr");
+-	} else
++	} else if (dut->program == PROGRAM_HE)
++		snprintf(program, sizeof(program), "he");
++	else
+ 		return STATUS_SENT_ERROR;
+ 
+ 	if (dut->nontrigger_txbf == VALUE_ENABLED) {

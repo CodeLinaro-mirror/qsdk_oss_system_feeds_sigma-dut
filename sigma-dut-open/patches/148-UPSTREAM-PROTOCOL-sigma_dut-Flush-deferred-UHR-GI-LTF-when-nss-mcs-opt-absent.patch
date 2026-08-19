@@ -1,0 +1,63 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Mon, 17 Aug 2026 21:04:32 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Flush deferred UHR GI LTF when nss mcs opt absent
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index bbd9b8a..2b4c3b4 100644
+--- a/ap.c
++++ b/ap.c
+@@ -24161,6 +24161,51 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 	if (val)
+ 		run_iwpriv(dut, ifname, "muedca_timer %d %d", AP_AC_VO, atoi(val));
+ 
++	/* Flush any pending UHR GI/LTF that were deferred waiting for
++	 * nss_mcs_opt but nss_mcs_opt was not sent in this CAPI command
++	 * (e.g. TC 4.2.1 sends only PPDUTxType+LTF+GI+CodingType). */
++	if (dut->program == PROGRAM_UHR &&
++	    (dut->ar_ltf || dut->ar_gi)) {
++		const char *band;
++
++		if (dut->ap_band_6g)
++			band = "6";
++		else if (dut->use_5g)
++			band = "5";
++		else
++			band = "2.4";
++
++		if (dut->ar_ltf && dut->ar_gi) {
++			int ltf_val = mac80211_he_ltf_mapping(dut, dut->ar_ltf);
++
++			if (ltf_val >= 0) {
++				run_system_wrapper(dut,
++						   "iw dev %s set bitrates -l %d "
++						   "uhr-ltf-%s %d "
++						   "uhr-gi-%s %s",
++						   ifname, link_id,
++						   band, ltf_val,
++						   band, dut->ar_gi);
++			}
++		} else if (dut->ar_ltf) {
++			int ltf_val = mac80211_he_ltf_mapping(dut, dut->ar_ltf);
++
++			if (ltf_val >= 0)
++				run_system_wrapper(dut,
++						   "iw dev %s set bitrates -l %d uhr-ltf-%s %d",
++						   ifname, link_id, band, ltf_val);
++		} else if (dut->ar_gi) {
++			run_system_wrapper(dut,
++					   "iw dev %s set bitrates -l %d uhr-gi-%s %s",
++					   ifname, link_id, band, dut->ar_gi);
++		}
++
++		free(dut->ar_ltf);
++		dut->ar_ltf = NULL;
++		free(dut->ar_gi);
++		dut->ar_gi = NULL;
++	}
++
+ 	return SUCCESS_SEND_STATUS;
+ }
+ 
