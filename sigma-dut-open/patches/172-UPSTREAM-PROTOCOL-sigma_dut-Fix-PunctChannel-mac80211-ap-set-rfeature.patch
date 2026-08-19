@@ -1,0 +1,301 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:36:04 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Fix PunctChannel mac80211 ap set rfeature
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index ea4e92d..2ac1cbd 100644
+--- a/ap.c
++++ b/ap.c
+@@ -3143,6 +3143,11 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+ 				  "errorCode,Invalid PunctChannel");
+ 			return STATUS_SENT_ERROR;
+ 		}
++		if (dut->ap_punct_bitmap == 0) {
++			sigma_dut_print(dut, DUT_MSG_INFO,
++					"PunctChannel '%s' did not match any configured link's punct window; applying bitmap=0",
++					val);
++		}
+ 	}
+ 
+ 	val = get_param(cmd, "BTMsupt");
+@@ -14732,7 +14737,12 @@ hapd_started:
+ 		for (i = 0; i < dut->num_links; i++) {
+ 			if ((dut->device_type == AP_dut) && ((mode == AP_11be || mode == AP_11bn))
+ 			    && (dut->ap_he_mimo == MIMO_UL)) {
+-				if (dut->ap_punct_bitmap)
++				/* Proprietary gate for this command is
++				 * ap_he_ppdu==PPDU_MU && ap_he_mimo==MIMO_UL
++				 * (MIMO_UL already required by the outer if);
++				 * require PPDU_MU here too so puncturing+UL-MIMO
++				 * enablement matches proprietary behavior. */
++				if (dut->ap_punct_bitmap && dut->ap_he_ppdu == PPDU_MU)
+ 					fwtest_linkid_cmd_wrapper(dut, "-m 10 -v 0 86 1", ifname, i);
+ 				/* Enable MU MIMO for 2x2 */
+ 				fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 641 1", ifname, i);
+@@ -23313,6 +23323,86 @@ static void mac80211_set_trigger_type_testenable(struct sigma_dut *dut,
+ }
+ 
+ 
++/* Parse a PunctChannel channel list against a specific link's configured
++ * width and return the resulting bitmap, or -1 if the link's width is not
++ * one that supports puncturing (mirrors get_bitmap_from_punct_chlist()'s
++ * default-case error for an unrecognized width). *chwidth is only valid
++ * when the return value is >= 0. */
++static int mac80211_rfeature_punct_bitmap(struct sigma_dut *dut,
++					  const char *punct_channel_list,
++					  int link_id, int *chwidth)
++{
++	char *punctchannel_val, *saveptr, *punct_channel;
++	unsigned int punct_index = 0;
++	int n, i;
++
++	punct_channel = strdup(punct_channel_list);
++	if (!punct_channel)
++		return -1;
++
++	punctchannel_val = strtok_r(punct_channel, " ", &saveptr);
++
++	if (dut->mld[link_id].ap_chwidth == AP_80) {
++		int punct_80[] = {33, 37, 41, 45};
++
++		*chwidth = 80;
++		while (punctchannel_val != NULL) {
++			n = atoi(punctchannel_val);
++			for (i = 0; i < 4; i++) {
++				if (n == punct_80[i])
++					punct_index |= 1 << i;
++			}
++			punctchannel_val = strtok_r(NULL, " ", &saveptr);
++		}
++	} else if (dut->mld[link_id].ap_chwidth == AP_160) {
++		int punct_160[] = {33, 37, 41, 45, 49, 53, 57, 61};
++
++		*chwidth = 160;
++		while (punctchannel_val != NULL) {
++			n = atoi(punctchannel_val);
++			for (i = 0; i < 8; i++) {
++				if (n == punct_160[i])
++					punct_index |= 1 << i;
++			}
++			punctchannel_val = strtok_r(NULL, " ", &saveptr);
++		}
++	} else if (dut->mld[link_id].ap_chwidth == AP_320) {
++		*chwidth = 320;
++		if (dut->cfreq == 6105) {
++			int punct_320_1[] = {1, 5, 9, 13, 17, 21, 25, 29, 33, 37,
++					     41, 45, 49, 53, 57, 61};
++
++			while (punctchannel_val != NULL) {
++				n = atoi(punctchannel_val);
++				for (i = 0; i < 16; i++) {
++					if (n == punct_320_1[i])
++						punct_index |= 1 << i;
++				}
++				punctchannel_val = strtok_r(NULL, " ", &saveptr);
++			}
++		} else {
++			int punct_320_2[] = {33, 37, 41, 45, 49, 53, 57, 61, 65,
++					     69, 73, 77, 81, 85, 89, 93};
++
++			while (punctchannel_val != NULL) {
++				n = atoi(punctchannel_val);
++				for (i = 0; i < 16; i++) {
++					if (n == punct_320_2[i])
++						punct_index |= 1 << i;
++				}
++				punctchannel_val = strtok_r(NULL, " ", &saveptr);
++			}
++		}
++	} else {
++		free(punct_channel);
++		return -1;
++	}
++
++	free(punct_channel);
++	return (int) punct_index;
++}
++
++
+ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 						      struct sigma_conn *conn,
+ 						      struct sigma_cmd *cmd)
+@@ -23324,6 +23414,7 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 	int he_ackpolicymac = 0;
+ 	int ap_he_ackpolicy;
+ 	int link_id = dut->intf_defined;
++	bool punct_link_explicit = false;
+ 	int param;
+ 	char buf[200];
+ 	int val_bw = -1;
+@@ -23357,6 +23448,7 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 		else if (strcasecmp(val, "6G") == 0)
+ 			link_id = dut->band_to_link[2];
+ 
++		punct_link_explicit = true;
+ 		dut->intf_defined = dut->num_links;
+ 	}
+ 
+@@ -23484,6 +23576,7 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 		if (mac80211_process_wlan_tag(dut, wlan_tag, ifname2, &link_id) == -1)
+ 			return -1;
+ 
++		punct_link_explicit = true;
+ 		ifname = ifname2;
+ 	}
+ 
+@@ -23726,82 +23819,63 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 	val = get_param(cmd, "PunctChannel");
+ 	if (val) {
+ 		if (dut->program == PROGRAM_EHT || dut->program == PROGRAM_UHR) {
+-			unsigned int punct_index = 0;
+-			char *punctchannel_val;
+-			char *saveptr;
+-			char *punct_channel = NULL;
+-			int n, i = 0;
+-			int chwidth, chan = 0;
+-			int sec_ch_offset = 0;
++			int chwidth = 0, chan, sec_ch_offset = 0;
+ 			int center_freq, center_freq_idx;
+-
+-			punct_channel = strdup(val);
+-			if (!punct_channel)
+-				return STATUS_SENT_ERROR;
+-
+-			punctchannel_val = strtok_r(punct_channel, " ", &saveptr);
+-
+-			if (dut->mld[link_id].ap_chwidth == AP_80) {
+-				int punct_80[] = {33, 37, 41, 45};
+-
+-				chwidth = 80;
+-				while (punctchannel_val != NULL) {
+-					n = atoi(punctchannel_val);
+-					for (i = 0; i < 4; i++) {
+-						if (n == punct_80[i])
+-							punct_index |= 1 << i;
++			int punct_link = link_id;
++			int bitmap;
++
++			bitmap = mac80211_rfeature_punct_bitmap(dut, val,
++								punct_link,
++								&chwidth);
++
++			if (!punct_link_explicit && bitmap <= 0) {
++				/* No explicit Interface/WLAN_TAG was given, and
++				 * the default link's punct window doesn't
++				 * contain the requested channel(s) (or its
++				 * width doesn't support puncturing at all).
++				 * Try every other configured link and use the
++				 * first one that actually matches, instead of
++				 * silently applying an empty bitmap to link 0. */
++				int scan_link, num_links = dut->num_links > 0 ?
++					dut->num_links : 1;
++
++				for (scan_link = 0; scan_link < num_links;
++				     scan_link++) {
++					int cw = 0, bm;
++
++					if (scan_link == punct_link)
++						continue;
++					bm = mac80211_rfeature_punct_bitmap(
++						dut, val, scan_link, &cw);
++					if (bm > 0) {
++						punct_link = scan_link;
++						chwidth = cw;
++						bitmap = bm;
++						break;
+ 					}
+-					punctchannel_val = strtok_r(NULL, " ", &saveptr);
+ 				}
+-			} else if (dut->mld[link_id].ap_chwidth == AP_160) {
+-				int punct_160[] = {33, 37, 41, 45, 49, 53, 57, 61};
+-
+-				chwidth = 160;
++			}
+ 
+-				while (punctchannel_val != NULL) {
+-					n = atoi(punctchannel_val);
+-					for (i = 0; i < 8; i++) {
+-						if (n == punct_160[i])
+-							punct_index |= 1 << i;
+-					}
+-					punctchannel_val = strtok_r(NULL, " ", &saveptr);
+-				}
+-			} else {
+-				chwidth = 320;
+-				if (dut->cfreq == 6105) {
+-					int punct_320_1[] = {1, 5, 9, 13, 17, 21, 25, 29, 33, 37,
+-							     41, 45, 49, 53, 57, 61};
+-
+-					while (punctchannel_val != NULL) {
+-						n = atoi(punctchannel_val);
+-						for (i = 0; i < 16; i++) {
+-							if (n == punct_320_1[i])
+-								punct_index |= 1 << i;
+-						}
+-						punctchannel_val = strtok_r(NULL, " ", &saveptr);
+-					}
+-				} else {
+-					int punct_320_2[] = {33, 37, 41, 45, 49, 53, 57, 61, 65,
+-							     69, 73, 77, 81, 85, 89, 93};
+-
+-					while (punctchannel_val != NULL) {
+-						n = atoi(punctchannel_val);
+-						for (i = 0; i < 16; i++) {
+-							if (n == punct_320_2[i])
+-								punct_index |= 1 << i;
+-						}
+-						punctchannel_val = strtok_r(NULL, " ", &saveptr);
+-					}
+-				}
++			if (bitmap < 0) {
++				send_resp(dut, conn, SIGMA_ERROR,
++					  "errorCode,Invalid PunctChannel");
++				return STATUS_SENT_ERROR;
+ 			}
+-			dut->ap_punct_bitmap = punct_index;
++
++			dut->ap_punct_bitmap = bitmap;
+ 			if (dut->ap_punct_bitmap) {
+-				sigma_dut_print(dut, DUT_MSG_DEBUG, "punct_bitmap=0x%04x",
++				sigma_dut_print(dut, DUT_MSG_DEBUG,
++						"punct_bitmap=0x%04x",
+ 						dut->ap_punct_bitmap);
++			} else {
++				sigma_dut_print(dut, DUT_MSG_INFO,
++						"PunctChannel '%s' did not match any configured link's punct window; applying bitmap=0 on link %d",
++						val, punct_link);
+ 			}
+ 
+-			chan = channel_to_freq(dut, dut->mld[link_id].ap_channel);
+-			center_freq_idx = get_oper_center_freq_6g(chwidth, dut->mld[link_id].ap_channel);
++			chan = channel_to_freq(dut, dut->mld[punct_link].ap_channel);
++			center_freq_idx = get_oper_center_freq_6g(
++				chwidth, dut->mld[punct_link].ap_channel);
+ 			center_freq = channel_to_freq(dut, center_freq_idx);
+ 
+ 			if (dut->cfreq == 0)
+@@ -23811,19 +23885,15 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 			else
+ 				sec_ch_offset = -1;
+ 
+-			center_freq_idx = get_oper_center_freq_6g(chwidth, dut->mld[link_id].ap_channel);
+-			center_freq = channel_to_freq(dut, center_freq_idx);
+-
+ 			res = snprintf(buf, sizeof(buf),
+-					" -i %s %s chan_switch 10 %d sec_channel_offset=%d center_freq1=%d bandwidth=%d punct_bitmap=%d blocktx %s",
+-				ifname, link_set ? link_param : "", chan,
++					" -i %s -l %d chan_switch 10 %d sec_channel_offset=%d center_freq1=%d bandwidth=%d punct_bitmap=%d blocktx %s",
++				ifname, punct_link, chan,
+ 				sec_ch_offset, center_freq, chwidth, dut->ap_punct_bitmap, "eht");
+ 
+ 			if (res < 0 || res >= sizeof(buf) || run_hostapd_cli(dut, buf) != 0) {
+ 				sigma_dut_print(dut, DUT_MSG_ERROR,
+ 						"hostapd_cli chan_switch failed");
+ 			}
+-			free(punct_channel);
+ 		}
+ 	}
+ 

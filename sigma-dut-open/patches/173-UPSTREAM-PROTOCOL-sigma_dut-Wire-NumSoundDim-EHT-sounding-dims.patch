@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:36:04 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Wire NumSoundDim EHT sounding dims
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 2ac1cbd..0658143 100644
+--- a/ap.c
++++ b/ap.c
+@@ -11148,6 +11148,26 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 	run_iwpriv(dut, ifname, "set_eht_trig_txop_sharing 0");
+ 	run_iwpriv(dut, ifname, "set_eht_max_nc 0");
+ 	run_iwpriv(dut, ifname, "set_eht_bfme_ss 1 0 0");
++	/* NumSoundDim CAPI: the EHT PHY Capabilities "Number Of Sounding
++	 * Dimensions" field (bits 16-31 of the capability, distinct from the
++	 * Beamformee SS field set above) is a separate hostapd knob
++	 * ("set_eht_num_sd <lt80> <160> <320>", all 0-7) that nothing in the
++	 * EHT/UHR path was issuing, so a beacon's EHT Cap sounding-dims field
++	 * always showed the driver's hardware-max default (e.g. 7) instead of
++	 * the value requested via NumSoundDim (WFA
++	 * EHTCapa_EHTPhyCapa_NumOfSoundingDims_80/160/320 checks). The CAPI
++	 * carries a single value with no per-bandwidth variant, so apply it
++	 * uniformly, matching how the same single value is applied to nss in
++	 * the legacy/HE paths (ath_ap_set_params(), fwtest_set_he_params()).
++	 * Requires eht_su_beamformer to already be enabled (hostapd rejects
++	 * a non-zero value otherwise); that is set from dut->ap_txBF earlier
++	 * in hostapd.conf, before hostapd is (re)started ahead of this call. */
++	if (dut->ap_numsounddim) {
++		run_system_wrapper(dut,
++				   "hostapd_cli -i %s set_eht_num_sd %d %d %d",
++				   ifname, dut->ap_numsounddim,
++				   dut->ap_numsounddim, dut->ap_numsounddim);
++	}
+ 	run_iwpriv(dut, ifname, "set_eht_trig_su_bf_fb 0");
+ 	run_iwpriv(dut, ifname, "set_eht_trig_mu_bf_part_bw_fb 0");
+ 	run_iwpriv(dut, ifname, "set_eht_trig_cqi_fb 0");

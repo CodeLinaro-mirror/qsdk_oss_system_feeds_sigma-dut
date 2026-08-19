@@ -1,0 +1,64 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:36:53 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Add smallMRU largeMRU any MRU dispatch
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index cc92786..fe98c8c 100644
+--- a/ap.c
++++ b/ap.c
+@@ -22618,17 +22618,47 @@ static enum sigma_cmd_result mac80211_eht_ru_mru_alloctones(struct sigma_dut *du
+ 	if (!token)
+ 		return -1;
+ 
++	if (strcasecmp(token, "smallMRU") == 0) {
++		/* CAPI note: any applicable small MRU (52+26 or 106+26) may
++		 * be used; mac80211_eht_mrualloc_fwtest() already picks the
++		 * right one per val_bw for EHT_MRU_ALLOC_52. */
++		free(token);
++		return mac80211_eht_mrualloc_fwtest(dut, conn, ifname, val_bw,
++						     EHT_MRU_ALLOC_52, linkid);
++	}
++
++	if (strcasecmp(token, "largeMRU") == 0 || strcasecmp(token, "any") == 0) {
++		int large_value;
++
++		/* A large MRU (>242 tones) only exists at 80 MHz+. */
++		if (val_bw == AP_80)
++			large_value = EHT_MRU_ALLOC_484;
++		else if (val_bw == AP_160)
++			large_value = EHT_MRU_ALLOC_996;
++		else if (val_bw == AP_320)
++			large_value = EHT_MRU_ALLOC_2988;
++		else if (strcasecmp(token, "any") == 0)
++			large_value = EHT_MRU_ALLOC_52;
++		else {
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "errorCode,largeMRU not applicable for this bandwidth");
++			free(token);
++			return STATUS_SENT_ERROR;
++		}
++		free(token);
++		return mac80211_eht_mrualloc_fwtest(dut, conn, ifname, val_bw,
++						     large_value, linkid);
++	}
++
+ 	if (strncmp(token, "2x996", strlen(token)) == 0) {
+ 		value = 2;
+ 		alloc = 0;
+ 		goto fwtest;
+ 	} else {
+ 		result = strtok_r(token, delimiter, &saveptr);
+-		while (result != NULL) {
+-			for (i = 0; result && i < 2; i++) {
+-				mru[i] = result;
+-				result = strtok_r(NULL, delimiter, &saveptr);
+-			}
++		for (i = 0; result && i < 2; i++) {
++			mru[i] = result;
++			result = strtok_r(NULL, delimiter, &saveptr);
+ 		}
+ 	}
+ 

@@ -1,0 +1,21 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:35:07 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Do not hardcode he bss color
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 2c86c92..f617a2a 100644
+--- a/ap.c
++++ b/ap.c
+@@ -13654,8 +13654,7 @@ skip_vht_parameters_set:
+ 		    dut->program == PROGRAM_UHR) {
+ 			fprintf(f, "he_su_beamformer=%d\n", dut->ap_txBF);
+ 			fprintf(f, "he_mu_beamformer=%d\n", dut->ap_mu_txBF);
+-			/* Disable BSS Color config by default */
+-			fprintf(f, "he_bss_color=1\n");
++			fprintf(f, "he_bss_color=64\n");
+ 			if (default_muedca_values(dut, f) < 0) {
+ 				sigma_dut_print(dut, DUT_MSG_ERROR,
+ 						"%s: File pointer is invalid",

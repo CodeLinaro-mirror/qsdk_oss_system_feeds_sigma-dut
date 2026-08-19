@@ -1,0 +1,67 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:31:15 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Fix EHT MCS map assignme
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index b52d256..7886c50 100644
+--- a/ap.c
++++ b/ap.c
+@@ -814,7 +814,7 @@ static void set_vht_mcsmap_nss(struct sigma_dut *dut, int nss, int mcs)
+ static void set_eht_mcsmap_nss(struct sigma_dut *dut, int nss, int mcs)
+ {
+ 	switch (mcs) {
+-	case 7:
++	case 9:
+ 		switch (nss) {
+ 		case 1:
+ 			dut->ap_ehtmcs_map = 0x1;
+@@ -833,7 +833,7 @@ static void set_eht_mcsmap_nss(struct sigma_dut *dut, int nss, int mcs)
+ 			break;
+ 		}
+ 		break;
+-	case 9:
++	case 11:
+ 		switch (nss) {
+ 		case 1:
+ 			dut->ap_ehtmcs_map = 0x11;
+@@ -852,7 +852,7 @@ static void set_eht_mcsmap_nss(struct sigma_dut *dut, int nss, int mcs)
+ 			break;
+ 		}
+ 		break;
+-	case 11:
++	case 13:
+ 		switch (nss) {
+ 		case 1:
+ 			dut->ap_ehtmcs_map = 0x111;
+@@ -871,27 +871,8 @@ static void set_eht_mcsmap_nss(struct sigma_dut *dut, int nss, int mcs)
+ 			break;
+ 		}
+ 		break;
+-	case 13:
+-		switch (nss) {
+-		case 1:
+-			dut->ap_ehtmcs_map = 0x1111;
+-			break;
+-		case 2:
+-			dut->ap_ehtmcs_map = 0x2222;
+-			break;
+-		case 3:
+-			dut->ap_ehtmcs_map = 0x3333;
+-			break;
+-		case 4:
+-			dut->ap_ehtmcs_map = 0x4444;
+-			break;
+-		default:
+-			dut->ap_ehtmcs_map = 0x4444;
+-			break;
+-		}
+-		break;
+ 	default:
+-		dut->ap_ehtmcs_map = 0x4444;
++		dut->ap_ehtmcs_map = 0x444;
+ 		break;
+ 	}
+ }

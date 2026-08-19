@@ -1,0 +1,28 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:36:53 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Route EHT trigger feedback hostapd cli
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 338a7ae..cc92786 100644
+--- a/ap.c
++++ b/ap.c
+@@ -11168,10 +11168,14 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 				   ifname, dut->ap_numsounddim,
+ 				   dut->ap_numsounddim, dut->ap_numsounddim);
+ 	}
+-	run_iwpriv(dut, ifname, "set_eht_trig_su_bf_fb 0");
++	/*run_iwpriv(dut, ifname, "set_eht_trig_su_bf_fb 0");
+ 	run_iwpriv(dut, ifname, "set_eht_trig_mu_bf_part_bw_fb 0");
+ 	run_iwpriv(dut, ifname, "set_eht_trig_cqi_fb 0");
+-	run_iwpriv(dut, ifname, "set_eht_non_trig_cqi_fb 0");
++	run_iwpriv(dut, ifname, "set_eht_non_trig_cqi_fb 0");*/
++	run_system_wrapper(dut, "hostapd_cli -i %s set bss_eht_trig_su_bf_fb 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s set bss_eht_dl_ofdma_txbf 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s set bss_eht_trig_cqi_fb 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s set bss_eht_non_trig_cqi_fb 0", ifname);
+ 	if (!dut->ap_txBF) {
+ 		run_iwpriv(dut, ifname, "set_eht_su_bfmr 0");
+ 		run_iwpriv(dut, ifname, "set_eht_su_bfme 0");

@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:36:03 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Add UHR WPA3 TK retrieval via dump tk
+
+extended existing PROGRAM_WPA3 gate to include PROGRAM_UHR
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index f617a2a..a771843 100644
+--- a/ap.c
++++ b/ap.c
+@@ -19543,7 +19543,7 @@ static enum sigma_cmd_result cmd_ap_get_parameter(struct sigma_dut *dut,
+ 		}
+ 		memcpy(resp, "PMK,", 4);
+ 	} else if (strcasecmp(param, "TK") == 0) {
+-		if (dut->program == PROGRAM_WPA3) {
++		if (dut->program == PROGRAM_WPA3 || dut->program == PROGRAM_UHR) {
+ 			FILE *fp = NULL;
+ 			char buff[200];
+ 			long filesize;
