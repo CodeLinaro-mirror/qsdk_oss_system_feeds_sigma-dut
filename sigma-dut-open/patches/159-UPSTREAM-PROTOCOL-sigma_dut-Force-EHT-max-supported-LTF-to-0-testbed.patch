@@ -1,0 +1,21 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:28:01 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Force EHT max supported LTF to 0 testbed
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 06cef1c..1f13565 100644
+--- a/ap.c
++++ b/ap.c
+@@ -11048,6 +11048,9 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 	}
+ 	run_system_wrapper(dut, "hostapd_cli -i %s bss_eht_mcs15_supp 0", ifname);
+ 	run_system_wrapper(dut, "hostapd_cli -i %s bss_eht_mcs14_dup_in_6ghz 0", ifname);
++	/* Testbed default: do not advertise support for the extra EHT-LTF
++	 * symbol (Maximum Number Of Supported EHT-LTFs = 0). */
++	run_system_wrapper(dut, "hostapd_cli -i %s set bss_eht_max_num_supp_ltf 0", ifname);
+ 	run_iwpriv(dut, ifname, "set_max_mpdu_length 0");
+ 	if (dut->ap_interface_6g)
+ 		run_system_wrapper(dut, "wifitool %s set_wfa_test_param 6ghz 1 1",

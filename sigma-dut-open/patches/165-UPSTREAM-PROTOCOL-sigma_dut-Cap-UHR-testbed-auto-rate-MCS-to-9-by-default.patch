@@ -1,0 +1,117 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:28:02 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Cap UHR testbed auto rate MCS to 9 by default
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index fd780d8..13d72bb 100644
+--- a/ap.c
++++ b/ap.c
+@@ -906,6 +906,7 @@ static void set_eht_mcsmap_nss(struct sigma_dut *dut, int nss, int mcs)
+ 
+ #define MCS_TESTBED_VALUE 7
+ #define MCS_TESTBED_VALUE_EHT 9
++#define MCS_TESTBED_VALUE_UHR 9
+ 
+ static void he_reset_mcs_values_for_unsupported_ss(uint8_t *mcsnssmap,
+ 						   uint8_t nss)
+@@ -10506,6 +10507,37 @@ static void fwtest_set_he_params(struct sigma_dut *dut, const char *ifname,
+ 					   "hostapd_cli -i %s SET bss_uhr_2xldpc_rx %d",
+ 					   ifname,
+ 					   dut->uhr_2xldpc_rx == VALUE_ENABLED ? 1 : 0);
++
++		/* Testbed default auto-rate MCS cap: when no nss_mcs_opt/
++		 * ForceUHRTXMCS CAPI is sent for a TC, the FW auto-rate
++		 * scheduler is otherwise left uncapped and can select its
++		 * ceiling MCS (e.g. MCS13) instead of the WFA testbed
++		 * default of MCS_TESTBED_VALUE_UHR (9). Cap it here for
++		 * AP_testbed only; a later ap_set_rfeature nss_mcs_opt call
++		 * overwrites this with an explicit cap via the same
++		 * "iw dev <ifname> set bitrates uhr-mcs-<band> ..." command.
++		 * Skip entirely when nss_mcs_cap/NSS_MCS_Cap already set an
++		 * explicit MCS (dut->nss_mcs_set) -- e.g. "4;0-11" or
++		 * "4;0-13" -- so this default does not clobber that cap;
++		 * mirrors the existing !dut->nss_mcs_set guard used for the
++		 * HE/EHT testbed MCS map default elsewhere in this function. */
++		if (dut->device_type == AP_testbed && !dut->nss_mcs_set) {
++			int cap_nss = dut->ap_tx_streams ? dut->ap_tx_streams : 4;
++			char mcs_str[128] = "";
++			char tmp[24];
++			int n;
++
++			for (n = 1; n <= cap_nss; n++) {
++				if (n > 1)
++					strlcat(mcs_str, " ", sizeof(mcs_str));
++				snprintf(tmp, sizeof(tmp), "%d:0-%d", n,
++					 MCS_TESTBED_VALUE_UHR);
++				strlcat(mcs_str, tmp, sizeof(mcs_str));
++			}
++			run_system_wrapper(dut,
++					   "iw dev %s set bitrates -l %d uhr-mcs-%s %s",
++					   ifname, link_id, ldpc_band, mcs_str);
++		}
+ 	}
+ 
+ 	/* mac80211/ath12k: ADDBA Reject — control ADDBA Req processing.
+@@ -24463,6 +24495,7 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 	if (dut->program == PROGRAM_UHR &&
+ 	    (dut->ar_ltf || dut->ar_gi)) {
+ 		const char *band;
++		char mcs_tok[32] = "";
+ 
+ 		/* Use link_id-aware band detection (mirrors mac80211_he_gi) so that
+ 		 * Interface,24G correctly uses uhr-gi-2.4 instead of uhr-gi-5. */
+@@ -24481,15 +24514,33 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 			band = dut->ap_band_6g ? "6" : dut->use_5g ? "5" : "2.4";
+ 		}
+ 
++		/* "iw set bitrates" resets any unspecified sub-attribute
++		 * (including MCS) to the driver default, so a GI/LTF-only
++		 * command silently drops any MCS cap already in effect.
++		 * No ap_set_rfeature in this session ever specified an MCS
++		 * (fixed or auto-rate range) via nss_mcs_opt/ForceUHRTXMCS —
++		 * otherwise mac80211_vht_nss_mcs() would have consumed
++		 * ar_ltf/ar_gi already and this flush would not run.  For
++		 * AP_testbed only, re-assert the WFA testbed default
++		 * (NSS=2, auto-rate cap MCS0-9) alongside GI/LTF so it isn't
++		 * lost; skip when nss_mcs_cap/NSS_MCS_Cap already set an
++		 * explicit MCS (dut->nss_mcs_set) so this default does not
++		 * clobber that cap.  AP_dut is left exactly as before (no
++		 * MCS token). */
++		if (dut->device_type == AP_testbed && !dut->nss_mcs_set)
++			snprintf(mcs_tok, sizeof(mcs_tok), "uhr-mcs-%s 2:0-%d ",
++				 band, MCS_TESTBED_VALUE_UHR);
++
+ 		if (dut->ar_ltf && dut->ar_gi) {
+ 			int ltf_val = mac80211_he_ltf_mapping(dut, dut->ar_ltf);
+ 
+ 			if (ltf_val >= 0) {
+ 				run_system_wrapper(dut,
+ 						   "iw dev %s set bitrates -l %d "
++						   "%s"
+ 						   "uhr-ltf-%s %d "
+ 						   "uhr-gi-%s %s",
+-						   ifname, link_id,
++						   ifname, link_id, mcs_tok,
+ 						   band, ltf_val,
+ 						   band, dut->ar_gi);
+ 			}
+@@ -24498,12 +24549,12 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 
+ 			if (ltf_val >= 0)
+ 				run_system_wrapper(dut,
+-						   "iw dev %s set bitrates -l %d uhr-ltf-%s %d",
+-						   ifname, link_id, band, ltf_val);
++						   "iw dev %s set bitrates -l %d %suhr-ltf-%s %d",
++						   ifname, link_id, mcs_tok, band, ltf_val);
+ 		} else if (dut->ar_gi) {
+ 			run_system_wrapper(dut,
+-					   "iw dev %s set bitrates -l %d uhr-gi-%s %s",
+-					   ifname, link_id, band, dut->ar_gi);
++					   "iw dev %s set bitrates -l %d %suhr-gi-%s %s",
++					   ifname, link_id, mcs_tok, band, dut->ar_gi);
+ 		}
+ 
+ 		free(dut->ar_ltf);

@@ -1,0 +1,37 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:28:01 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Extend AP 11be split phy quadband gating to AP 11bn
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index a4948bd..aef8fa0 100644
+--- a/ap.c
++++ b/ap.c
+@@ -1464,7 +1464,8 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+ 
+ 		if (wlan_tag > 1) {
+ 	                dut->ap_is_dual = 1;
+-			if (dut->mld[wlan_tag - 2].ap_mode == AP_11be &&
++			if ((dut->mld[wlan_tag - 2].ap_mode == AP_11be ||
++			     dut->mld[wlan_tag - 2].ap_mode == AP_11bn) &&
+ 			    num_radio == MAX_RADIO)
+ 				dut->ap_is_mld = 1;
+ 		}
+@@ -17185,12 +17186,13 @@ static int mac80211_process_wlan_tag(struct sigma_dut *dut, int wlan_tag,
+ 		return -1;
+ 	}
+ 
+-	/* For split phy and when mode is 11be, wlan_tags are used
++	/* For split phy and when mode is 11be or 11bn, wlan_tags are used
+ 	 * to get the link_id of the interface defined through the particular
+ 	 * wlan_tag, other wise it is used to get the interface name of the
+ 	 * particular wlan_tag defined interface
+ 	 */
+-	if (dut->mld[wlan_tag - 1].ap_mode == AP_11be && num_radio == MAX_RADIO)
++	if ((dut->mld[wlan_tag - 1].ap_mode == AP_11be ||
++	     dut->mld[wlan_tag - 1].ap_mode == AP_11bn) && num_radio == MAX_RADIO)
+ 		*link_id = wlan_tag - 1;
+ 	else if (ifname != NULL)
+ 		get_if_name(dut, (char *) ifname, 50, wlan_tag);
