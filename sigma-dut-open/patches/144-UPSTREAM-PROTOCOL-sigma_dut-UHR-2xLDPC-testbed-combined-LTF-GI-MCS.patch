@@ -1,0 +1,253 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Mon, 17 Aug 2026 21:04:31 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: UHR 2xLDPC testbed combined LTF GI MCS
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 0db5551..71fd30b 100644
+--- a/ap.c
++++ b/ap.c
+@@ -10318,7 +10318,6 @@ static void fwtest_set_he_params(struct sigma_dut *dut, const char *ifname,
+ 		fwtest_cmd_wrapper(dut, "-m 0x47 -v 0 9 1", ifname);
+ 		/* To set TBTT PPDU duration (us) */
+ 		fwtest_cmd_wrapper(dut, "-m 0x48 -v 0 63 1908", ifname);
+-
+ 		/* Below Two commands - To disable dynamic check for not using UL OFDMA
+ 		 * in some cases */
+ 		fwtest_cmd_wrapper(dut, "-m 0x47 -v 0 302 0", ifname);
+@@ -10869,6 +10868,21 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 	if (dut->ap_twtinfoframerx == VALUE_ENABLED)
+ 		fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 333 1", ifname, link_id);
+
++	/* 2xLDPC: disable by default for Testbed; enable only when
++	 * CodingType=2xLDPCCoding CAPI is received (sets uhr_2xldpc=ENABLED).
++	 * Command: iw dev <ifname> set bitrates -l <link_id> 2xldpc-<band> on|off
++	 */
++	if (dut->program == PROGRAM_UHR) {
++		const char *ldpc_band = dut->ap_band_6g ? "6" :
++					dut->use_5g ? "5" : "2.4";
++		const char *ldpc_state =
++			(dut->uhr_2xldpc == VALUE_ENABLED) ? "on" : "off";
++
++		run_system_wrapper(dut,
++				   "iw dev %s set bitrates -l %d 2xldpc-%s %s",
++				   ifname, link_id, ldpc_band, ldpc_state);
++	}
++
+ 	/* mac80211/ath12k: trigger beacon reconvergence after all bss_he_* and
+ 	 * bss_eht_* SET calls above have updated the hostapd capability state. */
+ 	run_system_wrapper(dut, "hostapd_cli -i %s UPDATE_BEACON", ifname);
+@@ -14261,6 +14275,9 @@ enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
+ 			/* Dynamic fake Qdepth enabled for all ACs as needed based
+ 			 * on SCS Request arrival from client test cases for AP Test Bed */
+ 			fwtest_cmd_wrapper(dut, "-m 0x48 -v 0 721", ifname);
++	dut->uhr_2xldpc = VALUE_DISABLED;
++	free(dut->ar_gi);
++	dut->ar_gi = NULL;
+ 		}
+ 	}
+
+@@ -15396,7 +15413,6 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+ 	dut->eht_txmcs = 0;
+ 	dut->uhr_txmcs = 0;
+ 	dut->ap_ehtmcs_map = 0;
+-	dut->run_set_param = 0;
+
+ 	if (dut->device_type == AP_testbed) {
+ 		dut->ap_he_dlofdma = VALUE_DISABLED;
+@@ -15541,6 +15557,9 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+ 	dut->ap_preamblepunct = VALUE_NOT_SET;
+ 	dut->eht_txmcs = 0;
+ 	dut->uhr_txmcs = 0;
++	dut->uhr_2xldpc = VALUE_DISABLED;
++	free(dut->ar_gi);
++	dut->ar_gi = NULL;
+ 	dut->ap_addba_amsdu = -1;
+ 	dut->eht_omctrl = VALUE_NOT_SET;
+ 	dut->eht_txemlomn = VALUE_NOT_SET;
+@@ -21655,7 +21674,15 @@ static enum sigma_cmd_result mac80211_he_gi(struct sigma_dut *dut,
+ 		snprintf(program, sizeof(program), "uhr");
+ 	else if (dut->program == PROGRAM_HE)
+ 		snprintf(program, sizeof(program), "he");
+-	else
++	else if (dut->program == PROGRAM_UHR) {
++		/* For UHR, defer GI so it can be combined with nss_mcs_opt.
++		 * Store for use in mac80211_vht_nss_mcs().  If nss_mcs_opt
++		 * never arrives, the pending GI is consumed here anyway.
++		 */
++		free(dut->ar_gi);
++		dut->ar_gi = val ? strdup(val) : NULL;
++		snprintf(program, sizeof(program), "uhr");
++	} else
+ 		return STATUS_SENT_ERROR;
+
+ 	if (dut->nontrigger_txbf == VALUE_ENABLED) {
+@@ -21674,7 +21701,9 @@ static enum sigma_cmd_result mac80211_he_gi(struct sigma_dut *dut,
+ 		}
+ 	}
+
+-	if (dut->ar_ltf) {
++	/* For UHR, ar_ltf and ar_gi are consumed by mac80211_vht_nss_mcs()
++	 * to form a single combined iw command with nss_mcs_opt. */
++	if (dut->ar_ltf && dut->program != PROGRAM_UHR) {
+ 		he_ltf = mac80211_he_ltf_mapping(dut, dut->ar_ltf);
+ 		if (dut->nontrigger_txbf == VALUE_ENABLED) {
+ 			if (he_ltf == 0x01)
+@@ -21722,7 +21751,8 @@ static enum sigma_cmd_result mac80211_he_gi(struct sigma_dut *dut,
+ 					ifname, mode, program, mode, he_ltf);
+ 			}
+ 		}
+-	} else if (val) {
++	} else if (val && dut->program != PROGRAM_UHR) {
++		/* UHR: ar_gi stored above; combined in mac80211_vht_nss_mcs() */
+ 		if (dut->program == PROGRAM_EHT || dut->program == PROGRAM_UHR) {
+ 			ret = run_system_wrapper(
+ 				dut,
+@@ -21736,7 +21766,8 @@ static enum sigma_cmd_result mac80211_he_gi(struct sigma_dut *dut,
+ 		}
+ 	}
+
+-	if ((dut->program == PROGRAM_EHT) && (dut->nontrigger_txbf == VALUE_ENABLED))
++	if ((dut->program == PROGRAM_EHT || dut->program == PROGRAM_UHR) &&
++	    (dut->nontrigger_txbf == VALUE_ENABLED))
+ 		run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x48 -v 0 620 %d %d ",
+ 				   ifname, ltf, gi);
+
+@@ -22378,16 +22409,79 @@ static int mac80211_vht_nss_mcs(struct sigma_dut *dut, const char *ifname,
+ 		if (dut->program == PROGRAM_UHR) {
+ 			int cap_nss = nss ? nss :
+ 				      (dut->ap_tx_streams ? dut->ap_tx_streams : 4);
++			int ltf_val = -1;
+
+-			sigma_dut_print(dut, DUT_MSG_DEBUG,
+-					"nss_mcs_opt UHR auto-rate cap: "
+-					"iw set bitrates %s uhr-mcs-%s %d:0-%d",
+-					link_flag, band, cap_nss, mcs);
+-			run_system_wrapper(dut,
+-					   "iw %s set bitrates %s "
+-					   "uhr-mcs-%s %d:0-%d",
+-					   ifname, link_flag,
+-					   band, cap_nss, mcs);
++			/* Combine pending LTF and GI into a single iw command.
++			 * When LTF/GI arrive before nss_mcs_opt in the same
++			 * ap_set_rfeature, dut->ar_ltf and dut->ar_gi are set.
++			 * Issue: iw dev <ifname> set bitrates -l <id>
++			 *          uhr-mcs-<band> <nss>:0-<mcs>
++			 *          [uhr-ltf-<band> <ltf>]
++			 *          [uhr-gi-<band> <gi>]
++			 */
++			if (dut->ar_ltf) {
++				ltf_val = mac80211_he_ltf_mapping(dut, dut->ar_ltf);
++				free(dut->ar_ltf);
++				dut->ar_ltf = NULL;
++			}
++
++			if (ltf_val >= 0 && dut->ar_gi) {
++				sigma_dut_print(dut, DUT_MSG_DEBUG,
++						"nss_mcs_opt UHR auto-rate cap + LTF + GI: "
++						"iw set bitrates %s uhr-mcs-%s %d:0-%d "
++						"uhr-ltf-%s %d uhr-gi-%s %s",
++						link_flag, band, cap_nss, mcs,
++						band, ltf_val, band, dut->ar_gi);
++				run_system_wrapper(dut,
++						   "iw dev %s set bitrates %s "
++						   "uhr-mcs-%s %d:0-%d "
++						   "uhr-ltf-%s %d "
++						   "uhr-gi-%s %s",
++						   ifname, link_flag,
++						   band, cap_nss, mcs,
++						   band, ltf_val,
++						   band, dut->ar_gi);
++				free(dut->ar_gi);
++				dut->ar_gi = NULL;
++			} else if (ltf_val >= 0) {
++				sigma_dut_print(dut, DUT_MSG_DEBUG,
++						"nss_mcs_opt UHR auto-rate cap + LTF: "
++						"iw set bitrates %s uhr-mcs-%s %d:0-%d "
++						"uhr-ltf-%s %d",
++						link_flag, band, cap_nss, mcs, band, ltf_val);
++				run_system_wrapper(dut,
++						   "iw dev %s set bitrates %s "
++						   "uhr-mcs-%s %d:0-%d "
++						   "uhr-ltf-%s %d",
++						   ifname, link_flag,
++						   band, cap_nss, mcs,
++						   band, ltf_val);
++			} else if (dut->ar_gi) {
++				sigma_dut_print(dut, DUT_MSG_DEBUG,
++						"nss_mcs_opt UHR auto-rate cap + GI: "
++						"iw set bitrates %s uhr-mcs-%s %d:0-%d "
++						"uhr-gi-%s %s",
++						link_flag, band, cap_nss, mcs, band, dut->ar_gi);
++				run_system_wrapper(dut,
++						   "iw dev %s set bitrates %s "
++						   "uhr-mcs-%s %d:0-%d "
++						   "uhr-gi-%s %s",
++						   ifname, link_flag,
++						   band, cap_nss, mcs,
++						   band, dut->ar_gi);
++				free(dut->ar_gi);
++				dut->ar_gi = NULL;
++			} else {
++				sigma_dut_print(dut, DUT_MSG_DEBUG,
++						"nss_mcs_opt UHR auto-rate cap: "
++						"iw set bitrates %s uhr-mcs-%s %d:0-%d",
++						link_flag, band, cap_nss, mcs);
++				run_system_wrapper(dut,
++						   "iw dev %s set bitrates %s "
++						   "uhr-mcs-%s %d:0-%d",
++						   ifname, link_flag,
++						   band, cap_nss, mcs);
++			}
+ 			goto end_nss_mcs;
+ 		}
+
+@@ -22827,11 +22921,22 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 			}
+ 		} else if (strcasecmp(val, "2xLDPCCoding") == 0 &&
+ 			   dut->program == PROGRAM_UHR) {
+-			fwtest_linkid_cmd_wrapper(dut, "-m 0xA -v 0 105 1",
+-						  ifname, link_id);
++			/* Wi-Fi8/UHR Testbed: enable dual-LDPC coding.
++			 * Set flag so fwtest_set_eht_params emits 'on' at commit.
++			 * Also issue immediately for runtime ap_set_rfeature calls.
++			 */
++			dut->uhr_2xldpc = VALUE_ENABLED;
++			dut->ap_ldpc = VALUE_ENABLED;
++			{
++				const char *ldpc_band = dut->ap_band_6g ? "6" :
++							dut->use_5g ? "5" : "2.4";
++
++				run_system_wrapper(dut,
++						   "iw dev %s set bitrates -l %d 2xldpc-%s on",
++						   ifname, link_id, ldpc_band);
++			}
+ 		} else if (strcasecmp(val, "Default") == 0) {
+-			dut->ap_bcc = VALUE_NOT_SET;
+-			dut->ap_ldpc = VALUE_NOT_SET;
++			/* Reset coding to device default per CAPI spec v11.3.0. */
+ 		}
+ 	}
+
+diff --git a/sigma_dut.h b/sigma_dut.h
+index 9d8a7c9..6891c2f 100644
+--- a/sigma_dut.h
++++ b/sigma_dut.h
+@@ -1135,6 +1135,7 @@ struct sigma_dut {
+ 	int ap_rssi_threshold;   /* OCE: RSSI-based assoc reject threshold (dBm) */
+ 	int ap_retry_delay;      /* OCE: assoc reject retry delay (seconds) */
+ 	int ap_nairealm_int;
++	char *ar_gi;   /* pending GI value for UHR combined iw command */
+ 	char ap_nairealm[33];
+ 	int ap_blechanutil;
+ 	int ap_ble_admit_cap;
+@@ -1149,6 +1150,7 @@ struct sigma_dut {
+ 	int ap_akm;
+ 	unsigned int ap_akm_values;
+ 	unsigned int ap_akm_values_rsno1e;
++	enum value_not_set_enabled_disabled uhr_2xldpc;
+ 	unsigned int ap_akm_values_rsno2e;
+ 	int ap_pmksa;
+ 	int ap_pmksa_caching;
