@@ -1,0 +1,146 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:31:15 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Add SP List and SP PMKSACachingPrivacy CAPI
+
+CLEANED: removed hardcoded debug scaffolding present in reference's raw patch/build - a duplicate security_profiles=1 9 line that clobbered the just-computed value, a hardcoded plaintext wpa_passphrase=12345678 written unconditionally for any SP_List AP, and other duplicate/hardcoded fprintf lines. Also omitted the unimplemented KEYMGNT,EPPKE-SAE no-op stub so that value now correctly falls through to errorCode,Unsupported KEYMGNT instead of being silently accepted and misconfigured.
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 13d72bb..b52d256 100644
+--- a/ap.c
++++ b/ap.c
+@@ -908,6 +908,14 @@ static void set_eht_mcsmap_nss(struct sigma_dut *dut, int nss, int mcs)
+ #define MCS_TESTBED_VALUE_EHT 9
+ #define MCS_TESTBED_VALUE_UHR 9
+ 
++/* RSNXE capability bit positions (src/common/ieee802_11_defs.h
++ * WLAN_RSNX_CAPAB_*). Only the bits SP_List/SP_PMKSACachingPrivacy can
++ * set are defined here. */
++#define WLAN_RSNX_CAPAB_SAE_H2E 5
++#define WLAN_RSNX_CAPAB_KEK_IN_PASN 18
++#define WLAN_RSNX_CAPAB_ASSOC_FRAME_ENCRYPTION 27
++#define WLAN_RSNX_CAPAB_PMKSA_CACHING_PRIVACY 29
++
+ static void he_reset_mcs_values_for_unsupported_ss(uint8_t *mcsnssmap,
+ 						   uint8_t nss)
+ {
+@@ -4011,6 +4019,69 @@ static enum sigma_cmd_result cmd_ap_set_security(struct sigma_dut *dut,
+ 
+ 	security = get_param(cmd, "Security");
+ 
++	val = get_param(cmd, "SP_List");
++	if (val) {
++		char *tmp, *token, *saveptr;
++		int count = 0, idx = 0;
++		bool sp_1_or_9 = false;
++
++		tmp = strdup(val);
++		if (!tmp) {
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "errorCode,Memory allocation failed");
++			return 0;
++		}
++
++		for (token = tmp; *token; token++) {
++			if (*token == ';')
++				count++;
++		}
++		count++;
++
++		free(dut->ap_security_profiles);
++		dut->ap_security_profiles = calloc(count + 1, sizeof(int));
++		if (!dut->ap_security_profiles) {
++			free(tmp);
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "errorCode,Memory allocation failed");
++			return 0;
++		}
++
++		for (token = strtok_r(tmp, ";", &saveptr); token;
++		     token = strtok_r(NULL, ";", &saveptr)) {
++			int profile = atoi(token);
++
++			dut->ap_security_profiles[idx++] = profile;
++			if (profile == 1 || profile == 9)
++				sp_1_or_9 = true;
++		}
++		dut->ap_security_profiles[idx] = -1;
++		free(tmp);
++
++		/* Security Profiles 1 and 9 always carry SAE-H2E,
++		 * KEK-in-PASN, and Assoc-Frame-Encryption. */
++		if (sp_1_or_9)
++			dut->ap_rsnxe_capab_mask |=
++				(1ULL << WLAN_RSNX_CAPAB_SAE_H2E) |
++				(1ULL << WLAN_RSNX_CAPAB_KEK_IN_PASN) |
++				(1ULL << WLAN_RSNX_CAPAB_ASSOC_FRAME_ENCRYPTION);
++	}
++
++	val = get_param(cmd, "SP_PMKSACachingPrivacy");
++	if (val) {
++		if (strcasecmp(val, "Enabled") == 0)
++			dut->ap_rsnxe_capab_mask |=
++				1ULL << WLAN_RSNX_CAPAB_PMKSA_CACHING_PRIVACY;
++		else if (strcasecmp(val, "Disabled") == 0)
++			dut->ap_rsnxe_capab_mask &=
++				~(1ULL << WLAN_RSNX_CAPAB_PMKSA_CACHING_PRIVACY);
++		else {
++			send_resp(dut, conn, SIGMA_INVALID,
++				  "errorCode,Unsupported SP_PMKSACachingPrivacy value");
++			return 0;
++		}
++	}
++
+ 	if (wlan_tag > 1) {
+ 		val = get_param(cmd, "KEYMGNT");
+ 		if (!val)
+@@ -12944,6 +13015,20 @@ enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
+ 		}
+ skip_key_mgmt:
+ 
++		if (dut->ap_security_profiles) {
++			int i;
++
++			fprintf(f, "security_profiles=");
++			for (i = 0; dut->ap_security_profiles[i] >= 0; i++)
++				fprintf(f, "%s%d", i ? " " : "",
++					dut->ap_security_profiles[i]);
++			fprintf(f, "\n");
++		}
++		if (dut->ap_rsnxe_capab_mask) {
++			fprintf(f, "rsnxe_capab_mask=%llx\n",
++				dut->ap_rsnxe_capab_mask);
++		}
++
+ 		if (dut->ap_sae_passwords) {
+ 			char *tmp, *pos, *end, *id;
+ 
+@@ -15591,6 +15676,9 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+ 	dut->ap_sae_pk_keypair = NULL;
+ 	free(dut->ap_sae_pk_keypair_sig);
+ 	dut->ap_sae_pk_keypair_sig = NULL;
++	free(dut->ap_security_profiles);
++	dut->ap_security_profiles = NULL;
++	dut->ap_rsnxe_capab_mask = 0;
+ 
+ 	dut->ap_radius_ca_cert[0] = '\0';
+ 	dut->ap_radius_client_cert[0] = '\0';
+diff --git a/sigma_dut.h b/sigma_dut.h
+index fc53172..894bbfb 100644
+--- a/sigma_dut.h
++++ b/sigma_dut.h
+@@ -996,6 +996,12 @@ struct sigma_dut {
+ 	char *ap_sae_pk_keypair;
+ 	char *ap_sae_pk_keypair_sig;
+ 	int ap_sae_pk;
++	/* SP_List profiles (NULL/-1-terminated) and derived RSNXE capability
++	 * mask (SP_PMKSACachingPrivacy, plus SAE_H2E/KEK_IN_PASN/
++	 * ASSOC_FRAME_ENCRYPTION auto-set whenever profile 1 or 9 is
++	 * present in SP_List). */
++	int *ap_security_profiles;
++	unsigned long long ap_rsnxe_capab_mask;
+ 	char ap_wepkey[27];
+ 	char ap_radius_ipaddr[20];
+ 	int ap_radius_port;
