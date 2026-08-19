@@ -1,0 +1,173 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Mon, 17 Aug 2026 20:59:30 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Add EHT AP testbed defaults MAC80211
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index de17e35..d15a324 100644
+--- a/ap.c
++++ b/ap.c
+@@ -10624,7 +10624,8 @@ static void fwtest_set_he_params(struct sigma_dut *dut, const char *ifname,
+ }
+ 
+ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+-				  const int link_id)
++				  const int link_id, const char *basedev,
++				  const char *basedev_radio)
+ {
+ 	/* Driver overrides pdev_id for ath11k-fwtest cmd, so use dummy
+ 	 * value of 1 for pdev_id parameter
+@@ -10795,6 +10796,133 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 	/* Disable best link selection algorithm for emlsr mode */
+ 	if (dut->single_link_emlsr == VALUE_ENABLED)
+ 		fwtest_linkid_cmd_wrapper(dut, "-m 0x48 -v 0 1023 1", ifname, link_id);
++
++	/* EHT unconditional testbed mode resets */
++	run_iwpriv(dut, basedev, "dcs_enable 0");
++	run_iwpriv(dut, basedev_radio, "dcs_enable 0");
++	run_iwpriv(dut, basedev, "disable_eml_in_slo 0");
++	run_iwpriv(dut, basedev_radio, "disable_eml_in_slo 0");
++	run_iwpriv(dut, basedev, "he_muedca_mode 0");
++	run_iwpriv(dut, basedev_radio, "he_muedca_mode 0");
++	if (!dut->ap_txBF) {
++		run_iwpriv(dut, ifname, "vhtsubfer 0");
++		run_iwpriv(dut, ifname, "he_subfer 0");
++		run_iwpriv(dut, ifname, "set_eht_su_bfer 0");
++	}
++	if (!dut->ap_mu_txBF) {
++		run_iwpriv(dut, ifname, "vhtmubfer 0");
++		run_iwpriv(dut, ifname, "he_mubfer 0");
++		run_iwpriv(dut, ifname, "set_eht_mu_bfer 0");
++	}
++
++	if (dut->device_type != AP_testbed)
++		return;
++
++	/* EHT AP testbed capability IE resets */
++	run_iwpriv(dut, ifname, "tx_stbc 0");
++	run_iwpriv(dut, ifname, "eht_rxmcsmap 0x22 0 0");
++	run_iwpriv(dut, ifname, "eht_txmcsmap 0x22 0 0");
++	run_iwpriv(dut, ifname, "rx_stbc 0");
++	run_iwpriv(dut, ifname, "set_eht_ndp_4x_eht_ltf_and_320nsgi 0");
++	run_iwpriv(dut, ifname, "set_eht_ulofdma_mumimo 0");
++	run_iwpriv(dut, ifname, "set_eht_4x_eht_ltf_and_800ns_gi 0");
++	run_iwpriv(dut, ifname, "set_eht_rx_1024_and_4096_qam_ls_242_tone_ru 0");
++	run_iwpriv(dut, ifname, "set_eht_ulmumimo 0");
++	run_iwpriv(dut, ifname, "set_eht_epcs_pri_access 0");
++	run_iwpriv(dut, ifname, "set_eht_om_ctrl 0");
++	run_iwpriv(dut, ifname, "set_eht_trig_txop_sharing 0");
++	run_iwpriv(dut, ifname, "set_eht_max_nc 0");
++	run_iwpriv(dut, ifname, "set_eht_bfme_ss 1 0 0");
++	run_iwpriv(dut, ifname, "set_eht_trig_su_bf_fb 0");
++	run_iwpriv(dut, ifname, "set_eht_trig_mu_bf_part_bw_fb 0");
++	run_iwpriv(dut, ifname, "set_eht_trig_cqi_fb 0");
++	run_iwpriv(dut, ifname, "set_eht_non_trig_cqi_fb 0");
++	if (!dut->ap_txBF) {
++		run_iwpriv(dut, ifname, "set_eht_su_bfmr 0");
++		run_iwpriv(dut, ifname, "set_eht_su_bfme 0");
++	}
++	if (!dut->ap_mu_txBF) {
++		run_iwpriv(dut, ifname, "set_eht_mu_bfmr 0");
++		run_iwpriv(dut, ifname, "set_eht_mubfee 0");
++	}
++	run_iwpriv(dut, ifname, "eht_mcs15_supp 0");
++	run_iwpriv(dut, ifname, "eht_mcs14_dup_6ghz 0");
++	run_iwpriv(dut, ifname, "set_max_mpdu_length 0");
++	if (dut->ap_interface_6g)
++		run_system_wrapper(dut, "wifitool %s set_wfa_test_param 6ghz 1 1",
++				   ifname);
++	if ((dut->ap_rx_streams || dut->ap_tx_streams) && !dut->nss_mcs_set)
++		set_eht_mcsmap_nss(dut, dut->ap_rx_streams, MCS_TESTBED_VALUE_EHT);
++	/* Disable EHT triggers and OFDMA by default */
++	run_iwpriv(dut, ifname, "set_eht_ulofdma 0");
++	run_iwpriv(dut, ifname, "set_eht_dlofdma 0");
++	run_iwpriv(dut, ifname, "he_ul_ofdma 0");
++	run_iwpriv(dut, ifname, "he_dl_ofdma 0");
++	run_iwpriv(dut, ifname, "he_ul_mumimo 0");
++	if (dut->ap_channel_1 <= 11 && dut->run_set_param)
++		run_iwpriv(dut, ifname, "vht_11ng 0");
++	/* Re-enable EML sleep link (testbed) */
++	run_iwpriv(dut, basedev, "disable_eml_in_slo 1");
++	run_iwpriv(dut, basedev_radio, "disable_eml_in_slo 1");
++	if (dut->ap_chwidth == AP_320)
++		run_iwpriv(dut, ifname, "eht_config_ccfs0 1");
++	run_iwpriv(dut, ifname, "eht_max_supp_ltf 0");
++	/* STR WAR for testbed */
++	fwtest_linkid_cmd_wrapper(dut, "-m 0x48 -v 0 676 1", ifname, link_id);
++	/* Clear NO_NAV_CHECK_FOR_CTS bit */
++	fwtest_linkid_cmd_wrapper(dut, "-m 0x48 -v 0 686 0", ifname, link_id);
++	/* Disable sounding */
++	fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 7 0", ifname, link_id);
++
++	/* Reuse HE testbed capability resets for EHT */
++	run_iwpriv(dut, ifname, "he_txmcsmap 0x0");
++	run_iwpriv(dut, ifname, "he_rxmcsmap 0x0");
++	run_iwpriv(dut, ifname, "he_amsdu_in_ampdu_supp 0");
++	run_iwpriv(dut, ifname, "he_bfee_sts_supp 0 0");
++	run_iwpriv(dut, ifname, "he_max_nc 0");
++	run_iwpriv(dut, ifname, "he_bsr_supp 0");
++	run_iwpriv(dut, ifname, "he_subfee 0");
++	run_iwpriv(dut, ifname, "he_su_mu_ppdu_4x_ltf_800ns_gi 0");
++	run_iwpriv(dut, ifname, "he_su_ppdu_1x_ltf_800ns_gi 0");
++	run_iwpriv(dut, ifname, "he_er_su_disable 1");
++	run_iwpriv(dut, ifname, "he_1024qam_lt242ru_rx 0");
++	run_iwpriv(dut, ifname, "he_ul_mu_data_dis_rx 0");
++	run_iwpriv(dut, ifname, "he_max_ampdu_len_exp 0");
++	run_iwpriv(dut, ifname, "he_full_bw_ulmumimo 0");
++	run_iwpriv(dut, ifname, "he_er_su_ppdu_1x_ltf_800ns_gi 0");
++	run_iwpriv(dut, ifname, "he_er_su_ppdu_4x_ltf_800ns_gi 0");
++	run_iwpriv(dut, ifname, "he_dcm_max_const_rx 0");
++	/* Disable BSRP triggers */
++	fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 345 1", ifname, link_id);
++	if (!dut->ap_txBF) {
++		run_iwpriv(dut, ifname, "he_subfer 0");
++		run_iwpriv(dut, ifname, "he_subfee 0");
++	}
++	if (!dut->ap_mu_txBF) {
++		run_iwpriv(dut, ifname, "he_mubfer 0");
++		run_iwpriv(dut, ifname, "he_mubfee 0");
++	}
++	if (dut->ap_cipher == AP_WEP || dut->ap_cipher == AP_TKIP)
++		run_iwpriv(dut, ifname, "htweptkip 1");
++	if (dut->ap_rx_streams || dut->ap_tx_streams) {
++		run_iwpriv(dut, ifname, "nss %d", dut->ap_rx_streams);
++		if (!dut->nss_mcs_set) {
++			unsigned int mcsnssmap;
++
++			get_he_mcs_nssmap((uint8_t *) &mcsnssmap, dut->ap_rx_streams,
++					  MCS_TESTBED_VALUE_EHT);
++			dut->he_mcsnssmap = (mcsnssmap << 16) | mcsnssmap;
++			run_iwpriv(dut, ifname, "he_rxmcsmap %u", dut->he_mcsnssmap);
++			run_iwpriv(dut, ifname, "he_txmcsmap %u", dut->he_mcsnssmap);
++		}
++	}
++
++	if (dut->ap_twtinfoframerx == VALUE_ENABLED)
++		fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 333 1", ifname, link_id);
++
++	/* Disable 802.11cf/8CFDF0 IE in testbed mode */
++	run_system_wrapper(dut, "wifitool %s set_wfa_test_param wfa_testbed 2 1",
++			   ifname);
+ }
+ 
+ #define IEEE80211_VHT_CAP_TXSTBC                               ((u32) (1 << 7))
+@@ -14236,6 +14364,8 @@ hapd_started:
+ 			fwtest_set_he_params(dut, ifname2, i+1, basedev);
+ 		}
+ 	} else if (drv == DRIVER_MAC80211 && dut->program == PROGRAM_EHT) {
++		const char *basedev = sigma_radio_ifname[0] ? sigma_radio_ifname[0] : "wifi0";
++		const char *basedev_radio = sigma_radio_ifname[1] ? sigma_radio_ifname[1] : "wifi1";
+ 		int i;
+ 
+ 		for (i = 0; i < dut->num_links; i++) {
+@@ -14249,7 +14379,7 @@ hapd_started:
+ 				fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 330 0", ifname, i);
+ 				continue;
+ 			}
+-			fwtest_set_eht_params(dut, ifname, i);
++			fwtest_set_eht_params(dut, ifname, i, basedev, basedev_radio);
+ 		}
+ 	}
+ 
