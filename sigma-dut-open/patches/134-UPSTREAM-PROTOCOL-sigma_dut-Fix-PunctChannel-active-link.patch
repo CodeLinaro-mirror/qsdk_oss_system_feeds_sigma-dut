@@ -1,0 +1,26 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Mon, 17 Aug 2026 21:00:42 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Fix PunctChannel active link
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 5b173f6..1a7c007 100644
+--- a/ap.c
++++ b/ap.c
+@@ -3087,8 +3087,13 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+ 
+ 	val = get_param(cmd, "PunctChannel");
+ 	if (val) {
++		/* Use the most recently configured link rather than hardcoding
++		 * BAND_6G — PunctChannel is valid on any link (5G or 6G) and
++		 * the width must have been set on that link first. */
++		int punct_link = dut->num_links > 0 ? dut->num_links - 1 : 0;
++
+ 		dut->ap_punct_bitmap = get_bitmap_from_punct_chlist(dut, val,
+-						get_link_id_by_band(dut, BAND_6G));
++								    punct_link);
+ 		if (dut->ap_punct_bitmap < 0) {
+ 			send_resp(dut, conn, SIGMA_INVALID,
+ 				  "errorCode,Invalid PunctChannel");
