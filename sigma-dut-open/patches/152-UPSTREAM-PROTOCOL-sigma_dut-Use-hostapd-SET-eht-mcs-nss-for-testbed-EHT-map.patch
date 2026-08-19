@@ -1,0 +1,61 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:09:19 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Use hostapd SET eht mcs nss for testbed EHT map
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 3baba60..0da6a93 100644
+--- a/ap.c
++++ b/ap.c
+@@ -10896,21 +10896,37 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 	/* EHT AP testbed capability IE resets */
+ 	run_iwpriv(dut, ifname, "tx_stbc 0");
+ 	/*
+-	 * EHT MCS/NSS map: use the CAPI-specified value when nss_mcs_cap was
+-	 * sent (nss_mcs_set=1, ap_ehtmcs_map set by set_eht_mcsmap_nss()).
+-	 * Fall back to testbed default 2SS MCS9 (0x22) when no explicit map
+-	 * was requested.  Without this the hardcoded 0x22 overwrites the
+-	 * correct per-TC value and the beacon always advertises 2SS.
++	 * EHT MCS/NSS map via hostapd_cli SET eht_tx/rx_mcs_nss_set.
++	 * cfg80211tool eht_rxmcsmap is ath11k-specific and silently ignored
++	 * on mac80211/ath12k.  Use the hostapd ctrl_iface SET command instead.
++	 *
++	 * Format: "<80MHz_mask> <160MHz_mask> <320MHz_mask>"
++	 *   bits[3:0]=MCS0-9 NSS, bits[7:4]=MCS10-11 NSS, bits[11:8]=MCS12-13 NSS
+ 	 */
+ 	if (dut->nss_mcs_set && dut->ap_ehtmcs_map) {
+-		run_iwpriv(dut, ifname, "eht_rxmcsmap 0x%x 0 0",
+-			   dut->ap_ehtmcs_map);
+-		run_iwpriv(dut, ifname, "eht_txmcsmap 0x%x 0 0",
+-			   dut->ap_ehtmcs_map);
++		unsigned int nss09   = dut->ap_ehtmcs_map & 0xF;
++		unsigned int nss1011 = (dut->ap_ehtmcs_map >> 4) & 0xF;
++		unsigned int nss1213 = (dut->ap_ehtmcs_map >> 8) & 0xF;
++		unsigned int mcs_mask = (nss1213 << 8) | (nss1011 << 4) | nss09;
++
++		run_system_wrapper(dut,
++				   "hostapd_cli -i %s SET eht_tx_mcs_nss_set "
++				   "\"0x%03x 0x000 0x000\"",
++				   ifname, mcs_mask);
++		run_system_wrapper(dut,
++				   "hostapd_cli -i %s SET eht_rx_mcs_nss_set "
++				   "\"0x%03x 0x000 0x000\"",
++				   ifname, mcs_mask);
+ 	} else {
+-		/* testbed default: 2SS MCS9 */
+-		run_iwpriv(dut, ifname, "eht_rxmcsmap 0x22 0 0");
+-		run_iwpriv(dut, ifname, "eht_txmcsmap 0x22 0 0");
++		/* Testbed default: NSS=2 MCS0-9 only (TC 5.2.1) */
++		run_system_wrapper(dut,
++				   "hostapd_cli -i %s SET eht_tx_mcs_nss_set "
++				   "\"0x002 0x000 0x000\"",
++				   ifname);
++		run_system_wrapper(dut,
++				   "hostapd_cli -i %s SET eht_rx_mcs_nss_set "
++				   "\"0x002 0x000 0x000\"",
++				   ifname);
+ 	}
+ 	run_iwpriv(dut, ifname, "rx_stbc 0");
+ 	run_iwpriv(dut, ifname, "set_eht_ndp_4x_eht_ltf_and_320nsgi 0");

@@ -1,0 +1,109 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:09:19 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: UHR nss mcs opt set MCS cap for all NSS 1 to N
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 1f6dcfc..3baba60 100644
+--- a/ap.c
++++ b/ap.c
+@@ -22720,6 +22720,21 @@ static int mac80211_vht_nss_mcs(struct sigma_dut *dut, const char *ifname,
+ 			int cap_nss = nss ? nss :
+ 				      (dut->ap_tx_streams ? dut->ap_tx_streams : 4);
+ 			int ltf_val = -1;
++			int n;
++			/* Build "1:0-M 2:0-M ... cap_nss:0-M" so the FW rate
++			 * scheduler picks the correct NSS based on negotiated
++			 * peer capability, not the AP hardware count:
++			 *   nss_mcs_opt,def;7 -> 1:0-7 2:0-7 3:0-7 4:0-7
++			 *   nss_mcs_opt,2;7  -> 1:0-7 2:0-7
++			 */
++			char mcs_str[128] = "";
++			char tmp[24];
++			for (n = 1; n <= cap_nss; n++) {
++				if (n > 1)
++					strlcat(mcs_str, " ", sizeof(mcs_str));
++				snprintf(tmp, sizeof(tmp), "%d:0-%d", n, mcs);
++				strlcat(mcs_str, tmp, sizeof(mcs_str));
++			}
+ 
+ 			/* Combine pending LTF and GI into a single iw command.
+ 			 * When LTF/GI arrive before nss_mcs_opt in the same
+@@ -22738,17 +22753,17 @@ static int mac80211_vht_nss_mcs(struct sigma_dut *dut, const char *ifname,
+ 			if (ltf_val >= 0 && dut->ar_gi) {
+ 				sigma_dut_print(dut, DUT_MSG_DEBUG,
+ 						"nss_mcs_opt UHR auto-rate cap + LTF + GI: "
+-						"iw set bitrates %s uhr-mcs-%s %d:0-%d "
++						"iw set bitrates %s uhr-mcs-%s %s "
+ 						"uhr-ltf-%s %d uhr-gi-%s %s",
+-						link_flag, band, cap_nss, mcs,
++						link_flag, band, mcs_str,
+ 						band, ltf_val, band, dut->ar_gi);
+ 				run_system_wrapper(dut,
+ 						   "iw dev %s set bitrates %s "
+-						   "uhr-mcs-%s %d:0-%d "
++						   "uhr-mcs-%s %s "
+ 						   "uhr-ltf-%s %d "
+ 						   "uhr-gi-%s %s",
+ 						   ifname, link_flag,
+-						   band, cap_nss, mcs,
++						   band, mcs_str,
+ 						   band, ltf_val,
+ 						   band, dut->ar_gi);
+ 				free(dut->ar_gi);
+@@ -22756,41 +22771,41 @@ static int mac80211_vht_nss_mcs(struct sigma_dut *dut, const char *ifname,
+ 			} else if (ltf_val >= 0) {
+ 				sigma_dut_print(dut, DUT_MSG_DEBUG,
+ 						"nss_mcs_opt UHR auto-rate cap + LTF: "
+-						"iw set bitrates %s uhr-mcs-%s %d:0-%d "
++						"iw set bitrates %s uhr-mcs-%s %s "
+ 						"uhr-ltf-%s %d",
+-						link_flag, band, cap_nss, mcs, band, ltf_val);
++						link_flag, band, mcs_str, band, ltf_val);
+ 				run_system_wrapper(dut,
+ 						   "iw dev %s set bitrates %s "
+-						   "uhr-mcs-%s %d:0-%d "
++						   "uhr-mcs-%s %s "
+ 						   "uhr-ltf-%s %d",
+ 						   ifname, link_flag,
+-						   band, cap_nss, mcs,
++						   band, mcs_str,
+ 						   band, ltf_val);
+ 			} else if (dut->ar_gi) {
+ 				sigma_dut_print(dut, DUT_MSG_DEBUG,
+ 						"nss_mcs_opt UHR auto-rate cap + GI: "
+-						"iw set bitrates %s uhr-mcs-%s %d:0-%d "
++						"iw set bitrates %s uhr-mcs-%s %s "
+ 						"uhr-gi-%s %s",
+-						link_flag, band, cap_nss, mcs, band, dut->ar_gi);
++						link_flag, band, mcs_str, band, dut->ar_gi);
+ 				run_system_wrapper(dut,
+ 						   "iw dev %s set bitrates %s "
+-						   "uhr-mcs-%s %d:0-%d "
++						   "uhr-mcs-%s %s "
+ 						   "uhr-gi-%s %s",
+ 						   ifname, link_flag,
+-						   band, cap_nss, mcs,
++						   band, mcs_str,
+ 						   band, dut->ar_gi);
+ 				free(dut->ar_gi);
+ 				dut->ar_gi = NULL;
+ 			} else {
+ 				sigma_dut_print(dut, DUT_MSG_DEBUG,
+ 						"nss_mcs_opt UHR auto-rate cap: "
+-						"iw set bitrates %s uhr-mcs-%s %d:0-%d",
+-						link_flag, band, cap_nss, mcs);
++						"iw set bitrates %s uhr-mcs-%s %s",
++						link_flag, band, mcs_str);
+ 				run_system_wrapper(dut,
+ 						   "iw dev %s set bitrates %s "
+-						   "uhr-mcs-%s %d:0-%d",
++						   "uhr-mcs-%s %s",
+ 						   ifname, link_flag,
+-						   band, cap_nss, mcs);
++						   band, mcs_str);
+ 			}
+ 			goto end_nss_mcs;
+ 		}
