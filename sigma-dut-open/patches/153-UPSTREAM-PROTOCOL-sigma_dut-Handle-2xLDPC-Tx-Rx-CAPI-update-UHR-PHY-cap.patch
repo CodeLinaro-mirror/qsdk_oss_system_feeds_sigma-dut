@@ -1,0 +1,122 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:12:40 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Handle 2xLDPC Tx/Rx CAPI and UHR PHY cap
+
+Squashed with the follow-up fixup patch: uses the corrected SET
+bss_uhr_2xldpc_tx/rx hostapd_cli format and FW auto-rate control
+from the start, matching the reference's final verified
+implementation.
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 0da6a93..0517013 100644
+--- a/ap.c
++++ b/ap.c
+@@ -3071,6 +3071,22 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+ 		dut->uhr_txmcs = atoi(val);
+ 	}
+ 
++	val = get_param(cmd, "2xLDPC_Tx");
++	if (val) {
++		if (strcasecmp(val, "Enable") == 0)
++			dut->uhr_2xldpc_tx = VALUE_ENABLED;
++		else
++			dut->uhr_2xldpc_tx = VALUE_DISABLED;
++	}
++
++	val = get_param(cmd, "2xLDPC_Rx");
++	if (val) {
++		if (strcasecmp(val, "Enable") == 0)
++			dut->uhr_2xldpc_rx = VALUE_ENABLED;
++		else
++			dut->uhr_2xldpc_rx = VALUE_DISABLED;
++	}
++
+ 	val = get_param(cmd, "BA_Param_AMSDU_Support");
+ 	if (val)
+ 		dut->ap_addba_amsdu = atoi(val);
+@@ -10444,7 +10460,12 @@ static void fwtest_set_he_params(struct sigma_dut *dut, const char *ifname,
+ 		fwtest_cmd_wrapper(dut, "-m 0x48 -v 0 63 1908", ifname);
+ 	/* 2xLDPC: disable by default for Testbed; enable only when
+ 	 * CodingType=2xLDPCCoding CAPI is received (sets uhr_2xldpc=ENABLED).
+-	 * Command: iw dev <ifname> set bitrates -l <link_id> 2xldpc-<band> on|off
++	 *
++	 * Two commands needed for full coverage:
++	 *   1. iw dev set bitrates 2xldpc-<band> on|off
++	 *      -> WMI_VDEV_PARAM_2XLDPC (0xCA): fixed-rate path
++	 *   2. fwtest -m 10 -v 0 105 <1|0>
++	 *      -> FW auto-rate scheduler 2xLDPC enable/disable
+ 	 */
+ 	if (dut->program == PROGRAM_UHR) {
+ 		const char *ldpc_band = dut->ap_band_6g ? "6" :
+@@ -10455,6 +10476,35 @@ static void fwtest_set_he_params(struct sigma_dut *dut, const char *ifname,
+ 		run_system_wrapper(dut,
+ 				   "iw dev %s set bitrates -l %d 2xldpc-%s %s",
+ 				   ifname, link_id, ldpc_band, ldpc_state);
++
++		/* Auto-rate path: FW rate scheduler 2xLDPC control */
++		fwtest_linkid_cmd_wrapper(dut,
++					  (dut->uhr_2xldpc == VALUE_ENABLED) ?
++					  "-m 10 -v 0 105 1" :
++					  "-m 10 -v 0 105 0",
++					  ifname, link_id);
++
++		/* Disable 2xLDPC TX/RX IE advertisement by default (testbed).
++		 * Conditional calls below re-enable when ap_set_wireless
++		 * 2xLDPC_Tx/Rx,Enable CAPI is sent. */
++		run_system_wrapper(dut,
++				   "hostapd_cli -i %s SET bss_uhr_2xldpc_tx 0",
++				   ifname);
++		run_system_wrapper(dut,
++				   "hostapd_cli -i %s SET bss_uhr_2xldpc_rx 0",
++				   ifname);
++
++		/* Override to enabled if CAPI explicitly requested */
++		if (dut->uhr_2xldpc_tx != VALUE_NOT_SET)
++			run_system_wrapper(dut,
++					   "hostapd_cli -i %s SET bss_uhr_2xldpc_tx %d",
++					   ifname,
++					   dut->uhr_2xldpc_tx == VALUE_ENABLED ? 1 : 0);
++		if (dut->uhr_2xldpc_rx != VALUE_NOT_SET)
++			run_system_wrapper(dut,
++					   "hostapd_cli -i %s SET bss_uhr_2xldpc_rx %d",
++					   ifname,
++					   dut->uhr_2xldpc_rx == VALUE_ENABLED ? 1 : 0);
+ 	}
+ 
+ 
+@@ -15853,6 +15903,8 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+ 	dut->eht_txmcs = 0;
+ 	dut->uhr_txmcs = 0;
+ 	dut->uhr_2xldpc = VALUE_DISABLED;
++	dut->uhr_2xldpc_tx = VALUE_NOT_SET;
++	dut->uhr_2xldpc_rx = VALUE_NOT_SET;
+ 	/* Reset ap_tx/rx_streams to 0 so nss_mcs_opt def;N defaults to 4
+ 	 * streams per link instead of the hardware antenna count (which
+ 	 * reflects all radio chains combined and can exceed 4).
+@@ -23275,6 +23327,10 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 				run_system_wrapper(dut,
+ 						   "iw dev %s set bitrates -l %d 2xldpc-%s on",
+ 						   ifname, link_id, ldpc_band);
++
++				/* Auto-rate path */
++				fwtest_linkid_cmd_wrapper(dut, "-m 10 -v 0 105 1",
++							  ifname, link_id);
+ 			}
+ 		} else if (strcasecmp(val, "Default") == 0) {
+ 			/* Reset coding to device default per CAPI spec v11.3.0. */
+diff --git a/sigma_dut.h b/sigma_dut.h
+index 6891c2f..60d9904 100644
+--- a/sigma_dut.h
++++ b/sigma_dut.h
+@@ -1151,6 +1151,8 @@ struct sigma_dut {
+ 	unsigned int ap_akm_values;
+ 	unsigned int ap_akm_values_rsno1e;
+ 	enum value_not_set_enabled_disabled uhr_2xldpc;
++	enum value_not_set_enabled_disabled uhr_2xldpc_tx;
++	enum value_not_set_enabled_disabled uhr_2xldpc_rx;
+ 	unsigned int ap_akm_values_rsno2e;
+ 	int ap_pmksa;
+ 	int ap_pmksa_caching;
