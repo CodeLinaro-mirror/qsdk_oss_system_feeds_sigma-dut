@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:28:01 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Set ath12k ba_mode Manual for ADDBA reject
+
+Squashed with the follow-up fixup patch: uses cfg80211tool
+directly per the reference's final verified implementation,
+skipping the intermediate debugfs approach the fixup patch
+replaced.
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index f1f1a68..06cef1c 100644
+--- a/ap.c
++++ b/ap.c
+@@ -11203,6 +11203,21 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 			    dut->ap_addba_reject == VALUE_ENABLED) ? 0 : 1,
+ 			   ifname);
+
++	/* ath12k: FW default BA mode is Auto (0) — FW negotiates BA
++	 * sessions on its own without going through mac80211's ADDBA Req
++	 * processing path, so the addba_req_enable knob above never gets
++	 * a chance to block it.  Switch this link to Manual mode (1) via
++	 * cfg80211tool so BA session control is left to the
++	 * host when ADDBA_REJECT,enable is in effect; restore to Auto (0)
++	 * otherwise. */
++	if (strncmp(dut->device_driver, "ath12k", 6) == 0) {
++		run_system_wrapper(dut,
++				   "cfg80211tool %s ba_mode %d",
++				   ifname,
++				   (dut->ap_ampdu == VALUE_DISABLED &&
++				    dut->ap_addba_reject == VALUE_ENABLED) ? 1 : 0);
++	}
++
+ 	/* mac80211/ath12k: trigger beacon reconvergence after all bss_he_* and
+ 	 * bss_eht_* SET calls above have updated the hostapd capability state. */
+ 	run_system_wrapper(dut, "hostapd_cli -i %s UPDATE_BEACON", ifname);

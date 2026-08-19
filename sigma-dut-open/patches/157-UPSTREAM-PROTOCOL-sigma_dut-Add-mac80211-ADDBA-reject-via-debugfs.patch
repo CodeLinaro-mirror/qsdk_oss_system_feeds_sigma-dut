@@ -1,0 +1,29 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:26:46 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Add mac80211 ADDBA reject via debugfs
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 232d038..f1f1a68 100644
+--- a/ap.c
++++ b/ap.c
+@@ -11192,6 +11192,17 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 	if (dut->ap_twtinfoframerx == VALUE_ENABLED)
+ 		fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 333 1", ifname, link_id);
+
++	/* mac80211/ath12k: ADDBA Reject — control ADDBA Req processing.
++	 * Disable (0) when ampdu,disable + ADDBA_REJECT,enable sent.
++	 * Always restore to 1 otherwise so kernel default is maintained. */
++	run_system_wrapper(dut,
++			   "echo %d > /sys/kernel/debug/ieee80211/"
++			   "$(cat /sys/class/net/%s/phy80211/name)"
++			   "/addba_req_enable",
++			   (dut->ap_ampdu == VALUE_DISABLED &&
++			    dut->ap_addba_reject == VALUE_ENABLED) ? 0 : 1,
++			   ifname);
++
+ 	/* mac80211/ath12k: trigger beacon reconvergence after all bss_he_* and
+ 	 * bss_eht_* SET calls above have updated the hostapd capability state. */
+ 	run_system_wrapper(dut, "hostapd_cli -i %s UPDATE_BEACON", ifname);

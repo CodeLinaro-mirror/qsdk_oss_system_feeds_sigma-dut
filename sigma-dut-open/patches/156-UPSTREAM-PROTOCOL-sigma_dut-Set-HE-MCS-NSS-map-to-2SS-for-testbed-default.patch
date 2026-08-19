@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:21:12 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Set HE MCS NSS map to 2SS for testbed default
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index e8c488d..232d038 100644
+--- a/ap.c
++++ b/ap.c
+@@ -10804,6 +10804,26 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 				   "\"0x002 0x000 0x000\"",
+ 				   ifname);
+ 	}
++	/* HE Capabilities MCS/NSS Set testbed default: limit to NSS=2 MCS0-9
++	 * to match the EHT testbed default (eht_tx/rx_mcs_nss_set "0x002").
++	 * Without this, the HE cap advertises hardware-max NSS (4+) while EHT
++	 * is capped at NSS=2, violating the spec requirement HE NSS <= EHT NSS
++	 * and failing TC 5.1.1 check:
++	 *   "HE Capabilities indicates support for a higher Nss than EHT Cap"
++	 *
++	 * For mac80211/ath12k there is no hostapd ctrl_iface command to
++	 * override the HE Capabilities MCS/NSS map per-BSS — this requires
++	 * a hostapd fix (add bss_he_tx/rx_mcs_nss_set similar to EHT). */
++	if (!dut->nss_mcs_set) {
++		unsigned int he_mcsnssmap_2ss;
++		uint8_t mcsnssmap[2];
++
++		get_he_mcs_nssmap(mcsnssmap, 2, MCS_TESTBED_VALUE_EHT);
++		he_mcsnssmap_2ss = ((uint16_t)mcsnssmap[1] << 8 | mcsnssmap[0]);
++		he_mcsnssmap_2ss = (he_mcsnssmap_2ss << 16) | he_mcsnssmap_2ss;
++		run_iwpriv(dut, ifname, "he_rxmcsmap %u", he_mcsnssmap_2ss);
++		run_iwpriv(dut, ifname, "he_txmcsmap %u", he_mcsnssmap_2ss);
++	}
+ 	run_iwpriv(dut, ifname, "rx_stbc 0");
+ 	run_iwpriv(dut, ifname, "set_eht_ndp_4x_eht_ltf_and_320nsgi 0");
+ 	run_iwpriv(dut, ifname, "set_eht_ulofdma_mumimo 0");
