@@ -1,0 +1,28 @@
+From 7f7deb4e415bb4c0fa8e1d0d71c29f92a412fa6e Mon Sep 17 00:00:00 2001
+From: Hari G<hag@qti.qualcomm.com>
+Date: Wed, 2 Sep 2026 16:21:46 -0700
+Subject: [PATCH] modify security alt behavior value
+
+modify security alt sec profile  behavior value.
+
+Signed-off-by: Hari G <hag@qti.qualcomm.com>
+---
+ ap.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/ap.c b/ap.c
+index 13391cf..629f484 100644
+--- a/ap.c
++++ b/ap.c
+@@ -4128,7 +4128,7 @@ static enum sigma_cmd_result cmd_ap_set_security(struct sigma_dut *dut,
+ 
+ 	val = get_param(cmd, "SecProfile_AltBehavior");
+ 	if (val) {
+-		if (strcmp(val, "0") == 0 || strcmp(val, "1") == 0)
++		if (strcmp(val, "2") == 0 || strcmp(val, "1") == 0)
+ 			dut->ap_security_profile_alt_behavior = atoi(val);
+ 		else {
+ 			send_resp(dut, conn, SIGMA_INVALID,
+-- 
+2.34.1
+
