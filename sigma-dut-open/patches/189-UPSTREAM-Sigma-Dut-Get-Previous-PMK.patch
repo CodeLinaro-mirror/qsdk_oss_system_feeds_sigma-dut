@@ -1,0 +1,68 @@
+From ed544d046611c02342f7eed09ef683fe5f784143 Mon Sep 17 00:00:00 2001
+From: Hari G <hag@qti.qualcomm.com>
+Date: Thu, 3 Sep 2026 13:33:14 +0530
+Subject: [PATCH] UPSTREAM:Sigma-Dut: Get-Previous-PMK
+
+Signed-off-by: Hari G <hag@qti.qualcomm.com>
+
+diff --git a/ap.c b/ap.c
+index 629f484..cdf73ef 100644
+--- a/ap.c
++++ b/ap.c
+@@ -19537,6 +19537,53 @@ static enum sigma_cmd_result cmd_ap_get_parameter(struct sigma_dut *dut,
+ 		free(buffer);
+ 		send_resp(dut, conn, SIGMA_COMPLETE, resp);
+ 		return STATUS_SENT;
++	} else if (strcasecmp(param, "PreviousPMK") == 0) {
++		/* Recall the previously used PMK for the given STA MAC
++		 * address. Used by testbed STA negative test cases where
++		 * the connection is expected to fail and the CTT needs the
++		 * earlier PMK for verification. */
++		FILE *fp;
++		long filesize;
++		size_t bytesread;
++		char *buffer;
++
++		var = get_param(cmd, "STA_MAC_Address");
++		if (!var)
++			return INVALID_SEND_STATUS;
++		run_system_wrapper(dut,
++				   "hostapd_cli -i %s get_previous_pmk %s -0 > /tmp/previous_pmk",
++				   ifname, var);
++		fp = fopen("/tmp/previous_pmk", "r");
++		if (!fp) {
++			sigma_dut_print(dut, DUT_MSG_ERROR,
++					"Failed to open /tmp/previous_pmk");
++			return ERROR_SEND_STATUS;
++		}
++		fseek(fp, 0, SEEK_END);
++		filesize = ftell(fp);
++		rewind(fp);
++		buffer = malloc(filesize + 1);
++		if (!buffer) {
++			sigma_dut_print(dut, DUT_MSG_ERROR,
++					"Memory allocation failed");
++			fclose(fp);
++			return ERROR_SEND_STATUS;
++		}
++		bytesread = fread(buffer, 1, filesize, fp);
++		buffer[bytesread] = '\0';
++		fclose(fp);
++		sigma_dut_print(dut, DUT_MSG_DEBUG, "Data read: %s",
++				buffer);
++		if (strstr(buffer, "FAIL")) {
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "ErrorCode,GET_PREVIOUS_PMK failed");
++			free(buffer);
++			return STATUS_SENT_ERROR;
++		}
++		snprintf(resp, sizeof(resp), "PMK,%s", buffer);
++		free(buffer);
++		send_resp(dut, conn, SIGMA_COMPLETE, resp);
++		return STATUS_SENT;
+ 	} else {
+ 		send_resp(dut, conn, SIGMA_ERROR,
+ 			  "ErrorCode,Unsupported parameter");
+-- 
+2.34.1
+
