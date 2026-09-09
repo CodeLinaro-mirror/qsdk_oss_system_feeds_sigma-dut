@@ -1,0 +1,66 @@
+From 9721d6b04f131585a73fe50b89017295ca71c598 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 8 Sep 2026 22:41:34 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL:sigma_dut: Fix PreviousTK/PreviousPMK
+ hostapd_cli argc mismatch
+
+cmd_ap_get_parameter() handles "parameter,PreviousTK" and
+"parameter,PreviousPMK" by shelling out to hostapd_cli's
+get_previous_tk and get_previous_pmk commands and reading their
+output back from a temp file:
+
+  hostapd_cli -i <ifname> get_previous_tk <STA_MAC_Address> -0 > /tmp/previous_tk
+  hostapd_cli -i <ifname> get_previous_pmk <STA_MAC_Address> -0 > /tmp/previous_pmk
+
+Both calls pass a trailing "-0" after the MAC address, carried over
+from the older "dump_tk" command (hostapd_cli_cmd_dump_tk(), which
+legitimately takes two arguments: STA address and key index). However
+hostapd_cli_cmd_get_previous_tk() and hostapd_cli_cmd_get_previous_pmk()
+(hostapd_cli.c) are single-argument commands that explicitly check
+"if (argc != 1)" and reject anything else, printing "Invalid
+GET_PREVIOUS_TK/GET_PREVIOUS_PMK command: needs one argument" instead
+of issuing the ctrl_iface request. Because of the stray "-0",
+hostapd_cli never sends GET_PREVIOUS_TK/GET_PREVIOUS_PMK to hostapd at
+all; its own usage error is redirected into /tmp/previous_tk or
+/tmp/previous_pmk and returned to the CAPI caller in place of the key
+material, so "parameter,PreviousPMK" (added by
+189-UPSTREAM-Sigma-Dut-Get-Previous-PMK.patch) and "parameter,PreviousTK"
+never actually fetch anything.
+
+Fix both run_system_wrapper() calls in cmd_ap_get_parameter() by
+dropping the trailing " -0", matching the single-argument signature
+hostapd_cli_cmd_get_previous_tk()/hostapd_cli_cmd_get_previous_pmk()
+actually expect.
+
+Patch-dependency: 189-UPSTREAM-Sigma-Dut-Get-Previous-PMK.patch
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+ ap.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/ap.c b/ap.c
+index cdf73ef..fceac81 100644
+--- a/ap.c
++++ b/ap.c
+@@ -19504,7 +19504,7 @@ static enum sigma_cmd_result cmd_ap_get_parameter(struct sigma_dut *dut,
+ 		if (!var)
+ 			return INVALID_SEND_STATUS;
+ 		run_system_wrapper(dut,
+-				   "hostapd_cli -i %s get_previous_tk %s -0 > /tmp/previous_tk",
++				   "hostapd_cli -i %s get_previous_tk %s > /tmp/previous_tk",
+ 				   ifname, var);
+ 		fp = fopen("/tmp/previous_tk", "r");
+ 		if (!fp) {
+@@ -19551,7 +19551,7 @@ static enum sigma_cmd_result cmd_ap_get_parameter(struct sigma_dut *dut,
+ 		if (!var)
+ 			return INVALID_SEND_STATUS;
+ 		run_system_wrapper(dut,
+-				   "hostapd_cli -i %s get_previous_pmk %s -0 > /tmp/previous_pmk",
++				   "hostapd_cli -i %s get_previous_pmk %s > /tmp/previous_pmk",
+ 				   ifname, var);
+ 		fp = fopen("/tmp/previous_pmk", "r");
+ 		if (!fp) {
+-- 
+2.34.1
+
