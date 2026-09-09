@@ -1,0 +1,139 @@
+From 9b57bdc762fa3c00d21b95a6759ad4d4d753b4a3 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 8 Sep 2026 23:29:50 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL:sigma_dut: Add Program=UHR S-MPDU frame
+ injector CAPI
+
+dev_send_frame,program,UHR,...,framename,S-MPDU had no dispatch case
+in cmd_ap_send_frame() and returned "Unsupported PMFFrameType".
+
+Add ap_send_frame_uhr()/mac80211_ap_send_frame_uhr(), routing S-MPDU
+to the frame_injector_en vendor command via wifitool (gerrit 7240723,
+win_qsdk.common.1.0.r45): S-MPDU -> QoS-Null frametype, TXOPDur (ms)
+-> frame_duration (usecs, *1000), interval -> inject_period,
+Dest_MAC -> dstmac, and bandwidth derived from the link's configured
+ap_chwidth via a new uhr_ap_chwidth_to_wmi_bw() mapping.
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+ ap.c | 97 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 97 insertions(+)
+
+diff --git a/ap.c b/ap.c
+index fceac81..9b590b2 100644
+--- a/ap.c
++++ b/ap.c
+@@ -18018,6 +18018,101 @@ static int ap_send_frame_qm(struct sigma_dut *dut, struct sigma_conn *conn,
+ }
+ 
+ 
++/*
++ * dut->mld[link_id].ap_chwidth (enum ap_chwidth) does not align with the
++ * WMI_CHAN_WIDTH_* values expected by the frame_injector_en vendor command
++ * (AP_320 is index 4 in ap_chwidth, but WMI_CHAN_WIDTH_80P80 is index 4 in
++ * WMI_CHAN_WIDTH_*, with WMI_CHAN_WIDTH_320 at index 9), so map explicitly.
++ */
++static int uhr_ap_chwidth_to_wmi_bw(struct sigma_dut *dut, int link_id)
++{
++	switch (dut->mld[link_id].ap_chwidth) {
++	case AP_20:
++		return 0;
++	case AP_40:
++		return 1;
++	case AP_80:
++		return 2;
++	case AP_160:
++		return 3;
++	case AP_320:
++		return 9;
++	default:
++		return 0;
++	}
++}
++
++
++static int mac80211_ap_send_frame_uhr(struct sigma_dut *dut,
++				      struct sigma_conn *conn,
++				      struct sigma_cmd *cmd)
++{
++	const char *val, *ifname;
++	unsigned char mac_addr[ETH_ALEN];
++	int link_id = 0;
++	int bw;
++	int txopdur_ms, interval_ms;
++
++	ifname = get_main_ifname(dut);
++
++	val = get_param(cmd, "FrameName");
++	if (!val || strcasecmp(val, "S-MPDU") != 0)
++		return -1;
++
++	val = get_param(cmd, "Dest_MAC");
++	if (!val || parse_mac_address(dut, val, mac_addr) < 0) {
++		sigma_dut_print(dut, DUT_MSG_ERROR,
++				"MAC Address not in proper format");
++		return -1;
++	}
++
++	val = get_param(cmd, "TXOPDur");
++	if (!val)
++		return -1;
++	txopdur_ms = atoi(val);
++
++	val = get_param(cmd, "interval");
++	if (!val)
++		return -1;
++	interval_ms = atoi(val);
++
++	val = get_param(cmd, "Interface");
++	if (val) {
++		if (strcasecmp(val, "24G") == 0)
++			link_id = dut->band_to_link[0];
++		else if (strcasecmp(val, "5G") == 0)
++			link_id = dut->band_to_link[1];
++		else if (strcasecmp(val, "6G") == 0)
++			link_id = dut->band_to_link[2];
++	}
++
++	bw = uhr_ap_chwidth_to_wmi_bw(dut, link_id);
++
++	run_system_wrapper(dut,
++			   "wifitool %s link_id %d frame_injector_en 0 1 %d %02x:%02x:%02x:%02x:%02x:%02x %d %d",
++			   ifname, link_id, interval_ms,
++			   mac_addr[0], mac_addr[1], mac_addr[2],
++			   mac_addr[3], mac_addr[4], mac_addr[5],
++			   bw, txopdur_ms * 1000);
++
++	return 1;
++}
++
++
++static int ap_send_frame_uhr(struct sigma_dut *dut, struct sigma_conn *conn,
++			     struct sigma_cmd *cmd)
++{
++	switch (get_driver_type(dut)) {
++	case DRIVER_MAC80211:
++		return mac80211_ap_send_frame_uhr(dut, conn, cmd);
++	default:
++		send_resp(dut, conn, SIGMA_ERROR,
++			  "errorCode,Unsupported ap_send_frame for the current driver");
++		return 0;
++	}
++}
++
++
+ enum sigma_cmd_result cmd_ap_send_frame(struct sigma_dut *dut,
+ 					struct sigma_conn *conn,
+ 					struct sigma_cmd *cmd)
+@@ -18050,6 +18145,8 @@ enum sigma_cmd_result cmd_ap_send_frame(struct sigma_dut *dut,
+ 			return ap_send_frame_mbo(dut, conn, cmd);
+ 		if (strcasecmp(val, "QM") == 0)
+ 			return ap_send_frame_qm(dut, conn, cmd);
++		if (strcasecmp(val, "UHR") == 0)
++			return ap_send_frame_uhr(dut, conn, cmd);
+ 	}
+ 
+ 	val = get_param(cmd, "PMFFrameType");
+-- 
+2.34.1
+
