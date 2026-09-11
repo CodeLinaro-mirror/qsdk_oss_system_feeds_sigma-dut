@@ -382,7 +382,7 @@ Signed-off-by: Hari Naraayana Desikan Kannan <hnaraaya@qti.qualcomm.com>
  			/* MBO Cellular Data Preference set to excluded (0) */
  			fprintf(f, "mbo_cell_data_conn_pref=0\n");
  			/* Update Country environment for MBO Global Reg Domain */
-@@ -11933,11 +12117,82 @@ skip_vht_parameters_set:
+@@ -11933,11 +12117,94 @@ skip_vht_parameters_set:
  				fprintf(f, "owe_ptk_workaround=1\n");
  		}
  
@@ -391,6 +391,17 @@ Signed-off-by: Hari Naraayana Desikan Kannan <hnaraaya@qti.qualcomm.com>
 -				dut->dev_role == DEVROLE_STA_CFON ? 2 : 1);
 +				dut->dev_role == DEVROLE_STA_CFON ? 2 : 4);
 +			fprintf(f, "mbo=1\n");
++			/* OCE WPS AP defaults; required by OCE WPS test cases. */
++			fprintf(f, "eap_server=1\n");
++			fprintf(f, "wps_state=1\n");
++			fprintf(f, "wps_cred_processing=1\n");
++			fprintf(f, "ap_setup_locked=0\n");
++			fprintf(f, "device_name=QCA AP\n");
++			fprintf(f, "manufacturer=QCA\n");
++			fprintf(f, "device_type=6-0050F204-1\n");
++			fprintf(f, "config_methods=push_button keypad label display "
++				"virtual_push_button virtual_display\n");
++			fprintf(f, "ap_pin=12345670\n");
 +			fprintf(f, "ieee80211w=1\n");
 +			if (dut->ap_assoc_reject == VALUE_ENABLED &&
 +			    dut->ap_rssi_threshold != 0) {
@@ -411,6 +422,7 @@ Signed-off-by: Hari Naraayana Desikan Kannan <hnaraaya@qti.qualcomm.com>
 +				fprintf(f, "fils_realm=%s\n", dut->ap_nairealm);
 +				fprintf(f, "erp_domain=%s\n", dut->ap_nairealm);
 +				fprintf(f, "fils_cache_id=1234\n");
++				fprintf(f, "eap_server_erp=1\n");
 +				fprintf(f, "erp_send_reauth_start=1\n");
 +			}
 +			if (dut->ap_filshlp == VALUE_ENABLED &&
@@ -604,12 +616,33 @@ Signed-off-by: Hari Naraayana Desikan Kannan <hnaraaya@qti.qualcomm.com>
  	}
  
  	get_if_name(dut, ifname, sizeof(ifname), wlan_tag);
-@@ -21418,10 +21719,46 @@ static enum sigma_cmd_result mac80211_ap
+@@ -21418,10 +21719,67 @@ static enum sigma_cmd_result mac80211_ap
  	}
  
  	if (++dut->intf_defined < dut->num_links)
  		mac80211_ap_set_rfeature(dut, conn, cmd);
  
++	if (dut->program == PROGRAM_OCE) {
++		/*
++		 * OCE-4.6.1 sends RSSIthreshold and RetryDelay in
++		 * ap_set_rfeature, after ap_config_commit. Parse them here
++		 * so the values are applied to the running hostapd instance.
++		 */
++		val = get_param(cmd, "RSSIthreshold");
++		if (!val)
++			val = get_param(cmd, "RSSIThreshold");
++		if (!val)
++			val = get_param(cmd, "AssocRejectRSSI");
++		if (val) {
++			dut->ap_rssi_threshold = atoi(val);
++			dut->ap_assoc_reject = VALUE_ENABLED;
++		}
++
++		val = get_param(cmd, "RetryDelay");
++		if (val)
++			dut->ap_retry_delay = atoi(val);
++	}
++
 +	val = get_param(cmd, "DownlinkAvailCap");
 +	if (val) {
 +		int cap = atoi(val);
