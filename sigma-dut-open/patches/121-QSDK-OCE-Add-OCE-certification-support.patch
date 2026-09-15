@@ -507,7 +507,7 @@ Signed-off-by: Hari Naraayana Desikan Kannan <hnaraaya@qti.qualcomm.com>
  			 dut->hostapd_bin ? dut->hostapd_bin : path,
  			 dut->hostapd_debug_log ? " -dddKt" : "",
  			 (dut->hostapd_debug_log && dut->hostapd_debug_log[0]) ?
-@@ -12557,10 +12830,35 @@ hapd_started:
+@@ -12557,10 +12830,41 @@ hapd_started:
  		send_resp(dut, conn, SIGMA_ERROR,
  			  "errorCode,Failed to talk to hostapd");
  		return 0;
@@ -530,6 +530,12 @@ Signed-off-by: Hari Naraayana Desikan Kannan <hnaraaya@qti.qualcomm.com>
 +			_exit(0);
 +		}
 +	}
++
++	/* OCE certification: enable channel busy scanning for OCE AP updates. */
++	if (dut->program == PROGRAM_OCE &&
++	    run_hostapd_cli(dut, "cbs enable 2") != 0)
++		sigma_dut_print(dut, DUT_MSG_ERROR,
++				"OCE: cbs enable 2 failed on %s", ifname);
 +	/* OCE 4.8.x: enable ESP IE in beacons via SET_ESP ctrl command */
 +	if (dut->program == PROGRAM_OCE && dut->ap_esp == VALUE_ENABLED) {
 +		if (run_hostapd_cli(dut, "set_esp enable_esp 1") != 0)
