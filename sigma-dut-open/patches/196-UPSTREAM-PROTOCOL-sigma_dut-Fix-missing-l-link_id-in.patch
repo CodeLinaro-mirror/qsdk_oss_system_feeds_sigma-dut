@@ -1,0 +1,77 @@
+From 6e64a283bd8e94a12267852747e5d35de7ad7a9a Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 15 Sep 2026 14:16:37 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL:sigma_dut: Fix missing -l link_id in UHR
+ set bitrates for single-link APs
+
+mac80211_vht_nss_mcs() (ap.c) builds the "iw dev <ifname> set bitrates
+..." command used by ap_set_rfeature's nss_mcs_opt/LTF/GI/CodingType
+parameters for PROGRAM_UHR (e.g. "ap_set_rfeature,...,Interface,24G,
+type,UHR,PPDUTxType,MU,nss_mcs_opt,1;7,LTF,6.4,GI,0.8,CodingType,
+LDPCCoding"). The "-l <link_id>" flag was only appended when
+dut->ap_is_dual was set:
+
+  if (dut->ap_is_dual && (...ap_mode == AP_11be/AP_11bn)) {
+          ...
+          snprintf(link_flag, sizeof(link_flag), "-l %d", link_id);
+  } else {
+          band = ...;
+          /* link_flag stays empty for non-MLO */
+  }
+
+dut->ap_is_dual is only set when more than one band/interface is
+configured on the AP (ap.c, cmd_ap_set_wireless: it becomes 1 once
+both ap_interface_5g/6g/2g flags, or WLAN_TAG > 1, are seen). For a
+single-link ("SLO") UHR AP where only one Interface (e.g. 24G) is
+ever configured, ap_is_dual stays 0, so link_flag is left empty and
+the emitted command drops "-l" entirely, even though link_id itself
+is a valid, already-resolved link (mac80211_ap_set_rfeature() sets it
+from Interface,24G/5G/6G via dut->band_to_link[], or falls back to
+dut->intf_defined).
+
+Since link_id is always meaningful by the time it reaches this
+function -- MLO or not -- always emit "-l <link_id>" instead of
+gating it on ap_is_dual. The band-string selection above (2.4/5/6)
+is unchanged; only the -l flag emission moves out from under the
+ap_is_dual branch.
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+ ap.c | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/ap.c b/ap.c
+index 65274c1..893e3a9 100644
+--- a/ap.c
++++ b/ap.c
+@@ -22894,7 +22894,7 @@ static int mac80211_vht_nss_mcs(struct sigma_dut *dut, const char *ifname,
+ 	char *saveptr;
+ 	uint16_t mcsnssmap;
+ 	const char *band;
+-	char link_flag[16] = ""; /* "-l <n>" for EHT MLO, empty for non-MLO */
++	char link_flag[16] = ""; /* "-l <n>", set for every link_id below */
+ 
+ 	/*
+ 	 * Determine band string.  Mirror mac80211_he_gi() exactly so the
+@@ -22911,11 +22911,16 @@ static int mac80211_vht_nss_mcs(struct sigma_dut *dut, const char *ifname,
+ 			band = "5";
+ 		else
+ 			band = "5";
+-		snprintf(link_flag, sizeof(link_flag), "-l %d", link_id);
+ 	} else {
+ 		band = dut->ap_band_6g ? "6" : dut->use_5g ? "5" : "2.4";
+-		/* link_flag stays empty for non-MLO */
+ 	}
++	/*
++	 * link_id is always a valid link (set from Interface,24G/5G/6G or
++	 * dut->intf_defined -- see mac80211_ap_set_rfeature()), including
++	 * the single-link (SLO) case, so always target it explicitly
++	 * instead of only doing so when ap_is_dual is set.
++	 */
++	snprintf(link_flag, sizeof(link_flag), "-l %d", link_id);
+ 
+ 	token = strdup(val);
+ 	if (!token)
+-- 
+2.34.1
+
