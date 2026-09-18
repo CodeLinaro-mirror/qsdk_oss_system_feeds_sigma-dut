@@ -1,0 +1,64 @@
+From d65daf640ea551d4aed0e1060f274e1c4116889f Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Mon, 14 Sep 2026 23:15:29 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL:sigma_dut: Fix -Y consuming the next argv
+ token as its argument
+
+main() builds its getopt() option string as:
+
+  "aAb:Bc:C:dDE:e:fF:gGhH:j:J:i:Ik:K:l:L:m:M:nN:o:O:p:P:qQr:R:s:S:tT:uU:v:VWw:xX:yY:z:Z:2345:6:7"
+
+The "Y:" entry declares that -Y takes a mandatory argument. However
+case 'Y' (main(), sigma_dut.c) never reads optarg -- it only does
+"log_to_file = 1;" and breaks, i.e. -Y was always intended to be a
+bare on/off flag, matching every other logging toggle (-d, -D) in
+the same switch.
+
+files/sigma_dut.init builds the daemon's ARGS as:
+
+  [ "${debug}" == on ] && append ARGS "-Y -d "
+
+so when "option debug 'on'" is set in /etc/config/sigma-dut, argv
+ends up containing "-Y" immediately followed by the separate token
+"-d". Because the option string declares Y as requiring an argument,
+getopt() consumes that next token, the literal string "-d", as -Y's
+optarg instead of parsing it as its own option. case 'Y' ignores
+that consumed optarg (so -Y's own effect, enabling log_to_file, is
+unaffected), but case 'd' never runs, so dut->debug_level stays at
+its default DUT_MSG_INFO instead of dropping to DUT_MSG_DEBUG.
+
+The effect: sigma_dut_print() calls at DUT_MSG_INFO (cmd/resp/"Run
+command" lines) keep appearing in /tmp/sigma.txt, but every
+DUT_MSG_DEBUG line -- most importantly run_system()'s "Running '%s'"
+trace of the actual shell/iw/fwtest commands issued for each CAPI
+call -- is filtered out by the "if (level < dut->debug_level) return;"
+check in sigma_dut_print(), even though "option debug 'on'" is set.
+This only reproduces when -Y and -d arrive as separate argv tokens
+(e.g. via the init script); invoking sigma_dut manually with a single
+combined token such as "-dddt" is unaffected, since no -Y precedes it
+to consume "-d".
+
+Fix by removing the stray ":" after Y in the getopt() option string,
+matching the flag's actual (argument-less) implementation in case 'Y'.
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+ sigma_dut.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/sigma_dut.c b/sigma_dut.c
+index 1c12016..47a4e2c 100644
+--- a/sigma_dut.c
++++ b/sigma_dut.c
+@@ -1152,7 +1152,7 @@ int main(int argc, char *argv[])
+ 
+ 	for (;;) {
+ 		c = getopt(argc, argv,
+-			   "aAb:Bc:C:dDE:e:fF:gGhH:j:J:i:Ik:K:l:L:m:M:nN:o:O:p:P:qQr:R:s:S:tT:uU:v:VWw:xX:yY:z:Z:2345:6:7");
++			   "aAb:Bc:C:dDE:e:fF:gGhH:j:J:i:Ik:K:l:L:m:M:nN:o:O:p:P:qQr:R:s:S:tT:uU:v:VWw:xX:yYz:Z:2345:6:7");
+ 		if (c < 0)
+ 			break;
+ 		switch (c) {
+-- 
+2.34.1
+
