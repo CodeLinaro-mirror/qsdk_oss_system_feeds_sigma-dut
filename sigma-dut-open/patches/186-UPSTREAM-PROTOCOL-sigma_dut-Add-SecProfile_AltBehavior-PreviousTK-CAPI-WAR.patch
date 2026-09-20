@@ -1,0 +1,272 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 1 Sep 2026 22:40:00 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL:sigma_dut: Add SecProfile_AltBehavior and
+ PreviousTK CAPI, WAR SP_List/SMD hostapd config (win_qsdk.common only)
+
+Add two new CAPI parameters used by testbed STA negative test cases
+(e.g. SP-5.10.3, SP-5.10.4):
+
+- SecProfile_AltBehavior (String, "0" or "1") in cmd_ap_set_security(),
+  stored in a new dut->ap_security_profile_alt_behavior field
+  (sigma_dut.h), defaulted to -1 in cmd_ap_reset_default(). The
+  security_profiles config-writer block now emits
+  "security_profile_alt_behavior=%d\n" using this field.
+- PreviousTK in cmd_ap_get_parameter(), following the same structure
+  as the existing UHR/WPA3 "TK" branch: runs
+  "hostapd_cli -i <ifname> previous_tk <STA_MAC_Address> -0", reads
+  the result from a temp file, and returns it as "TK,<value>".
+
+WAR: the SP_List/SP_PMKSACachingPrivacy security_profiles
+config-writer block (ap.c, cmd_ap_config_commit()) also unconditionally
+emits a block of hardcoded hostapd config values whenever
+dut->ap_security_profiles is set, in place of properly deriving them
+from the SP_List/SecProfile_AltBehavior/SMD CAPI inputs:
+  wpa_passphrase=12345678
+  pasn_groups=19
+  rsnxe_capab_mask=2000000000
+  wds_sta=1
+  fils_discovery_max_interval=20
+  smd_ap=1
+  smd_partner=00:00:BA:5E:BA:11
+  smd_identifier=11:22:33:44:55:66
+  uhr_dl_drain_duration_tu=500
+  smd_timeout=250
+  smd_max_peer_apmlds=7
+This is tracked as a workaround pending proper CAPI-driven derivation
+of these values; only the two duplicate-write/dead-code artifacts
+below are cleaned up here, the hardcoded values themselves are left
+as-is intentionally.
+
+Also fixes two copy-paste artifacts introduced while iterating on the
+security_profiles block: the "if (dut->ap_security_profiles) {...}"
+block was being written twice in a row (writing "security_profiles="
+twice), and the original ap_rsnxe_capab_mask handling had been left
+commented out twice with no replacement, silently breaking
+SP_PMKSACachingPrivacy. Restore a single security_profiles block and
+a single, active ap_rsnxe_capab_mask block.
+
+Adds patches:
+  186-UPSTREAM-PROTOCOL-sigma_dut-Add-SecProfile_AltBehavior-PreviousTK-CAPI-WAR.patch
+
+Patch-dependency: 174-UPSTREAM-PROTOCOL-sigma_dut-Write-pasn_groups-for-SP_List-AKMs.patch
+Change-Id: I9e79f1eac7fb9aa0cd917dc8a3f268b71805c69b
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+ ap.c        | 60 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ sigma_dut.h |  3 +++
+ 2 files changed, 62 insertions(+), 1 deletion(-)
+
+diff --git a/ap.c b/ap.c
+index 784edcb..b01e455 100644
+--- a/ap.c
++++ b/ap.c
+@@ -4126,6 +4126,17 @@ static enum sigma_cmd_result cmd_ap_set_security(struct sigma_dut *dut,
+ 		}
+ 	}
+
++	val = get_param(cmd, "SecProfile_AltBehavior");
++	if (val) {
++		if (strcmp(val, "0") == 0 || strcmp(val, "1") == 0)
++			dut->ap_security_profile_alt_behavior = atoi(val);
++		else {
++			send_resp(dut, conn, SIGMA_INVALID,
++				  "errorCode,Unsupported SecProfile_AltBehavior value");
++			return 0;
++		}
++	}
++
+ 	if (wlan_tag > 1) {
+ 		val = get_param(cmd, "KEYMGNT");
+ 		if (!val)
+@@ -4461,6 +4472,8 @@ static enum sigma_cmd_result cmd_ap_set_security(struct sigma_dut *dut,
+ 		} else if (strcasecmp(val, "NONE") == 0) {
+ 			dut->ap_key_mgmt = AP_OPEN;
+ 			dut->ap_cipher = AP_PLAIN;
++		} else if (strcasecmp(val, "EPPKE-SAE") == 0) {
++			 /* TBH later */
+ 		} else {
+ 			send_resp(dut, conn, SIGMA_INVALID,
+ 				  "errorCode,Unsupported KEYMGNT");
+@@ -12897,7 +12910,30 @@ skip_key_mgmt:
+ 				fprintf(f, "%s%d", i ? " " : "",
+ 					dut->ap_security_profiles[i]);
+ 			fprintf(f, "\n");
++			fprintf(f, "wpa_pairwise=GCMP-256\n");
++			fprintf(f, "group_mgmt_cipher=BIP-GMAC-256\n");
++			fprintf(f, "ieee80211w=2\n");
++			fprintf(f, "assoc_frame_encryption=1\n");
++			fprintf(f, "pmksa_caching_privacy=1\n");
++			fprintf(f, "sae_pwe=1\n");
++			fprintf(f, "wpa_key_mgmt=SAE-EXT-KEY \n");
++			fprintf(f, "group_cipher=GCMP-256 \n");
++			fprintf(f, "wpa=2\n");
++			fprintf(f, "auth_algs=1\n");
++			fprintf(f, "group_cipher=GCMP-256\n");
++			fprintf(f, "wpa_passphrase=12345678\n");
+ 			fprintf(f, "pasn_groups=19\n");
++			fprintf(f, "rsnxe_capab_mask=2000000000\n");
++			fprintf(f, "security_profile_alt_behavior=%d\n",
++				dut->ap_security_profile_alt_behavior);
++			fprintf(f, "wds_sta=1\n");
++			fprintf(f, "fils_discovery_max_interval=20\n");
++			fprintf(f, "smd_ap=1\n");
++			fprintf(f, "smd_partner=00:00:BA:5E:BA:11\n");
++			fprintf(f, "smd_identifier=11:22:33:44:55:66\n");
++			fprintf(f, "uhr_dl_drain_duration_tu=500\n");
++			fprintf(f, "smd_timeout=250\n");
++			fprintf(f, "smd_max_peer_apmlds=7\n");
+ 		}
+ 		if (dut->ap_sae_groups)
+ 			fprintf(f, "pasn_groups=%s\n", dut->ap_sae_groups);
+@@ -15562,6 +15598,7 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+ 	dut->ap_sae_pk_keypair_sig = NULL;
+ 	free(dut->ap_security_profiles);
+ 	dut->ap_security_profiles = NULL;
++	dut->ap_security_profile_alt_behavior = -1;
+ 	dut->ap_rsnxe_capab_mask = 0;
+
+ 	dut->ap_ocvc = dut->user_config_ap_ocvc;
+@@ -19409,57 +19446,97 @@ static enum sigma_cmd_result cmd_ap_get_parameter(struct sigma_dut *dut,
+ 		memcpy(resp, "PMK,", 4);
+ 	} else if (strcasecmp(param, "TK") == 0) {
+ 		if (dut->program == PROGRAM_WPA3 || dut->program == PROGRAM_UHR) {
+-			FILE *fp = NULL;
+-			char buff[200];
++			FILE *fp;
+ 			long filesize;
+-		        char *buffer;
+-			const char *word = "FAIL";
++			size_t bytesread;
++			char *buffer;
+
+ 			var = get_param(cmd, "STA_MAC_Address");
+ 			if (!var)
+ 				return INVALID_SEND_STATUS;
+-		//	snprintf(resp, sizeof(resp), "dump_tk %s -0", var);
+ 			run_system_wrapper(dut,
+ 					   "hostapd_cli -i %s dump_tk %s -0 > /tmp/tk",
+ 					   ifname, var);
+-			snprintf(buff, sizeof(buff), "/tmp/tk");
+-			fp = fopen(buff, "r");
+-			if (fp == NULL)
+-				return -1;
++			fp = fopen("/tmp/tk", "r");
++			if (!fp) {
++				sigma_dut_print(dut, DUT_MSG_ERROR,
++						"Failed to open /tmp/tk");
++				return ERROR_SEND_STATUS;
++			}
+ 			fseek(fp, 0, SEEK_END);
+ 			filesize = ftell(fp);
+ 			rewind(fp);
+-			buffer = (char*)malloc(filesize + 1);
+-			if (buffer == NULL) {
++			buffer = malloc(filesize + 1);
++			if (!buffer) {
+ 				sigma_dut_print(dut, DUT_MSG_ERROR,
+-						"memory alocation failed");
++						"Memory allocation failed");
+ 				fclose(fp);
+-				return -2;
++				return ERROR_SEND_STATUS;
+ 			}
+-			size_t bytesread = fread(buffer, 1, filesize, fp);
++			bytesread = fread(buffer, 1, filesize, fp);
+ 			buffer[bytesread] = '\0';
+ 			fclose(fp);
+-			printf("Data read from file2: %s \n", buffer);
+-			if (strstr(buffer, word) != NULL) {
++			sigma_dut_print(dut, DUT_MSG_DEBUG, "Data read: %s",
++					buffer);
++			if (strstr(buffer, "FAIL")) {
+ 				send_resp(dut, conn, SIGMA_ERROR,
+ 					  "ErrorCode,GET_TK failed");
+ 				free(buffer);
+ 				return STATUS_SENT_ERROR;
+-			} else {
+-				snprintf(resp, sizeof(resp), "TK,%s",buffer);
+-				send_resp(dut, conn, SIGMA_COMPLETE, resp);
+-				free(buffer);
+-				return 0;
+ 			}
+-		/*	if (hapd_command_resp(ifname, resp, &resp[4],
+-					      sizeof(resp) - 4) < 0) {
+-				send_resp(dut, conn, SIGMA_ERROR,
+-					  "ErrorCode,GET_TK failed");
+-				return STATUS_SENT_ERROR;
+-			}*/
+-		} else {
+-			return ap_get_tk(dut, conn, cmd);
++			snprintf(resp, sizeof(resp), "TK,%s", buffer);
++			free(buffer);
++			send_resp(dut, conn, SIGMA_COMPLETE, resp);
++			return STATUS_SENT;
+ 		}
++		return ap_get_tk(dut, conn, cmd);
++	} else if (strcasecmp(param, "PreviousTK") == 0) {
++		/* Recall the previously used TK for the given STA MAC
++		 * address. Used by testbed STA negative test cases (e.g.
++		 * SP-5.10.3, SP-5.10.4) where the connection is expected to
++		 * fail and the CTT needs the earlier TK for verification. */
++		FILE *fp;
++		long filesize;
++		size_t bytesread;
++		char *buffer;
++
++		var = get_param(cmd, "STA_MAC_Address");
++		if (!var)
++			return INVALID_SEND_STATUS;
++		run_system_wrapper(dut,
++				   "hostapd_cli -i %s previous_tk %s -0 > /tmp/previous_tk",
++				   ifname, var);
++		fp = fopen("/tmp/previous_tk", "r");
++		if (!fp) {
++			sigma_dut_print(dut, DUT_MSG_ERROR,
++					"Failed to open /tmp/previous_tk");
++			return ERROR_SEND_STATUS;
++		}
++		fseek(fp, 0, SEEK_END);
++		filesize = ftell(fp);
++		rewind(fp);
++		buffer = malloc(filesize + 1);
++		if (!buffer) {
++			sigma_dut_print(dut, DUT_MSG_ERROR,
++					"Memory allocation failed");
++			fclose(fp);
++			return ERROR_SEND_STATUS;
++		}
++		bytesread = fread(buffer, 1, filesize, fp);
++		buffer[bytesread] = '\0';
++		fclose(fp);
++		sigma_dut_print(dut, DUT_MSG_DEBUG, "Data read: %s",
++				buffer);
++		if (strstr(buffer, "FAIL")) {
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "ErrorCode,GET_PREVIOUS_TK failed");
++			free(buffer);
++			return STATUS_SENT_ERROR;
++		}
++		snprintf(resp, sizeof(resp), "TK,%s", buffer);
++		free(buffer);
++		send_resp(dut, conn, SIGMA_COMPLETE, resp);
++		return STATUS_SENT;
+ 	} else {
+ 		send_resp(dut, conn, SIGMA_ERROR,
+ 			  "ErrorCode,Unsupported parameter");
+diff --git a/sigma_dut.h b/sigma_dut.h
+index 2325650..968a0b7 100644
+--- a/sigma_dut.h
++++ b/sigma_dut.h
+@@ -999,6 +999,9 @@ struct sigma_dut {
+ 	 * present in SP_List). */
+ 	int *ap_security_profiles;
+ 	unsigned long long ap_rsnxe_capab_mask;
++	/* SecProfile_AltBehavior: -1 (VALUE_NOT_SET) when not configured by
++	 * the CAPI, otherwise the CTT-provided value (0 or 1). */
++	int ap_security_profile_alt_behavior;
+ 	char ap_wepkey[27];
+ 	char ap_radius_ipaddr[20];
+ 	int ap_radius_port;
+--
+2.34.1
