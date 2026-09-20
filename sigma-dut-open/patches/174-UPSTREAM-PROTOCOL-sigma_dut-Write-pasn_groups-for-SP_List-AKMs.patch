@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:36:53 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Write pasn groups for SP List AKMs
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 0658143..338a7ae 100644
+--- a/ap.c
++++ b/ap.c
+@@ -13048,7 +13048,10 @@ skip_key_mgmt:
+ 				fprintf(f, "%s%d", i ? " " : "",
+ 					dut->ap_security_profiles[i]);
+ 			fprintf(f, "\n");
++			fprintf(f, "pasn_groups=19\n");
+ 		}
++		if (dut->ap_sae_groups)
++			fprintf(f, "pasn_groups=%s\n", dut->ap_sae_groups);
+ 		if (dut->ap_rsnxe_capab_mask) {
+ 			fprintf(f, "rsnxe_capab_mask=%llx\n",
+ 				dut->ap_rsnxe_capab_mask);
