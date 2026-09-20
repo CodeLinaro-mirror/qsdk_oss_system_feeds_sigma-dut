@@ -1,0 +1,51 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:39:49 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Retry device driver name detection at startup
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/sigma_dut.c b/sigma_dut.c
+index 11f7d4e..1c12016 100644
+--- a/sigma_dut.c
++++ b/sigma_dut.c
+@@ -1451,9 +1451,39 @@ int main(int argc, char *argv[])
+ 	sigma_dut_get_device_driver_name(get_main_ifname(&sigma_dut),
+ 					 sigma_dut.device_driver,
+ 					 sizeof(sigma_dut.device_driver));
++	if (!sigma_dut.device_driver[0]) {
++		/*
++		 * device_driver is resolved once here and cached for the
++		 * life of this process (see uses of dut->device_driver in
++		 * ap.c, e.g. the ath12k per-link BSSID offset in
++		 * cmd_ap_config_commit()). On some platforms /sys/class/net/
++		 * <main_ifname>/phy80211 and .../device/driver are not yet
++		 * populated when sigma_dut is launched at boot, since ath12k
++		 * MLO/vdev registration for the interface can still be in
++		 * progress at that point. A failed lookup here previously
++		 * stuck forever, silently disabling ath12k-specific logic
++		 * (e.g. producing duplicate per-link BSSIDs for MLD APs)
++		 * for this process's entire lifetime, regardless of how
++		 * long the process later stays idle. Retry briefly so a
++		 * slow-to-appear sysfs link does not permanently wedge this.
++		 */
++		int retry;
++
++		for (retry = 0; retry < 20 && !sigma_dut.device_driver[0];
++		     retry++) {
++			usleep(200000);
++			sigma_dut_get_device_driver_name(
++				get_main_ifname(&sigma_dut),
++				sigma_dut.device_driver,
++				sizeof(sigma_dut.device_driver));
++		}
++	}
+ 	if (sigma_dut.device_driver[0])
+ 		sigma_dut_print(&sigma_dut, DUT_MSG_DEBUG, "device driver: %s",
+ 				sigma_dut.device_driver);
++	else
++		sigma_dut_print(&sigma_dut, DUT_MSG_ERROR,
++				"device driver: failed to determine after retries");
+ 
+ #ifdef NL80211_SUPPORT
+ 	sigma_dut.nl_ctx = nl80211_init(&sigma_dut);

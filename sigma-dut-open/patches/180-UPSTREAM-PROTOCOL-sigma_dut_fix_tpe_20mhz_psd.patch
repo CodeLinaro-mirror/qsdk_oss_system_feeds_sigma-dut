@@ -1,0 +1,114 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:41:16 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Fix tpe 20mhz psd
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 21c3486..64bad26 100644
+--- a/ap.c
++++ b/ap.c
+@@ -3373,6 +3373,44 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+ 		free(string);
+ 	}
+ 
++	val = get_param(cmd, "TPE_CommonPSD");
++	if (val) {
++		if (strcasecmp(val, "enable") == 0) {
++			dut->ap_tpecommonpsd = VALUE_ENABLED;
++		} else if (strcasecmp(val, "disable") == 0) {
++			dut->ap_tpecommonpsd = VALUE_DISABLED;
++		} else {
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "errorCode,Unsupported TPE_CommonPSD");
++			return STATUS_SENT_ERROR;
++		}
++	}
++
++	val = get_param(cmd, "TPE_Each20MHz_PSD");
++	if (val) {
++		if (strcasecmp(val, "enable") == 0) {
++			dut->ap_tpeeach20mhzpsd = VALUE_ENABLED;
++		} else if (strcasecmp(val, "disable") == 0) {
++			dut->ap_tpeeach20mhzpsd = VALUE_DISABLED;
++		} else {
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "errorCode,Unsupported TPE_Each20MHz_PSD");
++			return STATUS_SENT_ERROR;
++		}
++	}
++
++	val = get_param(cmd, "TPE_EIRP");
++	if (val) {
++		if (strcasecmp(val, "enable") == 0) {
++			dut->ap_tpeeirp = VALUE_ENABLED;
++		} else if (strcasecmp(val, "disable") == 0) {
++			dut->ap_tpeeirp = VALUE_DISABLED;
++		} else {
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "errorCode,Unsupported TPE_EIRP");
++			return STATUS_SENT_ERROR;
++		}
++	}
+ 	return SUCCESS_SEND_STATUS;
+ }
+ 
+@@ -11295,6 +11333,33 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 	/* Disable 802.11cf/8CFDF0 IE in testbed mode */
+ 	run_system_wrapper(dut, "wifitool %s set_wfa_test_param wfa_testbed 2 1",
+ 			   ifname);
++
++	if (dut->ap_tpecommonpsd == VALUE_ENABLED)
++		run_system_wrapper(dut,
++				   "hostapd_cli -i %s set_tpe_common_psd 1",
++				   ifname);
++
++	if (dut->ap_tpeeach20mhzpsd == VALUE_ENABLED) {
++		if (dut->ap_tpecommonpsd == VALUE_NOT_SET) {
++			run_system_wrapper(dut,
++					   "hostapd_cli -i %s set_tpe_common_psd 0",
++					   ifname);
++		}
++		run_system_wrapper(dut,
++				   "hostapd_cli -i %s set_tpe_pwr_unit 0",
++				   ifname);
++		if (dut->ap_punct_bitmap) {
++			run_system_wrapper(dut,
++					   "hostapd_cli -i %s set_tpe_punct_channel_tx_pwr 1",
++					   ifname);
++		}
++	}
++
++	if (dut->ap_tpeeirp == VALUE_ENABLED)
++		run_system_wrapper(dut,
++				   "hostapd_cli -i %s set_tpe_pwr_unit 1",
++				   ifname);
++
+ }
+ 
+ #define IEEE80211_VHT_CAP_TXSTBC                               ((u32) (1 << 7))
+@@ -15747,6 +15812,9 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+ 	dut->ap_pdcoe_endpoint_uri[0] = '\0';
+ 
+ 	dut->ap_ocvc = dut->user_config_ap_ocvc;
++	dut->ap_tpecommonpsd = VALUE_NOT_SET;
++	dut->ap_tpeeach20mhzpsd = VALUE_NOT_SET;
++	dut->ap_tpeeirp = VALUE_NOT_SET;
+ 
+ 	if (is_passpoint(dut->program) ||
+ 	    dut->program == PROGRAM_IOTLP) {
+diff --git a/sigma_dut.h b/sigma_dut.h
+index 0209522..7986178 100644
+--- a/sigma_dut.h
++++ b/sigma_dut.h
+@@ -1247,6 +1247,9 @@ struct sigma_dut {
+ 	enum value_not_set_enabled_disabled eht_omctrl;
+ 	enum value_not_set_enabled_disabled eht_txemlomn;
+ 	enum value_not_set_enabled_disabled ap_mbssid_mu;
++	enum value_not_set_enabled_disabled ap_tpeeach20mhzpsd;
++	enum value_not_set_enabled_disabled ap_tpeeirp;
++	enum value_not_set_enabled_disabled ap_tpecommonpsd;
+ 
+ 	enum ppdu {
+ 		PPDU_NOT_SET,

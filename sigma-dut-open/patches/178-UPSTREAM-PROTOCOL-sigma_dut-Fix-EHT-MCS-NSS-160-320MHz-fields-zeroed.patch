@@ -1,0 +1,57 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:39:49 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Fix EHT MCS NSS 160 320MHz fields zeroed
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index b17a1bd..21c3486 100644
+--- a/ap.c
++++ b/ap.c
+@@ -11122,6 +11122,17 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 	 *
+ 	 * Format: "<80MHz_mask> <160MHz_mask> <320MHz_mask>"
+ 	 *   bits[3:0]=MCS0-9 NSS, bits[7:4]=MCS10-11 NSS, bits[11:8]=MCS12-13 NSS
++	 *
++	 * hostapd intersects each field with hw capability via MIN(hw, usr),
++	 * so a 0x000 field means NSS=0 (unsupported) at that bandwidth, not
++	 * "use hw default" -- unlike the ath11k eht_rxmcsmap/eht_txmcsmap
++	 * iwpriv below, which always mirrored the same mask to all bandwidths.
++	 * Hardcoding 160/320 MHz to 0x000 here made the AP self-advertise
++	 * EHT-MCS unsupported at 160/320 MHz even when the link is configured
++	 * for that width (e.g. width,160 on 6G), causing the peer/testbed to
++	 * drop to a narrower BW in the (re)association response. Mirror the
++	 * mask to all three fields to match the intended per-TC NSS/MCS cap
++	 * at every bandwidth.
+ 	 */
+ 	if (dut->nss_mcs_set && dut->ap_ehtmcs_map) {
+ 		unsigned int nss09   = dut->ap_ehtmcs_map & 0xF;
+@@ -11131,21 +11142,21 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 
+ 		run_system_wrapper(dut,
+ 				   "hostapd_cli -i %s SET eht_tx_mcs_nss_set "
+-				   "\"0x%03x 0x000 0x000\"",
+-				   ifname, mcs_mask);
++				   "\"0x%03x 0x%03x 0x%03x\"",
++				   ifname, mcs_mask, mcs_mask, mcs_mask);
+ 		run_system_wrapper(dut,
+ 				   "hostapd_cli -i %s SET eht_rx_mcs_nss_set "
+-				   "\"0x%03x 0x000 0x000\"",
+-				   ifname, mcs_mask);
++				   "\"0x%03x 0x%03x 0x%03x\"",
++				   ifname, mcs_mask, mcs_mask, mcs_mask);
+ 	} else {
+ 		/* Testbed default: NSS=2 MCS0-9 only (TC 5.2.1) */
+ 		run_system_wrapper(dut,
+ 				   "hostapd_cli -i %s SET eht_tx_mcs_nss_set "
+-				   "\"0x002 0x000 0x000\"",
++				   "\"0x002 0x002 0x002\"",
+ 				   ifname);
+ 		run_system_wrapper(dut,
+ 				   "hostapd_cli -i %s SET eht_rx_mcs_nss_set "
+-				   "\"0x002 0x000 0x000\"",
++				   "\"0x002 0x002 0x002\"",
+ 				   ifname);
+ 	}
+ 	run_iwpriv(dut, ifname, "rx_stbc 0");
