@@ -1,0 +1,50 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:36:04 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Fix PunctChannel link selection by width
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index a771843..ea4e92d 100644
+--- a/ap.c
++++ b/ap.c
+@@ -3112,13 +3112,32 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+ 
+ 	val = get_param(cmd, "PunctChannel");
+ 	if (val) {
+-		/* Use the most recently configured link rather than hardcoding
+-		 * BAND_6G — PunctChannel is valid on any link (5G or 6G) and
+-		 * the width must have been set on that link first. */
+-		int punct_link = dut->num_links > 0 ? dut->num_links - 1 : 0;
++		/* PunctChannel is valid on any configured link (5G or 6G),
++		 * and its width must have been set on that link already.
++		 * Rather than guessing a single link (hardcoded BAND_6G, or
++		 * "most recently configured"), try every configured link and
++		 * use the first whose channel width actually places the
++		 * requested puncture channel(s) inside its punct window. This
++		 * covers both a single 5G-only 160 MHz link (TC 5.34) and a
++		 * dual-band setup where 6G is configured before 5G (UHR-4.9). */
++		int num_links = dut->num_links > 0 ? dut->num_links : 1;
++		int punct_link, link_bitmap, bitmap = -1;
++
++		for (punct_link = 0; punct_link < num_links; punct_link++) {
++			link_bitmap = get_bitmap_from_punct_chlist(dut, val,
++								   punct_link);
++			/* Skip links whose channel width was never set
++			 * (get_bitmap_from_punct_chlist() hit its default
++			 * case) rather than letting that -1 override a
++			 * correctly-configured link on another index. */
++			if (link_bitmap < 0)
++				continue;
++			bitmap = link_bitmap;
++			if (bitmap > 0)
++				break;
++		}
+ 
+-		dut->ap_punct_bitmap = get_bitmap_from_punct_chlist(dut, val,
+-								    punct_link);
++		dut->ap_punct_bitmap = bitmap;
+ 		if (dut->ap_punct_bitmap < 0) {
+ 			send_resp(dut, conn, SIGMA_INVALID,
+ 				  "errorCode,Invalid PunctChannel");

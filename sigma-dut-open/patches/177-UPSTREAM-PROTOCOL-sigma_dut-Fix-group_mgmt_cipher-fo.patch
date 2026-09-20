@@ -1,0 +1,42 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:36:53 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Fix group mgmt cipher fo
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index fe98c8c..b17a1bd 100644
+--- a/ap.c
++++ b/ap.c
+@@ -4359,6 +4359,17 @@ static enum sigma_cmd_result cmd_ap_set_security(struct sigma_dut *dut,
+ 				}
+ 			} else {
+ 				dut->ap_cipher = AP_CCMP;
++				/* ap_reset_default() unconditionally defaults
++				 * ap_group_mgmt_cipher to BIP-GMAC-256 for any
++				 * EHT/UHR program run, before the AP mode is
++				 * known. Plain SAE (non-11be/11bn, e.g. 11ax)
++				 * uses CCMP for pairwise/group, so undo that
++				 * stale default here -- otherwise hostapd.conf
++				 * ends up with group_mgmt_cipher=BIP-GMAC-256
++				 * alongside group_cipher=CCMP, which STAs
++				 * reject as an inconsistent RSNE. */
++				dut->ap_group_mgmt_cipher =
++					AP_NO_GROUP_MGMT_CIPHER_SET;
+ 			}
+ 			dut->ap_pmf = AP_PMF_REQUIRED;
+ 			if (dut->program == PROGRAM_HE)
+@@ -12733,10 +12744,10 @@ enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
+ 			if (group_cipher != AP_NO_GROUP_CIPHER_SET)
+ 				fprintf(f, "group_cipher=%s\n",
+ 					hostapd_cipher_name(group_cipher));
+-			if (group_cipher != AP_NO_GROUP_MGMT_CIPHER_SET)
++			if (group_mgmt_cipher != AP_NO_GROUP_MGMT_CIPHER_SET)
+ 				fprintf(f, "group_mgmt_cipher=%s\n",
+ 				hostapd_group_mgmt_cipher_name(
+-					group_cipher));
++					group_mgmt_cipher));
+ 			if (write_hostapd_conf_password(
+ 				    dut, f, dut->ap_key_mgmt == AP_WPA2_SAE) < 0) {
+ 				fclose(f);
