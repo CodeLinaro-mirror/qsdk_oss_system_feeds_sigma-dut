@@ -1,0 +1,55 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Mon, 17 Aug 2026 21:01:48 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Fix EHT testbed MCS map MUEDCA
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 3a31c74..ca55790 100644
+--- a/ap.c
++++ b/ap.c
+@@ -10835,8 +10835,23 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 
+ 	/* EHT AP testbed capability IE resets */
+ 	run_iwpriv(dut, ifname, "tx_stbc 0");
+-	run_iwpriv(dut, ifname, "eht_rxmcsmap 0x22 0 0");
+-	run_iwpriv(dut, ifname, "eht_txmcsmap 0x22 0 0");
++	/*
++	 * EHT MCS/NSS map: use the CAPI-specified value when nss_mcs_cap was
++	 * sent (nss_mcs_set=1, ap_ehtmcs_map set by set_eht_mcsmap_nss()).
++	 * Fall back to testbed default 2SS MCS9 (0x22) when no explicit map
++	 * was requested.  Without this the hardcoded 0x22 overwrites the
++	 * correct per-TC value and the beacon always advertises 2SS.
++	 */
++	if (dut->nss_mcs_set && dut->ap_ehtmcs_map) {
++		run_iwpriv(dut, ifname, "eht_rxmcsmap 0x%x 0 0",
++			   dut->ap_ehtmcs_map);
++		run_iwpriv(dut, ifname, "eht_txmcsmap 0x%x 0 0",
++			   dut->ap_ehtmcs_map);
++	} else {
++		/* testbed default: 2SS MCS9 */
++		run_iwpriv(dut, ifname, "eht_rxmcsmap 0x22 0 0");
++		run_iwpriv(dut, ifname, "eht_txmcsmap 0x22 0 0");
++	}
+ 	run_iwpriv(dut, ifname, "rx_stbc 0");
+ 	run_iwpriv(dut, ifname, "set_eht_ndp_4x_eht_ltf_and_320nsgi 0");
+ 	run_iwpriv(dut, ifname, "set_eht_ulofdma_mumimo 0");
+@@ -11321,10 +11336,15 @@ static int default_muedca_values(struct sigma_dut *dut, FILE *f)
+ 		memset(aifsn, 0, 4);
+ 	}
+ 
+-	fprintf(f,"he_mu_edca_qos_info_param_count=0\n"
++	/* param_count must be non-zero when MU EDCA is overridden by CAPI
++	 * (MU_EDCA,override) so STAs know the advertised params differ from
++	 * defaults. */
++	fprintf(f,"he_mu_edca_qos_info_param_count=%d\n"
+ 		"he_mu_edca_qos_info_q_ack=0\n"
+ 		"he_mu_edca_qos_info_queue_request=0\n"
+-		"he_mu_edca_qos_info_txop_request=0\n"
++		"he_mu_edca_qos_info_txop_request=0\n",
++		(dut->ap_mu_edca == VALUE_ENABLED) ? 1 : 0);
++	fprintf(f,
+ 
+ 		/* Best Effort */
+ 		"he_mu_edca_ac_be_aifsn=%u\n"
