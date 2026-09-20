@@ -1,0 +1,33 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Mon, 17 Aug 2026 21:04:31 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Fix UHR GI deferral and PPDUTxType MU
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 71fd30b..bb7bf66 100644
+--- a/ap.c
++++ b/ap.c
+@@ -21992,7 +21992,12 @@ static enum sigma_cmd_result mac80211_he_gi(struct sigma_dut *dut,
+ 	}
+ 
+ 	/* For UHR, ar_ltf and ar_gi are consumed by mac80211_vht_nss_mcs()
+-	 * to form a single combined iw command with nss_mcs_opt. */
++	 * to form a single combined iw command with nss_mcs_opt.
++	 * ret stays 0 - no command issued here is correct for UHR. */
++	if (dut->program == PROGRAM_UHR) {
++		ret = 0;
++		goto uhr_gi_done;
++	}
+ 	if (dut->ar_ltf && dut->program != PROGRAM_UHR) {
+ 		he_ltf = mac80211_he_ltf_mapping(dut, dut->ar_ltf);
+ 		if (dut->nontrigger_txbf == VALUE_ENABLED) {
+@@ -22061,6 +22066,7 @@ static enum sigma_cmd_result mac80211_he_gi(struct sigma_dut *dut,
+ 		run_system_wrapper(dut, "ath11k-fwtest -i %s -m 0x48 -v 0 620 %d %d ",
+ 				   ifname, ltf, gi);
+ 
++uhr_gi_done:
+ 	if (ret < 0)
+ 		return ERROR_SEND_STATUS;
+ 	return SUCCESS_SEND_STATUS;

@@ -1,0 +1,61 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Mon, 17 Aug 2026 21:04:31 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Fix UHR nss mcs opt def N auto rate MCS cap
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index ccb3753..0db5551 100644
+--- a/ap.c
++++ b/ap.c
+@@ -22645,6 +22645,41 @@ static int mac80211_vht_nss_mcs(struct sigma_dut *dut, const char *ifname,
+ 		 *   "iwpriv nss N" + "iwpriv vhtmcs M"   for VHT/legacy
+ 		 */
+ 		mcs = atoi(result);
++
++		/*
++		 * UHR nss_mcs_opt is always an auto-rate MCS cap, never a fixed
++		 * rate.  The command "uhr-mcs-<band> <nss>:0-<mcs>" tells the
++		 * driver to use auto-rate selection within MCS range 0..N.
++		 *
++		 * Fixed-rate transmission is controlled exclusively by
++		 * ForceUHRTXMCS in ap_set_wireless, which sets ap_fixed_rate=1
++		 * and dut->uhr_txmcs.  When ForceUHRTXMCS is not sent, the
++		 * scheduler operates in auto-rate mode within the MCS cap.
++		 *
++		 * nss_mcs_opt NSS value:
++		 *   def (nss==0) — use ap_tx_streams if set, else all streams (4)
++		 *   N   (nss>0)  — cap to NSS N, still auto-rate within 0..MCS
++		 *
++		 * ap_fixed_rate is intentionally NOT set here so that subsequent
++		 * CodingType, LTF, and GI parameters in the same ap_set_rfeature
++		 * command still apply correctly.
++		 */
++		if (dut->program == PROGRAM_UHR) {
++			int cap_nss = nss ? nss :
++				      (dut->ap_tx_streams ? dut->ap_tx_streams : 4);
++
++			sigma_dut_print(dut, DUT_MSG_DEBUG,
++					"nss_mcs_opt UHR auto-rate cap: "
++					"iw set bitrates %s uhr-mcs-%s %d:0-%d",
++					link_flag, band, cap_nss, mcs);
++			run_system_wrapper(dut,
++					   "iw %s set bitrates %s "
++					   "uhr-mcs-%s %d:0-%d",
++					   ifname, link_flag,
++					   band, cap_nss, mcs);
++			goto end_nss_mcs;
++		}
++
+ 		dut->ap_fixed_rate = 1;
+ 		if (nss == 0)
+ 			nss = 1; /* default NSS=1 when not specified */
+@@ -22707,6 +22742,7 @@ static int mac80211_vht_nss_mcs(struct sigma_dut *dut, const char *ifname,
+ 		}
+ 	}
+ 
++end_nss_mcs:
+ end:
+ 	free(token);
+ 	return 0;
