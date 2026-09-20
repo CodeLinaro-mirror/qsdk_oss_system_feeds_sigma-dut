@@ -1,0 +1,35 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Mon, 17 Aug 2026 21:04:31 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Override zero MAC address with hardcoded OUI
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index bb7bf66..19f8212 100644
+--- a/ap.c
++++ b/ap.c
+@@ -12059,6 +12059,11 @@ enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
+ 					"errorCode,Failed to get MAC address");
+ 				return STATUS_SENT_ERROR;
+ 			}
++			if (addr[0] == 0x00 && addr[1] == 0x00 && addr[2] == 0x00) {
++				addr[0] = 0x00; addr[1] = 0x03; addr[2] = 0x7f;
++				addr[3] = 0x04;
++				/* keep addr[4] and addr[5] from hardware - unique per AP */
++			}
+ 
+ 			fprintf(f, "mld_ap=1\n");
+ 			/* Use the same MLD and link MAC address */
+@@ -12116,6 +12121,11 @@ enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
+ 			fclose(f);
+ 			return -2;
+ 		}
++		if (main_bssid[0] == 0x00 && main_bssid[1] == 0x00 && main_bssid[2] == 0x00) {
++			main_bssid[0] = 0x00; main_bssid[1] = 0x03; main_bssid[2] = 0x7f;
++			main_bssid[3] = 0x04;
++			/* keep main_bssid[4] and main_bssid[5] from hardware - unique per AP */
++		}
+ 
+ 		fprintf(f, "bssid=%02x:%02x:%02x:%02x",
+ 			main_bssid[0], main_bssid[1], main_bssid[2], main_bssid[3]);
