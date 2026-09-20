@@ -1,0 +1,112 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Mon, 17 Aug 2026 21:00:42 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Fix txBandwidth add RUAllocTones MAC80211
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 1a7c007..43be299 100644
+--- a/ap.c
++++ b/ap.c
+@@ -21708,8 +21708,7 @@ mac80211_tx_bandwidth(struct sigma_dut *dut, struct sigma_conn *conn,
+ 		      const char *ifname, const char *val,
+ 		      const char *type, int link_id)
+ {
+-	int width, center_freq_idx, center_freq, channel_freq, res;
+-	char *mode, buf[256];
++	int width, chwidth_idx;
+ 
+ 	if (!type) {
+ 		send_resp(dut, conn, SIGMA_INVALID,
+@@ -21717,38 +21716,40 @@ mac80211_tx_bandwidth(struct sigma_dut *dut, struct sigma_conn *conn,
+ 		return STATUS_SENT_ERROR;
+ 	}
+ 
+-	if (strcasecmp(type, "EHT") == 0) {
+-		mode = "eht";
+-	} else if (strcasecmp(type, "HE") == 0) {
+-		mode = "he";
+-	} else if (strcasecmp(type, "VHT") == 0) {
+-		mode = "vht";
+-	} else if (strcasecmp(type, "HT") == 0) {
+-		mode = "ht";
+-	} else {
++	/* type (EHT/HE/VHT/HT) is informational only for the driver —
++	 * the bandwidth change itself is a runtime chwidth iwpriv. */
++	if (strcasecmp(type, "EHT") != 0 && strcasecmp(type, "HE") != 0 &&
++	    strcasecmp(type, "VHT") != 0 && strcasecmp(type, "HT") != 0) {
+ 		send_resp(dut, conn, SIGMA_ERROR,
+ 			  "errorCode,Unsupported type value");
+ 		return STATUS_SENT_ERROR;
+ 	}
+ 
+ 	width = atoi(val);
+-	center_freq_idx = get_oper_centr_freq_seq_idx(dut, width,
+-						      dut->mld[link_id].ap_channel, 0);
+-	if (center_freq_idx < 0)
+-		return ERROR_SEND_STATUS;
+-
+-	center_freq = get_5g_channel_freq(center_freq_idx);
+-	channel_freq = get_5g_channel_freq(dut->mld[link_id].ap_channel);
+-
+-	res = snprintf(buf, sizeof(buf),
+-		       "CHAN_SWITCH 10 %d sec_channel_offset=1 center_freq1=%d bandwidth=%d blocktx %s",
+-		       channel_freq, center_freq, width, mode);
+-
+-	if (res < 0 || res >= sizeof(buf) || hapd_command(ifname, buf) != 0) {
+-		send_resp(dut, conn, SIGMA_ERROR, "CHAN_SWITCH command failed");
++	switch (width) {
++	case 20:
++		chwidth_idx = 0;
++		break;
++	case 40:
++		chwidth_idx = 1;
++		break;
++	case 80:
++		chwidth_idx = 2;
++		break;
++	case 160:
++		chwidth_idx = 3;
++		break;
++	case 320:
++		chwidth_idx = 4;
++		break;
++	default:
++		send_resp(dut, conn, SIGMA_ERROR,
++			  "errorCode,Unsupported txBandwidth value");
+ 		return STATUS_SENT_ERROR;
+ 	}
+ 
++	run_iwpriv(dut, ifname, "chwidth %d", chwidth_idx);
++
+ 	return SUCCESS_SEND_STATUS;
+ }
+ 
+@@ -23059,6 +23060,26 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 		}
+ 	}
+ 
++	val = get_param(cmd, "RUAllocTones");
++	if (val) {
++		if (dut->mld[link_id].ap_chwidth == AP_20)
++			val_bw = 0;
++		else if (dut->mld[link_id].ap_chwidth == AP_40)
++			val_bw = 1;
++		else if (dut->mld[link_id].ap_chwidth == AP_80)
++			val_bw = 2;
++		else if (dut->mld[link_id].ap_chwidth == AP_160)
++			val_bw = 3;
++		else if (dut->mld[link_id].ap_chwidth == AP_320)
++			val_bw = 4;
++		else
++			val_bw = -1;
++
++		res = mac80211_eht_ru_mru_alloctones(dut, conn, ifname, val_bw, val, link_id);
++		if (res != SUCCESS_SEND_STATUS)
++			return res;
++	}
++
+ 	val = get_param(cmd, "MRUAllocTones");
+ 	if (val) {
+ 		if (dut->mld[link_id].ap_chwidth == AP_20)

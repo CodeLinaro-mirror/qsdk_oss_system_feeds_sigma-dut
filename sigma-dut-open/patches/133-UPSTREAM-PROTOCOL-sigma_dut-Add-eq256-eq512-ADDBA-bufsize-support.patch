@@ -1,0 +1,62 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Mon, 17 Aug 2026 21:00:42 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Add eq256 eq512 ADDBA bufsize support
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index ca02b0b..5b173f6 100644
+--- a/ap.c
++++ b/ap.c
+@@ -2772,9 +2772,15 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+ 	if (val) {
+ 		if (strcasecmp(val, "le64") == 0) {
+ 			dut->ap_ba_bufsize = BA_BUFSIZE_64;
+-		} else if (strcasecmp(val, "gt64") == 0) {
+-			dut->ap_ba_bufsize = dut->program == PROGRAM_EHT ?
+-				BA_BUFSIZE_1024 : BA_BUFSIZE_256;
++		} else if (strcasecmp(val, "gt64") == 0 ||
++			   strcasecmp(val, "eq256") == 0) {
++			if (dut->program == PROGRAM_EHT &&
++			    dut->ap_ba_bufsize != BA_BUFSIZE_1024)
++				dut->ap_ba_bufsize = BA_BUFSIZE_256;
++			else if (dut->program != PROGRAM_EHT)
++				dut->ap_ba_bufsize = BA_BUFSIZE_256;
++		} else if (strcasecmp(val, "eq512") == 0) {
++			dut->ap_ba_bufsize = BA_BUFSIZE_512;
+ 		} else {
+ 			send_resp(dut, conn, SIGMA_ERROR,
+ 				  "errorCode,Unsupported ADDBAReq Buffer Size");
+@@ -2789,6 +2795,10 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+ 				BA_BUFSIZE_1024 : BA_BUFSIZE_256;
+ 		} else if (strcasecmp(val, "le64") == 0) {
+ 			dut->ap_ba_bufsize = BA_BUFSIZE_64;
++		} else if (strcasecmp(val, "eq512") == 0) {
++			dut->ap_ba_bufsize = BA_BUFSIZE_512;
++		} else if (strcasecmp(val, "eq256") == 0) {
++			dut->ap_ba_bufsize = BA_BUFSIZE_256;
+ 		} else {
+ 			send_resp(dut, conn, SIGMA_ERROR,
+ 				  "errorCode,Unsupported ADDBAResp Buffer Size");
+@@ -14190,6 +14200,8 @@ hapd_started:
+ 
+ 		if (dut->ap_ba_bufsize == BA_BUFSIZE_1024)
+ 			buf_size = 1024;
++		else if (dut->ap_ba_bufsize == BA_BUFSIZE_512)
++			buf_size = 512;
+ 		else if (dut->ap_ba_bufsize == BA_BUFSIZE_256)
+ 			buf_size = 256;
+ 		else
+diff --git a/sigma_dut.h b/sigma_dut.h
+index cace317..04aeecb 100644
+--- a/sigma_dut.h
++++ b/sigma_dut.h
+@@ -1234,6 +1234,7 @@ struct sigma_dut {
+ 		BA_BUFSIZE_NOT_SET,
+ 		BA_BUFSIZE_64,
+ 		BA_BUFSIZE_256,
++		BA_BUFSIZE_512,
+ 		BA_BUFSIZE_1024,
+ 	} ap_ba_bufsize;
+ 
