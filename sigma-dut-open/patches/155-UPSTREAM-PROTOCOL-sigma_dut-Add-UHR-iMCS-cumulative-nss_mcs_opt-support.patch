@@ -1,0 +1,195 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:19:21 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Add UHR iMCS cumulative nss mcs opt support
+
+also fixed a corruption re-introduced by mechanically reapplying 144's zero-context hunks: dut->uhr_2xldpc reset block had landed inside a run_system_wrapper() call again - moved to the correct cmd_ap_reset_default location
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 1157300..e8c488d 100644
+--- a/ap.c
++++ b/ap.c
+@@ -14611,9 +14611,6 @@ hapd_started:
+ 			/* Dynamic fake Qdepth enabled for all ACs as needed based
+ 			 * on SCS Request arrival from client test cases for AP Test Bed */
+ 			fwtest_cmd_wrapper(dut, "-m 0x48 -v 0 721", ifname);
+-	dut->uhr_2xldpc = VALUE_DISABLED;
+-	free(dut->ar_gi);
+-	dut->ar_gi = NULL;
+ 		}
+ 	}
+ 
+@@ -15756,6 +15753,12 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+ 
+ 	dut->eht_txmcs = 0;
+ 	dut->uhr_txmcs = 0;
++	dut->uhr_2xldpc = VALUE_DISABLED;
++	dut->imcs_nss = 0;
++	dut->imcs_std_max = -1;
++	dut->imcs_count = 0;
++	free(dut->ar_gi);
++	dut->ar_gi = NULL;
+ 	dut->ap_ehtmcs_map = 0;
+ 
+ 	if (dut->device_type == AP_testbed) {
+@@ -22766,6 +22769,138 @@ static int mac80211_vht_nss_mcs(struct sigma_dut *dut, const char *ifname,
+ 		 */
+ 		mcs = atoi(result);
+ 
++		/*
++		 * UHR iMCS path: MCS >= 14 are irregular (implicit) MCS values.
++		 * They accumulate across CAPI steps; the standard MCS range grows
++		 * as std_max = new_imcs - 16.  The iw command uses a comma list:
++		 *   uhr-mcs-<band> <nss>:0,1,...,std_max,imcs1,imcs2,...
++		 *
++		 * NSS rule: first explicit N locks imcs_nss; "def" (nss==0) reuses it.
++		 *
++		 * Example (TC steps):
++		 *   1;17 → std=0,1    imcs=17   → 1:0,1,17
++		 *   def;19 → std=0-3  imcs=17,19 → 1:0,1,2,3,17,19
++		 *   1;20 → std=0-4    imcs=17,19,20 → 1:0,1,2,3,4,17,19,20
++		 */
++		if (dut->program == PROGRAM_UHR && mcs >= 14) {
++			int i, idx;
++			char mcs_list[256] = "";
++			char tmp2[16];
++			int use_nss;
++
++			/* Lock/update NSS from this step */
++			if (nss > 0) {
++				dut->imcs_nss = nss;
++			} else if (dut->imcs_nss == 0) {
++				dut->imcs_nss = dut->ap_tx_streams ?
++					dut->ap_tx_streams : 1;
++			}
++			use_nss = dut->imcs_nss;
++
++			/* Extend standard MCS range: std_max = mcs - 16 */
++			if (mcs - 16 > dut->imcs_std_max)
++				dut->imcs_std_max = mcs - 16;
++
++			/* Append iMCS value (avoid duplicates) */
++			for (i = 0; i < dut->imcs_count; i++) {
++				if (dut->imcs_vals[i] == mcs)
++					break;
++			}
++			if (i == dut->imcs_count &&
++			    dut->imcs_count < (int) ARRAY_SIZE(dut->imcs_vals))
++				dut->imcs_vals[dut->imcs_count++] = mcs;
++
++			/* Build "NSS:0,1,...,std_max,imcs1,imcs2,..." */
++			snprintf(mcs_list, sizeof(mcs_list), "%d:", use_nss);
++			for (idx = 0; idx <= dut->imcs_std_max; idx++) {
++				snprintf(tmp2, sizeof(tmp2),
++					 idx == 0 ? "%d" : ",%d", idx);
++				strlcat(mcs_list, tmp2, sizeof(mcs_list));
++			}
++			for (i = 0; i < dut->imcs_count; i++) {
++				snprintf(tmp2, sizeof(tmp2), ",%d", dut->imcs_vals[i]);
++				strlcat(mcs_list, tmp2, sizeof(mcs_list));
++			}
++
++			/* Flush pending LTF/GI with the combined iw command */
++			if (dut->ar_ltf) {
++				int ltf_v = mac80211_he_ltf_mapping(dut, dut->ar_ltf);
++
++				free(dut->ar_ltf);
++				dut->ar_ltf = NULL;
++				if (ltf_v >= 0 && dut->ar_gi) {
++					sigma_dut_print(dut, DUT_MSG_DEBUG,
++							"nss_mcs_opt UHR iMCS + LTF + GI: "
++							"iw set bitrates %s uhr-mcs-%s %s "
++							"uhr-ltf-%s %d uhr-gi-%s %s",
++							link_flag, band, mcs_list,
++							band, ltf_v, band, dut->ar_gi);
++					run_system_wrapper(dut,
++							   "iw dev %s set bitrates %s "
++							   "uhr-mcs-%s %s "
++							   "uhr-ltf-%s %d "
++							   "uhr-gi-%s %s",
++							   ifname, link_flag,
++							   band, mcs_list,
++							   band, ltf_v,
++							   band, dut->ar_gi);
++					free(dut->ar_gi);
++					dut->ar_gi = NULL;
++				} else if (ltf_v >= 0) {
++					sigma_dut_print(dut, DUT_MSG_DEBUG,
++							"nss_mcs_opt UHR iMCS + LTF: "
++							"iw set bitrates %s uhr-mcs-%s %s "
++							"uhr-ltf-%s %d",
++							link_flag, band, mcs_list,
++							band, ltf_v);
++					run_system_wrapper(dut,
++							   "iw dev %s set bitrates %s "
++							   "uhr-mcs-%s %s "
++							   "uhr-ltf-%s %d",
++							   ifname, link_flag,
++							   band, mcs_list,
++							   band, ltf_v);
++				} else {
++					sigma_dut_print(dut, DUT_MSG_DEBUG,
++							"nss_mcs_opt UHR iMCS: "
++							"iw set bitrates %s uhr-mcs-%s %s",
++							link_flag, band, mcs_list);
++					run_system_wrapper(dut,
++							   "iw dev %s set bitrates %s "
++							   "uhr-mcs-%s %s",
++							   ifname, link_flag,
++							   band, mcs_list);
++				}
++			} else if (dut->ar_gi) {
++				sigma_dut_print(dut, DUT_MSG_DEBUG,
++						"nss_mcs_opt UHR iMCS + GI: "
++						"iw set bitrates %s uhr-mcs-%s %s "
++						"uhr-gi-%s %s",
++						link_flag, band, mcs_list,
++						band, dut->ar_gi);
++				run_system_wrapper(dut,
++						   "iw dev %s set bitrates %s "
++						   "uhr-mcs-%s %s "
++						   "uhr-gi-%s %s",
++						   ifname, link_flag,
++						   band, mcs_list,
++						   band, dut->ar_gi);
++				free(dut->ar_gi);
++				dut->ar_gi = NULL;
++			} else {
++				sigma_dut_print(dut, DUT_MSG_DEBUG,
++						"nss_mcs_opt UHR iMCS: "
++						"iw set bitrates %s uhr-mcs-%s %s",
++						link_flag, band, mcs_list);
++				run_system_wrapper(dut,
++						   "iw dev %s set bitrates %s "
++						   "uhr-mcs-%s %s",
++						   ifname, link_flag,
++						   band, mcs_list);
++			}
++			goto end_nss_mcs;
++		}
++
+ 		/*
+ 		 * UHR nss_mcs_opt is always an auto-rate MCS cap, never a fixed
+ 		 * rate.  The command "uhr-mcs-<band> <nss>:0-<mcs>" tells the
+diff --git a/sigma_dut.h b/sigma_dut.h
+index 60d9904..fc53172 100644
+--- a/sigma_dut.h
++++ b/sigma_dut.h
+@@ -1187,6 +1187,15 @@ struct sigma_dut {
+ 	int ap_addba_amsdu;
+ 	unsigned int ap_ehtmcs_map;
+ 	int run_set_param;
++	/* UHR iMCS cumulative state for ap_set_rfeature nss_mcs_opt.
++	 * iMCS (MCS >= 14) accumulate across CAPI steps; standard MCS range
++	 * expands: std_max = latest_imcs - 16.  Reset at ap_reset_default.
++	 * imcs_nss: NSS locked to first explicit N in "N;M"; def reuses it.
++	 * imcs_vals[]: sorted list of accumulated iMCS values (max 32). */
++	int imcs_nss;
++	int imcs_std_max;
++	int imcs_vals[32];
++	int imcs_count;
+ 	int rsnxe_pwe;
+ 
+ 	enum value_not_set_enabled_disabled ap_oce;
