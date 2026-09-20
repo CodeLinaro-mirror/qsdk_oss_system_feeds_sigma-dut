@@ -1,0 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:28:02 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Reset EHT max supported LTF to 0 for UHR
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index aef8fa0..fd780d8 100644
+--- a/ap.c
++++ b/ap.c
+@@ -10986,6 +10986,11 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 		run_iwpriv(dut, ifname, "set_eht_mu_bfer 0");
+ 	}
+ 
++	/* UHR reset default: no extra EHT-LTF symbol unless a CAPI later
++	 * overrides it via ExtraLTFSymbols. Apply for AP_dut and AP_testbed. */
++	if (dut->program == PROGRAM_UHR)
++		run_iwpriv(dut, ifname, "eht_max_supp_ltf 0");
++
+ 	if (dut->device_type != AP_testbed)
+ 		return;
+ 

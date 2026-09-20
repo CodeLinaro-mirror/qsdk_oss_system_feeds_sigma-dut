@@ -1,0 +1,28 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:28:01 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Enable sounding for txBF in EHT testbed reset
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 005d7b3..81e451b 100644
+--- a/ap.c
++++ b/ap.c
+@@ -11075,8 +11075,14 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 	fwtest_linkid_cmd_wrapper(dut, "-m 0x48 -v 0 676 1", ifname, link_id);
+ 	/* Clear NO_NAV_CHECK_FOR_CTS bit */
+ 	fwtest_linkid_cmd_wrapper(dut, "-m 0x48 -v 0 686 0", ifname, link_id);
+-	/* Disable sounding */
+-	fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 7 0", ifname, link_id);
++
++	if (dut->ap_txBF) {
++		/* Enable sounding */
++		fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 7 1", ifname, link_id);
++	} else {
++		/* Disable sounding */
++		fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 7 0", ifname, link_id);
++	}
+ 
+ 	/* Reuse HE testbed capability resets for EHT */
+ 	run_iwpriv(dut, ifname, "he_txmcsmap 0x0");

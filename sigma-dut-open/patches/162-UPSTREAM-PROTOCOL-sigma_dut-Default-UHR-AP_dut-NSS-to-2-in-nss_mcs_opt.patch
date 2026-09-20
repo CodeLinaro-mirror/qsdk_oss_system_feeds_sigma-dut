@@ -1,0 +1,20 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:28:01 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Default UHR AP dut NSS to 2 in nss mcs opt
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 81e451b..a4948bd 100644
+--- a/ap.c
++++ b/ap.c
+@@ -22743,6 +22743,8 @@ static int mac80211_vht_nss_mcs(struct sigma_dut *dut, const char *ifname,
+ 			run_iwpriv(dut, ifname, "nss 1");
+ 		if (dut->device_type == AP_testbed && dut->program == PROGRAM_HE)
+ 			nss = dut->ap_tx_streams; /* used in mcsmap block below */
++		if (dut->device_type == AP_dut && dut->program == PROGRAM_UHR)
++			nss = 2;
+ 	}
+ 
+ 	/* --- MCS field --- */

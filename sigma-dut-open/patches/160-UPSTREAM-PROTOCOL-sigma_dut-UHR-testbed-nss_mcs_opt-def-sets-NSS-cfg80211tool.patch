@@ -1,0 +1,31 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:28:01 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: UHR testbed nss mcs opt def sets NSS cfg80211tool
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 1f13565..005d7b3 100644
+--- a/ap.c
++++ b/ap.c
+@@ -22760,6 +22760,19 @@ static int mac80211_vht_nss_mcs(struct sigma_dut *dut, const char *ifname,
+ 		if (dut->device_type == AP_testbed && dut->ap_sgi80 == 1) {
+ 			/* SGI testbed WAR: keep fixed at VHT MCS7 */
+ 			run_iwpriv(dut, ifname, "vhtmcs 7");
++		} else if (dut->program == PROGRAM_UHR &&
++			   dut->device_type == AP_testbed) {
++			/*
++			 * UHR testbed: for nss_mcs_opt MCS=def, set the NSS
++			 * capability via cfg80211tool instead of clearing the
++			 * fixed rate with "iw set bitrates".  NSS value is the
++			 * explicit NSS field; def;def (not a valid combination)
++			 * falls back to ap_tx_streams, else 4.
++			 */
++			int nss_val = nss ? nss :
++				      (dut->ap_tx_streams ? dut->ap_tx_streams : 4);
++
++			run_iwpriv(dut, ifname, "nss %d", nss_val);
+ 		} else if (dut->program == PROGRAM_HE ||
+ 			   dut->program == PROGRAM_EHT ||
+ 			   dut->program == PROGRAM_UHR) {
