@@ -1,0 +1,40 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:14:35 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Fix UHR GI LTF flush band for 24G interface
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index 0517013..1157300 100644
+--- a/ap.c
++++ b/ap.c
+@@ -24253,12 +24253,22 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 	    (dut->ar_ltf || dut->ar_gi)) {
+ 		const char *band;
+ 
+-		if (dut->ap_band_6g)
+-			band = "6";
+-		else if (dut->use_5g)
+-			band = "5";
+-		else
+-			band = "2.4";
++		/* Use link_id-aware band detection (mirrors mac80211_he_gi) so that
++		 * Interface,24G correctly uses uhr-gi-2.4 instead of uhr-gi-5. */
++		if (dut->ap_is_dual &&
++		    (dut->mld[link_id].ap_mode == AP_11be ||
++		     dut->mld[link_id].ap_mode == AP_11bn)) {
++			if (link_id == dut->band_to_link[0])
++				band = "2.4";
++			else if (link_id == dut->band_to_link[1])
++				band = "5";
++			else if (link_id == dut->band_to_link[2])
++				band = "6";
++			else
++				band = "5";
++		} else {
++			band = dut->ap_band_6g ? "6" : dut->use_5g ? "5" : "2.4";
++		}
+ 
+ 		if (dut->ar_ltf && dut->ar_gi) {
+ 			int ltf_val = mac80211_he_ltf_mapping(dut, dut->ar_ltf);
