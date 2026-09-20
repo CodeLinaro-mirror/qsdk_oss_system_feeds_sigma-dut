@@ -1,0 +1,285 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Mon, 17 Aug 2026 21:04:16 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Extend PROGRAM EHT conditions to PROGRAM UHR
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index b9b9b1f..ccb3753 100644
+--- a/ap.c
++++ b/ap.c
+@@ -523,6 +523,7 @@ static void mac80211_config_rts_force(struct sigma_dut *dut, const char *ifname,
+ 
+ 		switch (mode) {
+ 		case PROGRAM_EHT:
++		case PROGRAM_UHR:
+ 			res = snprintf(buf, sizeof(buf), "iw %s set rts -l %d 64", ifname, link_id);
+ 			break;
+ 		default:
+@@ -541,6 +542,7 @@ static void mac80211_config_rts_force(struct sigma_dut *dut, const char *ifname,
+ 
+ 		switch (mode) {
+ 		case PROGRAM_EHT:
++		case PROGRAM_UHR:
+ 			res = snprintf(buf, sizeof(buf), "iw %s set rts -l %d 2347", ifname, link_id);
+ 			break;
+ 		default:
+@@ -1497,7 +1499,8 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+ 	    (dut->ap_interface_6g && dut->ap_interface_2g))
+ 		dut->ap_is_dual = 1;
+ 
+-	if (dut->program == PROGRAM_EHT || dut->program == PROGRAM_WPA3) {
++	if (dut->program == PROGRAM_EHT || dut->program == PROGRAM_UHR ||
++	    dut->program == PROGRAM_WPA3) {
+ 		dut->ap_pmf = AP_PMF_OPTIONAL;
+ 		dut->ap_beacon_prot = 1;
+ 		if ((dut->ap_interface_5g || dut->ap_interface_2g) &&
+@@ -1963,7 +1966,7 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+ 			return STATUS_SENT;
+ 		}
+ 		nss = atoi(result);
+-		if (dut->program == PROGRAM_EHT) {
++		if (dut->program == PROGRAM_EHT || dut->program == PROGRAM_UHR) {
+ 			dut->ap_tx_streams = nss;
+ 			dut->ap_rx_streams = nss;
+ 		}
+@@ -1982,7 +1985,8 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+ 			return STATUS_SENT;
+ 		}
+ 		mcs = atoi(result);
+-		if (dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT) {
++		if (dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT ||
++		    dut->program == PROGRAM_UHR) {
+ 			uint16_t mcsnssmap = 0;
+ 
+ 			dut->he_ul_mcs = mcs;
+@@ -2779,10 +2783,10 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+ 			dut->ap_ba_bufsize = BA_BUFSIZE_64;
+ 		} else if (strcasecmp(val, "gt64") == 0 ||
+ 			   strcasecmp(val, "eq256") == 0) {
+-			if (dut->program == PROGRAM_EHT &&
++			if ((dut->program == PROGRAM_EHT || dut->program == PROGRAM_UHR) &&
+ 			    dut->ap_ba_bufsize != BA_BUFSIZE_1024)
+ 				dut->ap_ba_bufsize = BA_BUFSIZE_256;
+-			else if (dut->program != PROGRAM_EHT)
++			else if (dut->program != PROGRAM_EHT && dut->program != PROGRAM_UHR)
+ 				dut->ap_ba_bufsize = BA_BUFSIZE_256;
+ 		} else if (strcasecmp(val, "eq512") == 0) {
+ 			dut->ap_ba_bufsize = BA_BUFSIZE_512;
+@@ -2796,7 +2800,8 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+ 	val = get_param(cmd, "ADDBAResp_BufSize");
+ 	if (val) {
+ 		if (strcasecmp(val, "gt64") == 0) {
+-			dut->ap_ba_bufsize = dut->program == PROGRAM_EHT ?
++			dut->ap_ba_bufsize = (dut->program == PROGRAM_EHT ||
++					      dut->program == PROGRAM_UHR) ?
+ 				BA_BUFSIZE_1024 : BA_BUFSIZE_256;
+ 		} else if (strcasecmp(val, "le64") == 0) {
+ 			dut->ap_ba_bufsize = BA_BUFSIZE_64;
+@@ -3975,7 +3980,8 @@ static enum sigma_cmd_result cmd_ap_set_security(struct sigma_dut *dut,
+ 	}
+ 
+ 	val = get_param(cmd, "Interface");
+-	if (val && (dut->program == PROGRAM_EHT || dut->program == PROGRAM_WPA3))
++	if (val && (dut->program == PROGRAM_EHT || dut->program == PROGRAM_WPA3 ||
++		    dut->program == PROGRAM_UHR))
+ 		dut->link_specific_security = 1;
+ 
+ 	val = get_param(cmd, "MLD_ID");
+@@ -12878,7 +12884,8 @@ skip_key_mgmt:
+ 			break;
+ 		}
+ 
+-		if ((pmf != AP_PMF_DISABLED || dut->program == PROGRAM_EHT) &&
++		if ((pmf != AP_PMF_DISABLED || dut->program == PROGRAM_EHT ||
++		     dut->program == PROGRAM_UHR) &&
+ 		    group_mgmt_cipher != AP_NO_GROUP_MGMT_CIPHER_SET)
+ 			fprintf(f, "group_mgmt_cipher=%s\n",
+ 				hostapd_group_mgmt_cipher_name(
+@@ -13232,8 +13239,8 @@ skip_key_mgmt:
+ 
+ 		if ((dut->program == PROGRAM_VHT) ||
+ 		    ((dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT ||
+-			  dut->program == PROGRAM_WPA3 ||
+-			  dut->program == PROGRAM_QM) &&
++			  dut->program == PROGRAM_WPA3 || dut->program == PROGRAM_QM ||
++			  dut->program == PROGRAM_UHR) &&
+ 		     !check_band(dut, BAND_2G, link_id))) {
+ 			int vht_oper_centr_freq_idx;
+ 
+@@ -13394,7 +13401,8 @@ skip_vht_parameters_set:
+ 			fprintf(f, "eht_oper_centr_freq_seg0_idx=%d\n", seg_indx);
+ 		}
+ 
+-		if (dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT) {
++		if (dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT ||
++		    dut->program == PROGRAM_UHR) {
+ 			fprintf(f, "he_su_beamformer=%d\n", dut->ap_txBF);
+ 			fprintf(f, "he_mu_beamformer=%d\n", dut->ap_mu_txBF);
+ 			/* Disable BSS Color config by default */
+@@ -13414,7 +13422,7 @@ skip_vht_parameters_set:
+ 			else
+ 				fprintf(f, "he_rts_threshold=0\n");
+ 
+-			if (dut->program == PROGRAM_EHT) {
++			if (dut->program == PROGRAM_EHT || dut->program == PROGRAM_UHR) {
+ 				fprintf(f, "eht_su_beamformer=%d\n", dut->ap_txBF);
+ 				if (dut->ap_he_dlofdma != VALUE_ENABLED) {
+ 					fprintf(f, "eht_mu_beamformer=%d\n", dut->ap_mu_txBF);
+@@ -14469,8 +14477,9 @@ hapd_started:
+ 		}
+ 	}
+ 
+-	if (drv == DRIVER_MAC80211 && dut->program != PROGRAM_EHT) {
+-		/* NOTE: EHT program excluded as it is handled in fwtest_set_eht_params() */
++	if (drv == DRIVER_MAC80211 && dut->program != PROGRAM_EHT &&
++	    dut->program != PROGRAM_UHR) {
++		/* NOTE: EHT/UHR program excluded as it is handled in fwtest_set_eht_params() */
+ 		int i;
+ 
+ 		if (dut->ap_txBF) {
+@@ -15368,7 +15377,8 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+ 	}
+ 
+ 	if (dut->program == PROGRAM_HT || dut->program == PROGRAM_VHT ||
+-	    dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT) {
++	    dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT ||
++	    dut->program == PROGRAM_UHR) {
+ 		dut->ap_wme = AP_WME_ON;
+ 		dut->ap_wmmps = AP_WMMPS_ON;
+ 	} else {
+@@ -15668,7 +15678,8 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+ 		dut->he_ul_mcs = 0;
+ 	}
+ 
+-	if (dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT) {
++	if (dut->program == PROGRAM_HE || dut->program == PROGRAM_EHT ||
++	    dut->program == PROGRAM_UHR) {
+ 		dut->ap_ulmumimo_80mhz = -1;
+ 		dut->ap_ulmumimo_160mhz = -1;
+ 		dut->ap_ulmumimo_320mhz = -1;
+@@ -15758,7 +15769,7 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+ 	dut->ap_beacon_prot = dut->user_config_ap_beacon_prot;
+ 	dut->ap_transition_disable = 0;
+ 
+-	if (dut->program == PROGRAM_EHT) {
++	if (dut->program == PROGRAM_EHT || dut->program == PROGRAM_UHR) {
+ 		dut->ap_group_mgmt_cipher = AP_BIP_GMAC_256;
+ 		dut->ap_pmf = AP_PMF_OPTIONAL;
+ 		dut->ap_beacon_prot = 1;
+@@ -15896,7 +15907,7 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+ 		dut->mld[i].ap_pmksa_caching = 0;
+ 		dut->mld[i].ap_ieee8021x_auth = 0;
+ 
+-		if (dut->program == PROGRAM_EHT) {
++		if (dut->program == PROGRAM_EHT || dut->program == PROGRAM_UHR) {
+ 			dut->mld[i].ap_pmf_link = AP_PMF_OPTIONAL;
+ 			dut->mld[i].ap_beacon_prot_link = 1;
+ 			dut->mld[i].ap_group_mgmt_cipher_link = AP_BIP_GMAC_256;
+@@ -17071,7 +17082,7 @@ static int mac80211_ap_send_frame_bcn_rpt_req(struct sigma_dut *dut,
+ 			return -1;
+ 	}
+ 
+-	if (dut->program == PROGRAM_EHT) {
++	if (dut->program == PROGRAM_EHT || dut->program == PROGRAM_UHR) {
+ 		snprintf(link_param, sizeof(link_param), "-l %d", link_id);
+ 		link_set = true;
+ 	}
+@@ -17252,7 +17263,7 @@ static int mac80211_ap_send_frame_btm_req(struct sigma_dut *dut,
+ 		mbo_reason = atoi(val);
+ 
+ 
+-	if (dut->program == PROGRAM_EHT) {
++	if (dut->program == PROGRAM_EHT || dut->program == PROGRAM_UHR) {
+ 		snprintf(link_param, sizeof(link_param), "-l %d", link_id);
+ 		link_set = true;
+ 	}
+@@ -17558,7 +17569,7 @@ static int mac80211_ap_send_frame_t2lmteardown(struct sigma_dut *dut,
+ 		dut->intf_defined = dut->num_links;
+ 	}
+ 
+-	if (dut->program == PROGRAM_EHT) {
++	if (dut->program == PROGRAM_EHT || dut->program == PROGRAM_UHR) {
+ 		snprintf(link_param, sizeof(link_param), "-l %d", link_id);
+ 		link_set = true;
+ 	}
+@@ -21234,7 +21245,7 @@ static int mac80211_chnum_band(struct sigma_dut *dut, const char *ifname,
+ 	}
+ 
+ 
+-	if (dut->program == PROGRAM_EHT) {
++	if (dut->program == PROGRAM_EHT || dut->program == PROGRAM_UHR) {
+ 		snprintf(mode, sizeof(mode), "eht");
+ 		snprintf(link_param, sizeof(link_param), "-l %d", link_id);
+ 		link_set = true;
+@@ -23014,7 +23025,7 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 	if (val) {
+ 		if (strcasecmp(val, "HE-SU") == 0) {
+ 			/* Change PPDU format type to HE-SU MCS 1 */
+-			if (dut->program == PROGRAM_EHT)
++			if (dut->program == PROGRAM_EHT || dut->program == PROGRAM_UHR)
+ 				fwtest_linkid_cmd_wrapper(dut, "-m 0x48 -v 0 89 0x401",
+ 							  ifname, link_id);
+ 			else
+@@ -23027,7 +23038,7 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 			 */
+ 		} else if (strcasecmp(val, "legacy") == 0) {
+ 			/* Change PPDU format type to non-HT */
+-			if (dut->program == PROGRAM_EHT)
++			if (dut->program == PROGRAM_EHT || dut->program == PROGRAM_UHR)
+ 				fwtest_linkid_cmd_wrapper(dut, "-m 0x48 -v 0 89 3",
+ 							  ifname, link_id);
+ 			else
+@@ -23089,7 +23100,7 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 						ifname);
+ 		} else if (strcasecmp(val, "HE") == 0) {
+ 			dut->switch_he_eht = 1;
+-			if (dut->program == PROGRAM_EHT)
++			if (dut->program == PROGRAM_EHT || dut->program == PROGRAM_UHR)
+ 				fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 548 1",
+ 							  ifname, link_id);
+ 			else
+@@ -23113,7 +23124,7 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 
+ 	val = get_param(cmd, "PunctChannel");
+ 	if (val) {
+-		if (dut->program == PROGRAM_EHT) {
++		if (dut->program == PROGRAM_EHT || dut->program == PROGRAM_UHR) {
+ 			unsigned int punct_index = 0;
+ 			char *punctchannel_val;
+ 			char *saveptr;
+@@ -23437,7 +23448,7 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 
+ 	val = get_param(cmd, "AffiliatedAP_Action");
+ 	if (val) {
+-		if (dut->program == PROGRAM_EHT) {
++		if (dut->program == PROGRAM_EHT || dut->program == PROGRAM_UHR) {
+ 			if (strcasecmp(val, "Remove") == 0) {
+ 				val = get_param(cmd, "AffiliatedAP_RemovalTimer");
+ 				if (val) {
+@@ -23744,7 +23755,7 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 		int mcs = atoi(val);
+ 
+ 		dut->ap_fixed_rate = 1;
+-		if (dut->program == PROGRAM_EHT)
++		if (dut->program == PROGRAM_EHT || dut->program == PROGRAM_UHR)
+ 			run_iwpriv(dut, ifname, "eht_ul_mcs %d", mcs);
+ 		else
+ 			run_iwpriv(dut, ifname, "he_ul_mcs %d", mcs);
+@@ -23753,13 +23764,13 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 	val = get_param(cmd, "TriggerCoding");
+ 	if (val) {
+ 		if (strcasecmp(val, "BCC") == 0) {
+-			if (dut->program == PROGRAM_EHT)
++			if (dut->program == PROGRAM_EHT || dut->program == PROGRAM_UHR)
+ 				run_iwpriv(dut, ifname, "eht_ul_ldpc 0");
+ 			else
+ 				run_iwpriv(dut, ifname, "he_ul_ldpc 0");
+ 		} else if (strcasecmp(val, "LDPC") == 0) {
+ 			novap_reset(dut, ifname, 0);
+-			if (dut->program == PROGRAM_EHT)
++			if (dut->program == PROGRAM_EHT || dut->program == PROGRAM_UHR)
+ 				run_iwpriv(dut, ifname, "eht_ul_ldpc 1");
+ 			else
+ 				run_iwpriv(dut, ifname, "he_ul_ldpc 1");

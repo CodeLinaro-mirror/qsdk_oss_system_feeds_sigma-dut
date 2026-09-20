@@ -1,0 +1,205 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Mon, 17 Aug 2026 21:03:00 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Add hostapd bss cap cmds for ath12k HE EHT
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/ap.c b/ap.c
+index ca55790..d02f58e 100644
+--- a/ap.c
++++ b/ap.c
+@@ -10576,35 +10576,37 @@ static void fwtest_set_he_params(struct sigma_dut *dut, const char *ifname,
+ 	run_iwpriv(dut, ifname, "tx_stbc 0");
+ 	run_iwpriv(dut, ifname, "he_txmcsmap 0x0");
+ 	run_iwpriv(dut, ifname, "he_rxmcsmap 0x0");
+-	run_iwpriv(dut, ifname, "he_amsdu_in_ampdu_supp 0");
+-	run_iwpriv(dut, ifname, "he_bfee_sts_supp 0 0");
+-	run_iwpriv(dut, ifname, "he_max_nc 0");
+-	run_iwpriv(dut, ifname, "he_bsr_supp 0");
++	/* mac80211/ath12k: reset HE MCS map via hostapd; he_basic_mcs_nss_set 0
++	 * clears all NSS entries in the beacon HE Capabilities MCS/NSS IE. */
++	run_system_wrapper(dut, "hostapd_cli -i %s he_basic_mcs_nss_set 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_amsdu_in_ampdu_supp 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_bfee_sts_lteq80 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_bfee_sts_gt80 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_max_nc_suprt 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_bsr_support 0", ifname);
+ 	run_iwpriv(dut, ifname, "rx_stbc 0");
+-	run_iwpriv(dut, ifname, "he_subfee 0");
+-	run_iwpriv(dut, ifname, "he_su_mu_ppdu_4x_ltf_800ns_gi 0");
+-	run_iwpriv(dut, ifname, "he_su_ppdu_1x_ltf_800ns_gi 0");
+-	run_iwpriv(dut, ifname, "he_er_su_disable 1");
+-	run_iwpriv(dut, ifname, "he_1024qam_lt242ru_rx 0");
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_su_mu_ppdu_4x_ltf_800ns_gi 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_su_ppdu_1x_ltf_800ns_gi 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_er_su_disable 1", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_1024qam_lt242ru_rx_enable 0", ifname);
+ 	run_iwpriv(dut, ifname, "he_ul_mu_data_dis_rx 0");
+-	run_iwpriv(dut, ifname, "he_max_ampdu_len_exp 0");
+-	run_iwpriv(dut, ifname, "he_full_bw_ulmumimo 0");
+-	run_iwpriv(dut, ifname, "he_er_su_ppdu_1x_ltf_800ns_gi 0");
+-	run_iwpriv(dut, ifname, "he_er_su_ppdu_4x_ltf_800ns_gi 0");
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_max_ampdu_len_exp 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_full_bw_ul_mumimo 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_er_su_ppdu_1x_ltf_800ns_gi 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_er_su_ppdu_4x_ltf_800ns_gi 0", ifname);
+ 	run_iwpriv(dut, ifname, "he_dcm_max_const_rx 0");
+ 	/* Disable BSRP triggers */
+ 	fwtest_cmd_wrapper(dut, "-m 0x47 -v 0 345 1", ifname);
+ 	if (dut->ap_he_dlofdma == VALUE_DISABLED)
+-		run_iwpriv(dut, ifname, "he_dl_ofdma 0");
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_dl_mu_ofdma 0", ifname);
+ 	if (dut->ap_channel <= 11)
+ 		run_iwpriv(dut, ifname, "vht_11ng 0");
+ 	if (!dut->ap_txBF) {
+-		run_iwpriv(dut, ifname, "he_subfer 0");
+-		run_iwpriv(dut, ifname, "he_subfee 0");
++		run_system_wrapper(dut, "hostapd_cli -i %s bss_he_su_beamformer 0", ifname);
++		run_system_wrapper(dut, "hostapd_cli -i %s bss_he_su_beamformee 0", ifname);
+ 	}
+ 	if (!dut->ap_mu_txBF) {
+-		run_iwpriv(dut, ifname, "he_mubfer 0");
+-		run_iwpriv(dut, ifname, "he_mubfee 0");
++		run_system_wrapper(dut, "hostapd_cli -i %s bss_he_mu_beamformer 0", ifname);
+ 	}
+ 	if (dut->ap_cipher == AP_WEP || dut->ap_cipher == AP_TKIP)
+ 		run_iwpriv(dut, ifname, "htweptkip 1");
+@@ -10619,6 +10621,9 @@ static void fwtest_set_he_params(struct sigma_dut *dut, const char *ifname,
+ 			dut->he_mcsnssmap = (mcsnssmap << 16) | mcsnssmap;
+ 			run_iwpriv(dut, ifname, "he_rxmcsmap %u", dut->he_mcsnssmap);
+ 			run_iwpriv(dut, ifname, "he_txmcsmap %u", dut->he_mcsnssmap);
++			/* mac80211/ath12k: update HE MCS map in beacon via hostapd */
++			run_system_wrapper(dut, "hostapd_cli -i %s he_basic_mcs_nss_set 0x%x",
++					   ifname, dut->he_mcsnssmap & 0xffff);
+ 		}
+ 	}
+ 
+@@ -10633,6 +10638,10 @@ static void fwtest_set_he_params(struct sigma_dut *dut, const char *ifname,
+ 	if (dut->ap_twtinfoframerx == VALUE_ENABLED)
+ 		fwtest_cmd_wrapper(dut, "-m 0x47 -v 0 333 1", ifname);
+ 
++	/* mac80211/ath12k: trigger beacon reconvergence after all bss_he_*
++	 * SET calls above have updated the hostapd capability state. */
++	run_system_wrapper(dut, "hostapd_cli -i %s UPDATE_BEACON", ifname);
++
+ 	/* Disable 802.11cf/8CFDF0 IE in testbed mode */
+ 	run_system_wrapper(dut, "wifitool %s set_wfa_test_param wfa_testbed 2 1",
+ 			   ifname);
+@@ -10820,13 +10829,13 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 	run_iwpriv(dut, basedev, "he_muedca_mode 0");
+ 	run_iwpriv(dut, basedev_radio, "he_muedca_mode 0");
+ 	if (!dut->ap_txBF) {
+-		run_iwpriv(dut, ifname, "vhtsubfer 0");
+-		run_iwpriv(dut, ifname, "he_subfer 0");
++		run_system_wrapper(dut, "hostapd_cli -i %s bss_vht_su_beamformer 0", ifname);
++		run_system_wrapper(dut, "hostapd_cli -i %s bss_he_su_beamformer 0", ifname);
+ 		run_iwpriv(dut, ifname, "set_eht_su_bfer 0");
+ 	}
+ 	if (!dut->ap_mu_txBF) {
+-		run_iwpriv(dut, ifname, "vhtmubfer 0");
+-		run_iwpriv(dut, ifname, "he_mubfer 0");
++		run_system_wrapper(dut, "hostapd_cli -i %s bss_vht_mu_beamformer 0", ifname);
++		run_system_wrapper(dut, "hostapd_cli -i %s bss_he_mu_beamformer 0", ifname);
+ 		run_iwpriv(dut, ifname, "set_eht_mu_bfer 0");
+ 	}
+ 
+@@ -10875,8 +10884,8 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 		run_iwpriv(dut, ifname, "set_eht_mu_bfmr 0");
+ 		run_iwpriv(dut, ifname, "set_eht_mubfee 0");
+ 	}
+-	run_iwpriv(dut, ifname, "eht_mcs15_supp 0");
+-	run_iwpriv(dut, ifname, "eht_mcs14_dup_6ghz 0");
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_eht_mcs15_supp 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_eht_mcs14_dup_in_6ghz 0", ifname);
+ 	run_iwpriv(dut, ifname, "set_max_mpdu_length 0");
+ 	if (dut->ap_interface_6g)
+ 		run_system_wrapper(dut, "wifitool %s set_wfa_test_param 6ghz 1 1",
+@@ -10896,7 +10905,7 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 	run_iwpriv(dut, basedev_radio, "disable_eml_in_slo 1");
+ 	if (dut->ap_chwidth == AP_320)
+ 		run_iwpriv(dut, ifname, "eht_config_ccfs0 1");
+-	run_iwpriv(dut, ifname, "eht_max_supp_ltf 0");
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_eht_ltf 0", ifname);
+ 	/* STR WAR for testbed */
+ 	fwtest_linkid_cmd_wrapper(dut, "-m 0x48 -v 0 676 1", ifname, link_id);
+ 	/* Clear NO_NAV_CHECK_FOR_CTS bit */
+@@ -10907,31 +10916,26 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 	/* Reuse HE testbed capability resets for EHT */
+ 	run_iwpriv(dut, ifname, "he_txmcsmap 0x0");
+ 	run_iwpriv(dut, ifname, "he_rxmcsmap 0x0");
+-	run_iwpriv(dut, ifname, "he_amsdu_in_ampdu_supp 0");
+-	run_iwpriv(dut, ifname, "he_bfee_sts_supp 0 0");
+-	run_iwpriv(dut, ifname, "he_max_nc 0");
+-	run_iwpriv(dut, ifname, "he_bsr_supp 0");
+-	run_iwpriv(dut, ifname, "he_subfee 0");
+-	run_iwpriv(dut, ifname, "he_su_mu_ppdu_4x_ltf_800ns_gi 0");
+-	run_iwpriv(dut, ifname, "he_su_ppdu_1x_ltf_800ns_gi 0");
+-	run_iwpriv(dut, ifname, "he_er_su_disable 1");
+-	run_iwpriv(dut, ifname, "he_1024qam_lt242ru_rx 0");
++	run_system_wrapper(dut, "hostapd_cli -i %s he_basic_mcs_nss_set 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_amsdu_in_ampdu_supp 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_bfee_sts_lteq80 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_bfee_sts_gt80 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_max_nc_suprt 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_bsr_support 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_su_mu_ppdu_4x_ltf_800ns_gi 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_su_ppdu_1x_ltf_800ns_gi 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_er_su_disable 1", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_1024qam_lt242ru_rx_enable 0", ifname);
+ 	run_iwpriv(dut, ifname, "he_ul_mu_data_dis_rx 0");
+-	run_iwpriv(dut, ifname, "he_max_ampdu_len_exp 0");
+-	run_iwpriv(dut, ifname, "he_full_bw_ulmumimo 0");
+-	run_iwpriv(dut, ifname, "he_er_su_ppdu_1x_ltf_800ns_gi 0");
+-	run_iwpriv(dut, ifname, "he_er_su_ppdu_4x_ltf_800ns_gi 0");
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_max_ampdu_len_exp 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_full_bw_ul_mumimo 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_er_su_ppdu_1x_ltf_800ns_gi 0", ifname);
++	run_system_wrapper(dut, "hostapd_cli -i %s bss_he_er_su_ppdu_4x_ltf_800ns_gi 0", ifname);
+ 	run_iwpriv(dut, ifname, "he_dcm_max_const_rx 0");
+ 	/* Disable BSRP triggers */
+ 	fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 345 1", ifname, link_id);
+-	if (!dut->ap_txBF) {
+-		run_iwpriv(dut, ifname, "he_subfer 0");
+-		run_iwpriv(dut, ifname, "he_subfee 0");
+-	}
+-	if (!dut->ap_mu_txBF) {
+-		run_iwpriv(dut, ifname, "he_mubfer 0");
+-		run_iwpriv(dut, ifname, "he_mubfee 0");
+-	}
++	/* he_subfer/subfee/mubfer/mubfee already zeroed in the common pre-guard section
++	 * above; omit here to avoid running them twice for the testbed path. */
+ 	if (dut->ap_cipher == AP_WEP || dut->ap_cipher == AP_TKIP)
+ 		run_iwpriv(dut, ifname, "htweptkip 1");
+ 	if (dut->ap_rx_streams || dut->ap_tx_streams) {
+@@ -10944,12 +10948,19 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 			dut->he_mcsnssmap = (mcsnssmap << 16) | mcsnssmap;
+ 			run_iwpriv(dut, ifname, "he_rxmcsmap %u", dut->he_mcsnssmap);
+ 			run_iwpriv(dut, ifname, "he_txmcsmap %u", dut->he_mcsnssmap);
++			/* mac80211/ath12k: update HE MCS map in beacon via hostapd */
++			run_system_wrapper(dut, "hostapd_cli -i %s he_basic_mcs_nss_set 0x%x",
++					   ifname, dut->he_mcsnssmap & 0xffff);
+ 		}
+ 	}
+ 
+ 	if (dut->ap_twtinfoframerx == VALUE_ENABLED)
+ 		fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 333 1", ifname, link_id);
+ 
++	/* mac80211/ath12k: trigger beacon reconvergence after all bss_he_* and
++	 * bss_eht_* SET calls above have updated the hostapd capability state. */
++	run_system_wrapper(dut, "hostapd_cli -i %s UPDATE_BEACON", ifname);
++
+ 	/* Disable 802.11cf/8CFDF0 IE in testbed mode */
+ 	run_system_wrapper(dut, "wifitool %s set_wfa_test_param wfa_testbed 2 1",
+ 			   ifname);
+@@ -22548,6 +22559,10 @@ static int mac80211_vht_nss_mcs(struct sigma_dut *dut, const char *ifname,
+ 			/* iwpriv: updates beacon capability IE, NOT TX rate */
+ 			run_iwpriv(dut, ifname, "he_rxmcsmap %u", dut->he_mcsnssmap);
+ 			run_iwpriv(dut, ifname, "he_txmcsmap %u", dut->he_mcsnssmap);
++			/* mac80211/ath12k: update HE MCS map via hostapd ctrl interface */
++			run_system_wrapper(dut, "hostapd_cli -i %s he_basic_mcs_nss_set 0x%x",
++					   ifname, dut->he_mcsnssmap & 0xffff);
++			run_system_wrapper(dut, "hostapd_cli -i %s UPDATE_BEACON", ifname);
+ 			novap_reset(dut, ifname, 1);
+ 		}
+ 	} else {
