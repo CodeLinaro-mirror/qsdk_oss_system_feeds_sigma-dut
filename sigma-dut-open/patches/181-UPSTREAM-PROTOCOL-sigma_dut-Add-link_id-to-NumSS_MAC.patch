@@ -1,0 +1,69 @@
+From ad92c61c67f996dfa05f0de3b7d12a45f6c478b1 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Thu, 20 Aug 2026 21:38:05 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL:sigma_dut: Add link_id to NumSS_MAC
+ chmask_persta call
+
+mac80211_ap_set_rfeature() handles the NumSS_MAC CAPI parameter by
+pairing each STA MAC address from NumSS_MAC with its per-STA spatial
+stream count from NumSS, and invoking "wifitool <ifname> chmask_persta
+<mac_addr> <nss>" for each pair (ap.c, NumSS_MAC handling block). This
+does not target a specific MLD link, so on multi-link UHR/Wi-Fi 8 APs
+the driver cannot tell which link's peer the NSS mask applies to.
+
+Wi-Fi8 UHR CAPI scripts under WTS-UHR (e.g. UHR-4.6.1.txt,
+UHR-4.6.2.txt, UHR-5.6.1.txt) issue ap_set_rfeature with NumSS and
+NumSS_MAC while operating on a specific band/link, so the resulting
+wifitool call needs to carry that link explicitly rather than relying
+on the default interface.
+
+Fix mac80211_ap_set_rfeature() to insert "link_id <link_id>" into all
+four chmask_persta invocations in the NumSS_MAC block, using the
+link_id already resolved earlier in the function from the Interface/
+WLAN_TAG parameters. The resulting command is:
+wifitool <ifname> link_id <link_id> chmask_persta <mac_addr> <nss>
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+ ap.c | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/ap.c b/ap.c
+index e2ebb2f..102cc41 100644
+--- a/ap.c
++++ b/ap.c
+@@ -23306,23 +23306,23 @@ static enum sigma_cmd_result mac80211_ap_set_rfeature(struct sigma_dut *dut,
+ 			sta_mac_str = strtok_r(sta_mac_list_str, " ", &saveptr);
+ 			if (sta_mac_str && nss[0])
+ 				run_system_wrapper(dut,
+-						   "wifitool %s chmask_persta %s %s",
+-						   ifname, sta_mac_str, nss[0]);
++						   "wifitool %s link_id %d chmask_persta %s %s",
++						   ifname, link_id, sta_mac_str, nss[0]);
+ 			sta_mac_str = strtok_r(NULL, " ", &saveptr);
+ 			if (sta_mac_str && nss[1])
+ 				run_system_wrapper(dut,
+-						   "wifitool %s chmask_persta %s %s",
+-						   ifname, sta_mac_str, nss[1]);
++						   "wifitool %s link_id %d chmask_persta %s %s",
++						   ifname, link_id, sta_mac_str, nss[1]);
+ 			sta_mac_str = strtok_r(NULL, " ", &saveptr);
+ 			if (sta_mac_str && nss[2])
+ 				run_system_wrapper(dut,
+-						   "wifitool %s chmask_persta %s %s",
+-						   ifname, sta_mac_str, nss[2]);
++						   "wifitool %s link_id %d chmask_persta %s %s",
++						   ifname, link_id, sta_mac_str, nss[2]);
+ 			sta_mac_str = strtok_r(NULL, " ", &saveptr);
+ 			if (sta_mac_str && nss[3])
+ 				run_system_wrapper(dut,
+-						   "wifitool %s chmask_persta %s %s",
+-						   ifname, sta_mac_str, nss[3]);
++						   "wifitool %s link_id %d chmask_persta %s %s",
++						   ifname, link_id, sta_mac_str, nss[3]);
+ 			free(sta_mac_list_str);
+ 		}
+ 	}
+-- 
+2.34.1
+
