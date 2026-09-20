@@ -1,0 +1,72 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 18 Aug 2026 17:09:19 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL: sigma_dut: Use ftpput for dev upload log on OpenWrt
+
+net effect: mainline already uses ftpput; removed the dead commented-out ftp.sh heredoc block
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+diff --git a/dev.c b/dev.c
+index 296f7d6..2fd27f4 100644
+--- a/dev.c
++++ b/dev.c
+@@ -796,7 +796,6 @@ static enum sigma_cmd_result ftp_send(struct sigma_dut *dut,
+ 	int ftp_port = 2121;
+ 	char buf[300];
+ 	char src_dir[200];
+-	//FILE *f;
+ 	int res;
+ 
+ 	val = get_param(cmd, "Runtime_ID");
+@@ -837,50 +836,6 @@ static enum sigma_cmd_result ftp_send(struct sigma_dut *dut,
+ 				"FTP file transfer failed: %s", buf);
+ 		return ERROR_SEND_STATUS;
+ 	}
+-	if (res < 0 || res >= sizeof(src_dir))
+-		return ERROR_SEND_STATUS;
+-
+-	/* Create the ftp shell script which can be called
+-	f = fopen("ftp.sh", "w");
+-	if (!f) {
+-		sigma_dut_print(dut, DUT_MSG_ERROR,
+-				"Unable to create ftp.sh file");
+-		return ERROR_SEND_STATUS;
+-	}
+-
+-	fprintf(f, "#!" SHELL "\n\n"
+-		"ftp -in <<EOF\n"
+-		"open %s %d\n"
+-		"user %s %s\n"
+-		"pwd \n"
+-		"lcd %s \n"
+-		"put %s\n"
+-		"ls \n"
+-		"EOF\n",
+-		ftp_ip,
+-		ftp_port ? ftp_port : 21,
+-		ftp_uname ? ftp_uname : "anonymous",
+-		ftp_pwd ? ftp_pwd : "anonymous",
+-		src_dir, out_file);
+-	fclose(f);
+-
+-	if (chmod("ftp.sh", S_IRUSR | S_IWUSR | S_IXUSR) < 0) {
+-		sigma_dut_print(dut, DUT_MSG_ERROR, "Failed to chmod ftp.sh");
+-		unlink("ftp.sh");
+-		return ERROR_SEND_STATUS;
+-	}
+-
+-	if (system("cat ftp.sh") != 0) {
+-		sigma_dut_print(dut, DUT_MSG_ERROR, "Failed to cat ftp.sh");
+-	}
+-
+-	if (system("./ftp.sh > output.txt") != 0) {
+-		sigma_dut_print(dut, DUT_MSG_ERROR, "Failed to run ftp.sh");
+-		unlink("ftp.sh");
+-		return ERROR_SEND_STATUS;
+-	}
+-
+-	unlink("ftp.sh");*/
+ 
+ 	return SUCCESS_SEND_STATUS;
+ }
