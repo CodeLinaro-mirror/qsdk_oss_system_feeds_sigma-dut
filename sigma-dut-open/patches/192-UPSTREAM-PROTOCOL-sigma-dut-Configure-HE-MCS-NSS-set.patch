@@ -1,0 +1,65 @@
+From 4751226888a4f363ed8c830efe829eb219dae637 Mon Sep 17 00:00:00 2001
+From: Suraj P Kizhakkethil <suraj.kizhakkethil@oss.qualcomm.com>
+Date: Tue, 8 Sep 2026 20:54:43 +0530
+Subject: [PATCH] UPSTREAM:PROTOCOL:sigma-dut: Configure HE MCS/NSS set
+ alongside EHT MCS/NSS set
+
+fwtest_set_eht_params() only issued hostapd_cli SET eht_tx/rx_mcs_nss_set
+commands, leaving the HE MCS/NSS map unset even when dut->he_mcsnssmap
+was requested by the CAPI. Add matching he_tx_mcs_nss_set and
+he_rx_mcs_nss_set SET commands for both the CAPI-provided EHT MCS map
+and the testbed default (NSS=2 MCS0-9) path, so HE rate capability
+stays consistent with the EHT configuration.
+
+Patch-dependency: None
+
+Signed-off-by: Suraj P Kizhakkethil <suraj.kizhakkethil@oss.qualcomm.com>
+---
+ ap.c | 24 ++++++++++++++++++++++++
+ 1 file changed, 24 insertions(+)
+
+diff --git a/ap.c b/ap.c
+index 9b590b2..e39ee94 100644
+--- a/ap.c
++++ b/ap.c
+@@ -11081,6 +11081,19 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 		unsigned int nss1213 = (dut->ap_ehtmcs_map >> 8) & 0xF;
+ 		unsigned int mcs_mask = (nss1213 << 8) | (nss1011 << 4) | nss09;
+ 
++		if (dut->he_mcsnssmap) {
++			run_system_wrapper(dut,
++					   "hostapd_cli -i %s SET he_tx_mcs_nss_set "
++					   "\"0x%04x 0x%04x\"",
++					   ifname, dut->he_mcsnssmap & 0xFFFF,
++					   dut->he_mcsnssmap & 0xFFFF);
++			run_system_wrapper(dut,
++					   "hostapd_cli -i %s SET he_rx_mcs_nss_set "
++					   "\"0x%04x 0x%04x\"",
++					   ifname, dut->he_mcsnssmap & 0xFFFF,
++					   dut->he_mcsnssmap & 0xFFFF);
++		}
++
+ 		run_system_wrapper(dut,
+ 				   "hostapd_cli -i %s SET eht_tx_mcs_nss_set "
+ 				   "\"0x%03x 0x%03x 0x%03x\"",
+@@ -11091,6 +11104,17 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 				   ifname, mcs_mask, mcs_mask, mcs_mask);
+ 	} else {
+ 		/* Testbed default: NSS=2 MCS0-9 only (TC 5.2.1) */
++		if (dut->he_mcsnssmap) {
++			run_system_wrapper(dut,
++					   "hostapd_cli -i %s SET he_tx_mcs_nss_set "
++					   "\"0xfff5 0xfff5\"",
++					   ifname);
++			run_system_wrapper(dut,
++					   "hostapd_cli -i %s SET he_rx_mcs_nss_set "
++					   "\"0xfff5 0xfff5\"",
++					   ifname);
++		}
++
+ 		run_system_wrapper(dut,
+ 				   "hostapd_cli -i %s SET eht_tx_mcs_nss_set "
+ 				   "\"0x002 0x002 0x002\"",
+-- 
+2.34.1
+
