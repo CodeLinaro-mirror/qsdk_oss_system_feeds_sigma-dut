@@ -1,0 +1,52 @@
+From 21645e3d8cb03790aedca68fa0237aa613a57977 Mon Sep 17 00:00:00 2001
+From: Hari G<hag@qti.qualcomm.com>
+Date: Wed, 2 Sep 2026 10:59:36 -0700
+Subject: [PATCH] Fix EPPKE issue
+
+Fix the rsnxe_capab_mask bit mask value and also
+include appropriate arguments for previous_tk
+hostapd_cli command.
+
+Signed-off-by: Hari G<hag@qti.qualcomm.com>
+---
+ ap.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/ap.c b/ap.c
+index b01e455..13391cf 100644
+--- a/ap.c
++++ b/ap.c
+@@ -12923,7 +12923,7 @@ skip_key_mgmt:
+ 			fprintf(f, "group_cipher=GCMP-256\n");
+ 			fprintf(f, "wpa_passphrase=12345678\n");
+ 			fprintf(f, "pasn_groups=19\n");
+-			fprintf(f, "rsnxe_capab_mask=2000000000\n");
++			fprintf(f, "rsnxe_capab_mask=2028040020\n");
+ 			fprintf(f, "security_profile_alt_behavior=%d\n",
+ 				dut->ap_security_profile_alt_behavior);
+ 			fprintf(f, "wds_sta=1\n");
+@@ -12937,10 +12937,10 @@ skip_key_mgmt:
+ 		}
+ 		if (dut->ap_sae_groups)
+ 			fprintf(f, "pasn_groups=%s\n", dut->ap_sae_groups);
+-		if (dut->ap_rsnxe_capab_mask) {
++		/*if (dut->ap_rsnxe_capab_mask) {
+ 			fprintf(f, "rsnxe_capab_mask=%llx\n",
+ 				dut->ap_rsnxe_capab_mask);
+-		}
++		}*/
+ 
+ 		if (dut->ap_sae_passwords) {
+ 			char *tmp, *pos, *end, *id;
+@@ -19504,7 +19504,7 @@ static enum sigma_cmd_result cmd_ap_get_parameter(struct sigma_dut *dut,
+ 		if (!var)
+ 			return INVALID_SEND_STATUS;
+ 		run_system_wrapper(dut,
+-				   "hostapd_cli -i %s previous_tk %s -0 > /tmp/previous_tk",
++				   "hostapd_cli -i %s get_previous_tk %s -0 > /tmp/previous_tk",
+ 				   ifname, var);
+ 		fp = fopen("/tmp/previous_tk", "r");
+ 		if (!fp) {
+-- 
+2.34.1
+
