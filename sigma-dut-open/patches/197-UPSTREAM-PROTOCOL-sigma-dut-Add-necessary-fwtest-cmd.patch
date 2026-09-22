@@ -1,0 +1,64 @@
+From a08e27b7deeeaeba7bab67f97fe7c6b45259a470 Mon Sep 17 00:00:00 2001
+From: Suraj P Kizhakkethil <suraj.kizhakkethil@oss.qualcomm.com>
+Date: Tue, 22 Sep 2026 12:49:08 +0530
+Subject: [PATCH] UPSTREAM:PROTOCOL:sigma-dut: Add necessary fwtest cmds to
+ support UL OFDMA in Wi-Fi 8
+
+Currently, fwtest_set_eht_params() does not disable the firmware
+algorithm that can change UL OFDMA MCS dynamically, so transmissions
+during UHR test cases do not go out at the MCS the test case
+specifies. The testbed AP also has no way to force UL OFDMA triggers
+or fake a constant UL queue depth, so it cannot guarantee it keeps
+sending sufficient triggers to the STAUT.
+
+To address this issue, when dut->program is PROGRAM_UHR, send fwtest
+command 0x4b/20/0 to disable the dynamic UL OFDMA MCS algorithm and
+ensure all transmissions go out at the specified MCS.
+
+For device_type == AP_testbed, additionally send fwtest commands
+0x49/24, 0x49/23, 0x47/43, and 0x48/141 to force UL OFDMA triggers
+and fake a constant UL queue depth, so the testbed AP always sends
+sufficient triggers to the STAUT.
+
+Patch-dependency: none
+
+Signed-off-by: Suraj P Kizhakkethil <suraj.kizhakkethil@oss.qualcomm.com>
+---
+ ap.c | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/ap.c b/ap.c
+index 72f1242..c67a64c 100644
+--- a/ap.c
++++ b/ap.c
+@@ -10778,6 +10778,27 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 			fwtest_linkid_cmd_wrapper(dut, "-m 0x48 -v 0 325 0", ifname, link_id);
+ 			/* Disable unreliable trig delay time */
+ 			fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 302 0", ifname, link_id);
++			if (dut->program == PROGRAM_UHR) {
++				/*
++				 * Disable an algorithm with can change UL OFDMA MCS dynamically,
++				 * to ensure that all transmissions go out at specified MCS.
++				 */
++				fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 20 0", ifname, link_id);
++				if (dut->device_type == AP_testbed) {
++					/* Force UL OFDMA triggers and fake a constant
++					 * UL queue depth so the testbed AP always
++					 * sends sufficient triggers to the STAUT. */
++					fwtest_linkid_cmd_wrapper(dut,
++								  "-m 0x49 -v 0 24 0 0xFFFFFFFE 1",
++								  ifname, link_id);
++					fwtest_linkid_cmd_wrapper(dut, "-m 0x49 -v 0 23 0 1",
++								  ifname, link_id);
++					fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 43 16",
++								  ifname, link_id);
++					fwtest_linkid_cmd_wrapper(dut, "-m 0x48 -v 0 141 3000",
++								  ifname, link_id);
++				}
++			}
+ 		}
+ 
+ 		fwtest_linkid_cmd_wrapper(dut, "-m 0x4b -v 0 13 0", ifname, link_id);
+-- 
+2.34.1
+
