@@ -1,0 +1,80 @@
+From 24d706ed2a87e139558f0a1db3591ce8c80832cd Mon Sep 17 00:00:00 2001
+From: Hari G <hag@qti.qualcomm.com>
+Date: Fri, 25 Sep 2026 07:31:45 +0530
+Subject: [PATCH] QSDK:PROTOCOL:SIGM_DUT: Enable sigma_dut for EPPK-SAE
+
+Enable EPPK-SAE by extending it to security_profiles config
+
+Signed-off-by: Hari G <hag@qti.qualcomm.com>
+---
+ ap.c      | 14 +++++++++++++-
+ ap.c.orig | 11 ++++++++---
+ 2 files changed, 21 insertions(+), 4 deletions(-)
+
+diff --git a/ap.c b/ap.c
+index 72f1242..f8aa87b 100644
+--- a/ap.c
++++ b/ap.c
+@@ -4473,7 +4473,18 @@ static enum sigma_cmd_result cmd_ap_set_security(struct sigma_dut *dut,
+ 			dut->ap_key_mgmt = AP_OPEN;
+ 			dut->ap_cipher = AP_PLAIN;
+ 		} else if (strcasecmp(val, "EPPKE-SAE") == 0) {
+-			 /* TBH later */
++
++			if (dut->program == PROGRAM_UHR) {
++				free(dut->ap_security_profiles);
++				dut->ap_security_profiles = calloc(2, sizeof(int));
++				if (!dut->ap_security_profiles) {
++					send_resp(dut, conn, SIGMA_ERROR,
++						  "errorCode,Memory allocation failed");
++					return 0;
++				}
++				dut->ap_security_profiles[0] = 1;
++				dut->ap_security_profiles[1] = 9;
++			}
+ 		} else {
+ 			send_resp(dut, conn, SIGMA_INVALID,
+ 				  "errorCode,Unsupported KEYMGNT");
+@@ -12957,6 +12968,7 @@ skip_key_mgmt:
+ 			fprintf(f, "uhr_dl_drain_duration_tu=500\n");
+ 			fprintf(f, "smd_timeout=250\n");
+ 			fprintf(f, "smd_max_peer_apmlds=7\n");
++			fprintf(f, "security_profiles=1 9\n");
+ 		}
+ 		if (dut->ap_sae_groups)
+ 			fprintf(f, "pasn_groups=%s\n", dut->ap_sae_groups);
+diff --git a/ap.c.orig b/ap.c.orig
+index 53fc1cb..72f1242 100644
+--- a/ap.c.orig
++++ b/ap.c.orig
+@@ -22937,7 +22937,7 @@ static int mac80211_vht_nss_mcs(struct sigma_dut *dut, const char *ifname,
+ 	char *saveptr;
+ 	uint16_t mcsnssmap;
+ 	const char *band;
+-	char link_flag[16] = ""; /* "-l <n>" for EHT MLO, empty for non-MLO */
++	char link_flag[16] = ""; /* "-l <n>", set for every link_id below */
+ 
+ 	/*
+ 	 * Determine band string.  Mirror mac80211_he_gi() exactly so the
+@@ -22954,11 +22954,16 @@ static int mac80211_vht_nss_mcs(struct sigma_dut *dut, const char *ifname,
+ 			band = "5";
+ 		else
+ 			band = "5";
+-		snprintf(link_flag, sizeof(link_flag), "-l %d", link_id);
+ 	} else {
+ 		band = dut->ap_band_6g ? "6" : dut->use_5g ? "5" : "2.4";
+-		/* link_flag stays empty for non-MLO */
+ 	}
++	/*
++	 * link_id is always a valid link (set from Interface,24G/5G/6G or
++	 * dut->intf_defined -- see mac80211_ap_set_rfeature()), including
++	 * the single-link (SLO) case, so always target it explicitly
++	 * instead of only doing so when ap_is_dual is set.
++	 */
++	snprintf(link_flag, sizeof(link_flag), "-l %d", link_id);
+ 
+ 	token = strdup(val);
+ 	if (!token)
+-- 
+2.34.1
+
