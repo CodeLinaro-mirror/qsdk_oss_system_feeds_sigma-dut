@@ -1,0 +1,106 @@
+From 802f71c25be0776d4e77b0cecf470b9fadb6415f Mon Sep 17 00:00:00 2001
+From: Suraj P Kizhakkethil <suraj.kizhakkethil@oss.qualcomm.com>
+Date: Tue, 22 Sep 2026 14:06:29 +0530
+Subject: [PATCH] UPSTREAM:PROTOCOL:sigma-dut:ap: sleep 60s in ap_config_commit
+ if DFS channel is configured
+
+When the AP is configured on a DFS channel (e.g. ch36 + 160 MHz which
+spans into the 5250-5330 MHz DFS band), hostapd starts a CAC immediately
+after coming up. Sending the COMPLETE response before CAC finishes causes
+the testbed controller to issue the next command while the AP is still
+unavailable.
+
+Fix this for PROGRAM_UHR by sleeping 60 seconds at the end of
+cmd_ap_config_commit(), after hostapd is confirmed running via ping.
+
+The DFS check queries "iw reg get" at runtime so it works for any
+country setting. The full channel+BW frequency span is checked (not just
+the primary channel) so wide channels that only partially overlap the DFS
+band are caught. The sleep is skipped if no 5 GHz link is present or the
+channel does not touch any DFS range in the loaded regulatory domain.
+
+Signed-off-by: Suraj P Kizhakkethil <suraj.kizhakkethil@oss.qualcomm.com>
+---
+ ap.c | 59 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 59 insertions(+)
+
+diff --git a/ap.c b/ap.c
+index c67a64c..fde1f4e 100644
+--- a/ap.c
++++ b/ap.c
+@@ -11920,6 +11920,49 @@ static void oce_rnr_scan_and_update(struct sigma_dut *dut, const char *ifname)
+ 
+ 
+ 
++static int ap_chwidth_to_mhz(enum ap_chwidth chwidth)
++{
++	switch (chwidth) {
++	case AP_40:  return 40;
++	case AP_80:  return 80;
++	case AP_160: return 160;
++	case AP_320: return 320;
++	default:     return 20;
++	}
++}
++
++/*
++ * Returns 1 if the operating band [channel, channel+BW) overlaps a regulatory
++ * range that requires radar detection (DFS), regardless of country setting.
++ * Uses the kernel's loaded regulatory domain via "iw reg get".
++ */
++static int is_dfs_channel(struct sigma_dut *dut, int channel,
++			   enum ap_chwidth chwidth)
++{
++	int freq_low  = 5000 + channel * 5 - 10;
++	int freq_high = freq_low + ap_chwidth_to_mhz(chwidth);
++	char line[256];
++	FILE *f;
++	int lo, hi, is_dfs = 0;
++
++	f = popen("iw reg get 2>/dev/null", "r");
++	if (!f)
++		return 0;
++
++	while (fgets(line, sizeof(line), f)) {
++		/* Lines look like: (5250 - 5330 @ 80), (...), (...), DFS, ... */
++		if (sscanf(line, " (%d - %d @", &lo, &hi) == 2 &&
++		    freq_low < hi && freq_high > lo &&
++		    strstr(line, "DFS")) {
++			is_dfs = 1;
++			break;
++		}
++	}
++	pclose(f);
++	return is_dfs;
++}
++
++
+ enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
+ 					   struct sigma_conn *conn,
+ 					   struct sigma_cmd *cmd)
+@@ -14921,6 +14964,22 @@ hapd_started:
+ 		run_hostapd_cli(dut, buf);
+ 	}
+ 
++	if (dut->program == PROGRAM_UHR) {
++		int dfs_link;
++
++		for (dfs_link = 0; dfs_link < dut->num_links; dfs_link++) {
++			if (dut->mld[dfs_link].ap_band == BAND_5G)
++				break;
++		}
++		if (dfs_link < dut->num_links &&
++		    is_dfs_channel(dut, dut->mld[dfs_link].ap_channel,
++				   dut->mld[dfs_link].ap_chwidth)) {
++			sigma_dut_print(dut, DUT_MSG_INFO,
++					"DFS channel configured, waiting 60s for CAC");
++			sleep(60);
++		}
++	}
++
+ 	return 1;
+ }
+ 
+-- 
+2.34.1
+
