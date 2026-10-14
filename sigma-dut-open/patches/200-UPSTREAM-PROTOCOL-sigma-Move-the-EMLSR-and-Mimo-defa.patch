@@ -1,0 +1,32 @@
+From 7667ee57511b0054f7bc3a3688781da74217434f Mon Sep 17 00:00:00 2001
+From: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+Date: Tue, 29 Sep 2026 21:12:10 -0700
+Subject: [PATCH] UPSTREAM:PROTOCOL:sigma - Apply EMLSR default command for
+ EHT
+
+Apply the EMLSR scheduling default for all EHT configurations. This default
+is not specific to the UHR program.
+
+Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
+---
+ ap.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/ap.c b/ap.c
+index 9fc2122..cc75647 100644
+--- a/ap.c
++++ b/ap.c
+@@ -10614,9 +10614,8 @@ static void fwtest_set_eht_params(struct sigma_dut *dut, const char *ifname,
+ 	/* Enable mix bw */
+ 	fwtest_linkid_cmd_wrapper(dut, "-m 0x47 -v 0 141 1", ifname, link_id);
+ 
+-	/* Disable best link selection algorithm for emlsr mode */
+-	if (dut->single_link_emlsr == VALUE_ENABLED)
+-		fwtest_linkid_cmd_wrapper(dut, "-m 0x48 -v 0 1023 1", ifname, link_id);
++	/* Disable dynamic EMLSR scheduling by default. */
++	fwtest_linkid_cmd_wrapper(dut, "-m 0x48 -v 0 1023 1", ifname, link_id);
+ }
+ 
+ #define IEEE80211_VHT_CAP_TXSTBC                               ((u32) (1 << 7))
+-- 
+2.34.1
