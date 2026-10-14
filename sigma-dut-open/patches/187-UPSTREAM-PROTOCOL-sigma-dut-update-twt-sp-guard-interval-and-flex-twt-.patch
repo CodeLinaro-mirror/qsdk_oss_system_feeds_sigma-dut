@@ -1,0 +1,36 @@
+From fa817a984388298298d89d82af00a1738765536d Mon Sep 17 00:00:00 2001
+From: Kiran Venkatappa <kiranv@qti.qualcomm.com>
+Date: Mon, 12 Oct 2026 14:27:28 +0530
+Subject: [PATCH] sigma-dut: update twt sp guard interval and flex-twt unit
+ test cmd
+
+Change sp guard value from 1000 to 100 and flexi-twt unit test cmd 63
+value from 1800 to 1200. This change is done as per FW teams
+recommendation to fix DL throughput less the expected value during
+flexible TWT servide period.
+
+Signed-off-by: Kiran Venkatappa <kiranv@qti.qualcomm.com>
+---
+ ap.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/ap.c
++++ b/ap.c
+@@ -10322,12 +10322,15 @@ static void fwtest_set_he_params(struct
+ 		if (dut->ap_twtresp == VALUE_ENABLED || dut->device_type == AP_dut ||
+ 		    (dut->ap_btwt == VALUE_ENABLED && dut->device_type == AP_testbed)) {
+ 			if (dut->ap_flextwt == VALUE_ENABLED)
+-				fwtest_cmd_wrapper(dut, "-m 0x48 -v 0 63 1800", ifname);
++				fwtest_cmd_wrapper(dut, "-m 0x48 -v 0 63 1200", ifname);
+ 		}
+ 	}
+ 
+ 	/* sp_guard_interval_in_us WAR */
+-	fwtest_cmd_wrapper(dut, "-m 0x47 -v 0 398 1000", ifname);
++	if (dut->ap_flextwt == VALUE_ENABLED)
++		fwtest_cmd_wrapper(dut, "-m 0x47 -v 0 398 100", ifname);
++	else
++		fwtest_cmd_wrapper(dut, "-m 0x47 -v 0 398 1000", ifname);
+ 
+ 	if (dut->ap_he_ppdu == PPDU_MU &&
+ 	    dut->ap_he_dlofdma == VALUE_ENABLED) {
