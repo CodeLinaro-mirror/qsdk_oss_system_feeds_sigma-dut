@@ -75,7 +75,7 @@ Signed-off-by: Naveen Sivasamy <naves@qti.qualcomm.com>
 +	if (!fd)
 +		return -1;
 +
-+	ret = fread(cmdline, sizeof(char), COMMAND_LINE_SIZE, fd);
++	ret = fread(cmdline, sizeof(char), COMMAND_LINE_SIZE - 1, fd);
 +	fclose(fd);
 +	if (ret <= 0)
 +		return -1;
