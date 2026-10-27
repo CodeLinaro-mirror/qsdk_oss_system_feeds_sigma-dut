@@ -1354,8 +1354,9 @@ Signed-off-by: Priyadharshini Gowthaman <pgowtham@qti.qualcomm.com>
  #endif /* ANDROID */
  
 -	res = snprintf(out_file, sizeof(out_file), "%s_%s_%s_%s.tar.gz",
+-		       dut->vendor_name,
 +	res = snprintf(out_file, sizeof(out_file), "%s_%s_%s_%s_%s.tar.gz",
- 		       dut->vendor_name,
++		       dut->vendor_name ? dut->vendor_name : "Unknown",
  		       dut->model_name ? dut->model_name : "Unknown",
 +		       dut->device_name,
  		       dut->dev_start_test_runtime_id,
