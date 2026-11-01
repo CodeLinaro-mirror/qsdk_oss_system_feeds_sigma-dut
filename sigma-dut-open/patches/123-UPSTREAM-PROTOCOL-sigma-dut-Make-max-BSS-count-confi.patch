@@ -33,7 +33,7 @@ Signed-off-by: Naveen Sivasamy <naves@qti.qualcomm.com>
 
 --- a/ap.c
 +++ b/ap.c
-@@ -12336,7 +12336,7 @@ skip_vht_parameters_set:
+@@ -12346,7 +12346,7 @@ skip_vht_parameters_set:
  			if (!dut->mbss.num_non_tx_bss)
  				return -2;
  
@@ -42,7 +42,7 @@ Signed-off-by: Naveen Sivasamy <naves@qti.qualcomm.com>
  
  			base_val = bssid[5] & ~bssid_mask;
  			init_val = bssid[5] & bssid_mask;
-@@ -12347,7 +12347,7 @@ skip_vht_parameters_set:
+@@ -12357,7 +12357,7 @@ skip_vht_parameters_set:
  				fprintf(f, "\n");
  
  				/* start from 1 for non tx bssid */
@@ -72,10 +72,10 @@ Signed-off-by: Naveen Sivasamy <naves@qti.qualcomm.com>
 +	int ret;
 +
 +	fd = fopen("/proc/cmdline", "r");
-+	if (fd < 0)
++	if (!fd)
 +		return -1;
 +
-+	ret = fread(cmdline, sizeof(char), COMMAND_LINE_SIZE, fd);
++	ret = fread(cmdline, sizeof(char), COMMAND_LINE_SIZE - 1, fd);
 +	fclose(fd);
 +	if (ret <= 0)
 +		return -1;
